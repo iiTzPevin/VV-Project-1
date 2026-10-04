@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spec-Ambiguity Hunter · CRAFT V&amp;V Week 2</title>
+<style>
+:root{
+  --navy:#1B2A4A; --gold:#D4A843; --green:#27AE60; --blue:#2E86AB;
+  --red:#E74C3C; --purple:#9B59B6;
+  --ground:#F4F6F9; --surface:#fff; --surface2:#EDF0F5;
+  --ink:#16223B; --ink2:#3E4C68; --ink3:#6B7791; --rule:#D9DEE7;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#0D1524; --surface:#141E33; --surface2:#1B273F;
+    --ink:#E7ECF5; --ink2:#B6C1D6; --ink3:#8592AC; --rule:#2A3752;
+    --gold:#E9BE58; --green:#5FD48C; --blue:#5AA9C9; --red:#FF8776; --purple:#BE85D6;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font:16px/1.55 "Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 18px 60px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:1.5rem;margin:0;letter-spacing:-.01em}
+h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin:0 0 8px}
+h3{font-size:.95rem;margin:0 0 6px}
+p{margin:0;max-width:74ch;color:var(--ink2)}
+code,.mono,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+header{border-bottom:2px solid var(--ink);padding-bottom:12px;display:flex;flex-direction:column;gap:6px}
+.kicker{font:600 .7rem/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px 18px}
+.grid{display:grid;grid-template-columns:minmax(300px,1fr) minmax(340px,1.15fr);gap:16px;align-items:start}
+@media(max-width:880px){.grid{grid-template-columns:1fr}}
+
+button{font:inherit;cursor:pointer;border-radius:4px;border:1px solid var(--rule);
+  background:var(--surface2);color:var(--ink);padding:7px 12px}
+button:hover{border-color:var(--ink3)}
+button:disabled{opacity:.5;cursor:default}
+button.go{background:var(--green);color:#fff;border-color:var(--green);font-weight:600}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+#predict{border-left:4px solid var(--purple);background:var(--surface2);padding:12px 16px;border-radius:0 5px 5px 0}
+#predict .q{font-weight:600;margin-bottom:10px;max-width:none}
+.locked{opacity:.45;pointer-events:none}
+
+.excerpts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.exc{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:12px 14px}
+.exc .src{font:600 .66rem/1 ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin-bottom:8px}
+.exc .qt{font-size:.94rem;color:var(--ink);max-width:none;line-height:1.75}
+button.ph{display:inline;padding:1px 3px;margin:0;border:0;border-radius:3px;background:none;color:inherit;
+  font:inherit;border-bottom:2px dotted var(--ink3);cursor:pointer}
+button.ph:hover{background:var(--surface2);border-bottom-color:var(--ink)}
+button.ph.sel{background:var(--purple);color:#fff;border-bottom-color:var(--purple)}
+button.ph.live{border-bottom:2px solid var(--gold)}
+.commitrow{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-top:12px}
+#pverdict{font-size:.9rem;color:var(--ink2);max-width:74ch}
+#pverdict b{color:var(--ink)}
+
+.reading{background:var(--surface2);border-radius:5px;padding:10px 12px;margin-bottom:10px}
+.reading h3{font-family:ui-monospace,monospace;font-size:.85rem}
+pre{margin:6px 0 0;font-size:.78rem;line-height:1.5;overflow-x:auto;color:var(--ink2)}
+pre b{color:var(--ink)}
+.pinned{font-size:.8rem;color:var(--ink3);margin-top:8px;max-width:none}
+
+table.wt{border-collapse:collapse;width:100%;font-family:ui-monospace,monospace;font-size:.8rem}
+table.wt th,table.wt td{padding:5px 8px;text-align:center;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums;white-space:nowrap}
+table.wt th{color:var(--ink3);font-weight:600;font-size:.66rem;text-transform:uppercase;letter-spacing:.05em}
+table.wt td.in{text-align:left}
+table.wt td.split{color:var(--red);font-weight:700;background:color-mix(in srgb,var(--red) 12%,transparent)}
+@supports not (background:color-mix(in srgb,red 10%,transparent)){table.wt td.split{background:none}}
+table.wt td.tag{text-align:left;color:var(--ink3);font-size:.72rem;white-space:normal}
+table.wt tr.wit td.in{font-weight:700}
+.wtwrap{overflow-x:auto}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px}
+.stat{background:var(--surface2);border-radius:5px;padding:9px 11px}
+.stat .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)}
+.stat .v{font:700 1.1rem/1.25 ui-monospace,monospace;font-variant-numeric:tabular-nums;margin-top:3px}
+.v.ok{color:var(--green)} .v.bad{color:var(--red)} .v.warn{color:var(--gold)}
+
+.vplan{margin-top:14px;border-left:4px solid var(--blue);background:var(--surface2);padding:10px 14px;border-radius:0 5px 5px 0;font-size:.85rem}
+.vplan .h{font-weight:700;color:var(--ink);margin-bottom:4px}
+.vplan pre{font-size:.76rem;white-space:pre-wrap}
+
+.runner{margin-top:14px;border-top:1px solid var(--rule);padding-top:12px}
+.runner .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+select,input[type=text]{font:inherit;font-family:ui-monospace,monospace;padding:5px 7px;border:1px solid var(--rule);
+  border-radius:4px;background:var(--surface2);color:var(--ink);width:74px}
+select{width:auto}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{padding:4px 9px;font-size:.78rem;font-family:ui-monospace,monospace}
+#rout{margin-top:8px}
+.verdict{margin-top:10px;border-left:4px solid var(--rule);padding:8px 12px;background:var(--surface2);border-radius:0 5px 5px 0;font-size:.9rem}
+.verdict.ok{border-left-color:var(--green)}
+.verdict.bad{border-left-color:var(--red)}
+.verdict b{color:var(--ink)}
+footer{font-size:.8rem;color:var(--ink3);border-top:1px solid var(--rule);padding-top:12px}
+footer p{color:var(--ink3);max-width:none}
+
+body.present{font-size:20px}
+body.present .prose,body.present footer{display:none}
+body.present h1{font-size:2rem}
+body.present .exc .qt{font-size:1.15rem}
+body.present table.wt{font-size:1rem}
+body.present .stat .v{font-size:1.5rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="kicker">CRAFT V&amp;V · Week 2 · specs as contracts</span>
+  <h1>Spec-Ambiguity Hunter</h1>
+  <p class="prose">Three sentences from <code>code/dut/specs/alu.md</code>, quoted verbatim.
+  Two of them let two engineers ship different silicon while each points at the spec and says
+  "conforming." One cannot bite, however loose it sounds. The bug is not in any RTL —
+  it is in the prose, waiting.</p>
+</header>
+
+<div id="predict" class="panel">
+  <div class="q">Highlight the phrase you would flag in a spec review — the one two readers can
+  bind two ways — then commit. The implementations unlock after you commit.</div>
+
+  <div class="excerpts">
+    <div class="exc">
+      <div class="src">alu.md · Flags</div>
+      <p class="qt"><code>overflow</code> — set when
+        <button class="ph" data-k="ov">the mathematical result</button> of
+        <button class="ph" data-k="pops">an arithmetic operation (ADD, SUB)</button>
+        <button class="ph" data-k="ov">does not fit in <code>WIDTH</code> bits</button>.
+        <button class="ph" data-k="pzero"><code>0</code> for the logical, compare, and shift operations</button>.</p>
+    </div>
+    <div class="exc">
+      <div class="src">alu.md · Flags</div>
+      <p class="qt"><code>carry</code> —
+        <button class="ph" data-k="cy">the carry produced by</button>
+        <button class="ph" data-k="cy">the arithmetic operations</button>.
+        For ADD this is the carry out of the most-significant bit:
+        <button class="ph" data-k="piff">set iff <code>a + b &gt;= 2^WIDTH</code></button>.
+        <button class="ph" data-k="pzero2"><code>0</code> for the logical, compare, and shift operations</button>.</p>
+    </div>
+    <div class="exc">
+      <div class="src">alu.md · Operations</div>
+      <p class="qt"><button class="ph" data-k="decoy">Opcodes not listed in the table</button>
+        <button class="ph" data-k="decoy">are undefined</button>;
+        <button class="ph" data-k="decoy">do not rely on the <code>result</code> or flag values they produce</button>.</p>
+    </div>
+  </div>
+
+  <div class="commitrow">
+    <button id="commit" class="go" disabled>Commit the highlight</button>
+    <span id="pverdict">Pick a phrase first. After you commit, every phrase stays clickable — hunt all three sentences.</span>
+  </div>
+</div>
+
+<div id="main" class="locked">
+<div class="grid">
+
+  <div class="panel">
+    <h2 id="ctxtitle">Two conforming parts</h2>
+    <div id="readings"></div>
+    <p class="pinned" id="pinned"></p>
+    <div class="vplan" id="vplan"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Where they split</h2>
+    <div class="wtwrap" id="wtable"></div>
+    <div class="stats" id="tiles"></div>
+    <div class="runner" id="runner">
+      <h2>Run both parts yourself</h2>
+      <div class="row">
+        <select id="rop" aria-label="operation"><option>ADD</option><option>SUB</option></select>
+        <label>a <input type="text" id="ra" value="7F" aria-label="operand a, hex"></label>
+        <label>b <input type="text" id="rb" value="01" aria-label="operand b, hex"></label>
+        <span style="font-size:.78rem;color:var(--ink3)">hex, 8-bit</span>
+      </div>
+      <div class="chips" id="chips"></div>
+      <div id="rout"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<footer class="panel" style="border:0;background:none;padding-left:2px">
+  <p><b>What this models.</b> 8-bit two's-complement arithmetic, computed in the page. The
+  disagreement counts are exhaustive sweeps of all 65,536 operand pairs per operation, run live
+  each time a reveal opens — nothing is looked up.</p>
+  <p style="margin-top:8px"><b>Where the course lands.</b> The golden model
+  <code>code/lib/models/alu_model.py</code> and <code>code/dut/alu.sv</code> pick the signed
+  reading of overflow and the borrow reading of carry (<code>sub_ext[WIDTH]</code> — the model's
+  own comment says <code># borrow</code>). Nothing in the quoted sentences forces either choice;
+  the vplan row is what pins it. Finding the ambiguity before anyone writes RTL or a test is
+  verification work — the plan is the argument, the tests are its evidence.</p>
+  <p style="margin-top:8px"><b>The same split, in silicon and in the demo.</b> Borrow vs no-borrow
+  both ship in production instruction sets — x86 sets the flag on borrow, ARM clears it. The
+  Session 1 demo (<code>just demo 02 s1 0</code>) builds both overflow readings as RTL
+  (<code>alu_ovf_signed.sv</code> vs <code>alu_ovf_carry.sv</code>): one test, both pass; the
+  spec's own corner list then splits them on 118 of 272 vectors, first witness
+  <code>0x7F + 0x01</code>. Session 2's ask — the vplan row for the carry sentence at
+  <code>SUB 0x00 - 0x01</code> — is a preset above.</p>
+</footer>
+</div>
+
+<script>
+"use strict";
+var CORE = (function(){
+  function sgn(x){ return (x & 0x80) ? x - 256 : x; }
+  function alu(op, a, b, opts){
+    a &= 0xFF; b &= 0xFF;
+    var res, carry, math, smath;
+    if (op === "ADD"){
+      math = a + b; smath = sgn(a) + sgn(b);
+      res = math & 0xFF;
+      carry = math > 0xFF ? 1 : 0;
+    } else {
+      math = a - b; smath = sgn(a) - sgn(b);
+      res = (a - b) & 0xFF;
+      carry = (opts.subCarry === "borrow") ? (a < b ? 1 : 0)
+                                           : (((a + ((~b) & 0xFF) + 1) >> 8) & 1);
+    }
+    var ov = (opts.ov === "unsigned") ? ((math < 0 || math > 0xFF) ? 1 : 0)
+                                      : ((smath < -128 || smath > 127) ? 1 : 0);
+    return {result:res, zero:res === 0 ? 1 : 0, carry:carry, overflow:ov};
+  }
+  var CTX = {
+    ov: {A:{ov:"unsigned", subCarry:"borrow"}, B:{ov:"signed", subCarry:"borrow"}, flag:"overflow"},
+    cy: {A:{ov:"signed", subCarry:"borrow"}, B:{ov:"signed", subCarry:"cout"}, flag:"carry"}
+  };
+  var FIELDS = ["result","zero","carry","overflow"];
+  function pair(ctx, op, a, b){
+    var c = CTX[ctx];
+    var A = alu(op, a, b, c.A), B = alu(op, a, b, c.B);
+    var div = {}, any = false;
+    FIELDS.forEach(function(k){ div[k] = A[k] !== B[k]; if (div[k]) any = true; });
+    return {A:A, B:B, div:div, any:any};
+  }
+  function disagreements(ctx, op){
+    var n = 0, resDiff = 0;
+    for (var a = 0; a < 256; a++) for (var b = 0; b < 256; b++){
+      var p = pair(ctx, op, a, b);
+      if (p.any) n++;
+      if (p.div.result) resDiff++;
+    }
+    return {n:n, resDiff:resDiff, total:65536};
+  }
+  function ovEqCarry(){
+    var n = 0, t = 0;
+    for (var a = 0; a < 256; a++) for (var b = 0; b < 256; b++){
+      ["ADD","SUB"].forEach(function(op){
+        var x = alu(op, a, b, CTX.ov.A);
+        t++; if (x.overflow === x.carry) n++;
+      });
+    }
+    return {eq:n, total:t};
+  }
+  return {sgn:sgn, alu:alu, CTX:CTX, FIELDS:FIELDS, pair:pair,
+          disagreements:disagreements, ovEqCarry:ovEqCarry};
+})();
+
+if (typeof document === "undefined"){
+  if (typeof globalThis !== "undefined") globalThis.SPEC_CORE = CORE;
+} else { (function(){
+
+if (new URLSearchParams(location.search).get("present") === "1") document.body.classList.add("present");
+var el = function(id){ return document.getElementById(id); };
+function hex(x){ return "0x" + x.toString(16).toUpperCase().padStart(2, "0"); }
+function th(n){ return n.toString().replace(/\B(?=(\d{3})+$)/g, ","); }
+
+var TEXT = {
+  ov: {
+    title: "Two conforming parts — “does not fit in WIDTH bits”",
+    verdict: "<b>Flagged.</b> Fit as <em>what</em> — an unsigned count in [0, 255], or a " +
+      "two's-complement value in [−128, 127]? The sentence never says, so both parts below " +
+      "conform. They agree at the fits case and at the blow-up everyone tests first — and " +
+      "split at <code>ADD 0x7F + 0x01</code>.",
+    readings: [
+      ["Engineer A — unsigned fit",
+       "math = a + b            <b># ADD   (SUB: a - b)</b>\noverflow = 1 if math &lt; 0 or math &gt; 255 else 0"],
+      ["Engineer B — signed fit",
+       "smath = signed(a) + signed(b)   <b># two's complement</b>\noverflow = 1 if smath &lt; -128 or smath &gt; 127 else 0"]
+    ],
+    pinned: "carry on SUB is pinned to the borrow in both parts, so any split you see here is the overflow reading alone.",
+    vplan: ["Pin it in the plan — the course's sharpened row (Session 1 demo):",
+      "R-ADD-OVF: For ADD, result = (a + b) mod 2^WIDTH. overflow = 1 iff\n" +
+      "the SIGNED (two's-complement) sum of a and b lies outside\n" +
+      "[-2^(WIDTH-1), 2^(WIDTH-1)-1]. The unsigned does-not-fit fact is a\n" +
+      "different flag: carry = 1 iff a + b >= 2^WIDTH."],
+    rows: [
+      {op:"ADD", a:0x03, b:0x04, tag:"the fits case every test checks — agree"},
+      {op:"ADD", a:0x80, b:0x80, tag:"the blow-up everyone tests first — agree"},
+      {op:"ADD", a:0x7F, b:0x01, wit:true, tag:"witness — same result, split flag"},
+      {op:"SUB", a:0x80, b:0x01, wit:true, tag:"witness on SUB"}
+    ]
+  },
+  cy: {
+    title: "Two conforming parts — “the carry produced by the arithmetic operations”",
+    verdict: "<b>Flagged.</b> The plural covers ADD and SUB; the definition that follows covers " +
+      "ADD only. SUB falls in the gap, and the two readings of a subtract's carry — borrow, " +
+      "no-borrow — both ship in production instruction sets (x86 sets it on borrow, ARM clears " +
+      "it). Witness: <code>SUB 0x00 - 0x01</code>.",
+    readings: [
+      ["Reading A — carry records the borrow (x86 flavor)",
+       "carry = 1 if a &lt; b else 0        <b># SUB borrowed</b>"],
+      ["Reading B — carry is the adder's carry-out (ARM flavor)",
+       "carry = (a + (~b &amp; 0xFF) + 1) &gt;&gt; 8   <b># 1 iff a &gt;= b</b>"]
+    ],
+    pinned: "overflow is pinned to the signed reading in both parts, so any split you see here is the carry reading alone.",
+    vplan: ["Pin it in the plan — a row in the same shape (Session 2 asks you to write it):",
+      "R-SUB-C: For SUB, result = (a - b) mod 2^WIDTH. carry = 1 iff a < b\n" +
+      "comparing both as unsigned — the borrow, matching alu_model.py.\n" +
+      "Cover: a < b, a == b, a > b, checking carry explicitly on each."],
+    rows: [
+      {op:"ADD", a:0xFF, b:0x01, tag:"ADD — the spec pins it, so the parts must agree"},
+      {op:"SUB", a:0x00, b:0x01, wit:true, tag:"witness — the deck's vector"},
+      {op:"SUB", a:0xA5, b:0xA5, wit:true, tag:"equal operands split them too"}
+    ]
+  },
+  decoy: {
+    title: "The decoy — precise by declaration",
+    verdict: "<b>That one cannot bite.</b> It promises nothing, so no reader can claim the spec " +
+      "backed a value — an ambiguity hides a choice; this sentence declares one. And here it " +
+      "guards the empty set: <code>op</code> is 3 bits, and the table defines all 8 encodings. " +
+      "The live ambiguities are both in the Flags section — keep hunting.",
+    vplan: ["Nothing to pin:",
+      "A vplan row reading \"undefined opcodes return X\" would invent a\n" +
+      "requirement the spec deliberately refused to make. Declared\n" +
+      "looseness is a don't-care, not a defect. (At WIDTH=8 it is even\n" +
+      "vacuous: every 3-bit opcode is in the table.)"]
+  },
+  pops: "<b>Precise.</b> It names the two operations exactly — no reader can pull SLT or the shifts into this flag. The looseness sits on either side of it.",
+  pzero: "<b>Precise.</b> Six operations pinned to 0, no reading room. The trap in this sentence is elsewhere — what does \"fit\" mean, and for whom?",
+  piff: "<b>Precise.</b> One inequality over the raw operands; two conforming parts cannot differ on ADD's carry. Look instead for the operation this sentence never mentions.",
+  pzero2: "<b>Precise</b> — and a pointer. It pins the logical, compare, and shift ops to 0. Arithmetic is ADD <em>and SUB</em>, yet only ADD got a definition. So who defines SUB's carry?"
+};
+var PRESETS = [
+  {op:"ADD", a:0x7F, b:0x01}, {op:"ADD", a:0x80, b:0x80}, {op:"ADD", a:0x03, b:0x04},
+  {op:"SUB", a:0x00, b:0x01}, {op:"SUB", a:0xA5, b:0xA5}, {op:"SUB", a:0x80, b:0x01},
+  {op:"ADD", a:0xFF, b:0x01}
+];
+
+var committed = false;
+var ctx = null;              /* "ov" | "cy" | "decoy" */
+var selected = null;         /* phrase button pending commit */
+var sweepCache = {};
+
+function flagCell(p, k){
+  return p.div[k]
+    ? '<td class="split">' + p.A[k] + " ∕ " + p.B[k] + "</td>"
+    : "<td>" + p.A[k] + "</td>";
+}
+function rowHtml(op, a, b, tag, wit){
+  var p = CORE.pair(ctx, op, a, b);
+  var h = '<tr class="' + (wit ? "wit" : "") + '"><td class="in">' + op + " " + hex(a) +
+          (op === "ADD" ? " + " : " − ") + hex(b) + "</td>";
+  h += p.div.result
+    ? '<td class="split">' + hex(p.A.result) + " ∕ " + hex(p.B.result) + "</td>"
+    : "<td>" + hex(p.A.result) + "</td>";
+  ["zero","carry","overflow"].forEach(function(k){ h += flagCell(p, k); });
+  h += "<td>" + (p.any ? '<b style="color:var(--red)">SPLIT</b>' : "agree") + "</td>";
+  return h + (tag !== undefined ? '<td class="tag">' + tag + "</td>" : "") + "</tr>";
+}
+function tableHead(withTag){
+  return "<thead><tr><th>input</th><th>result</th><th>Z</th><th>C</th><th>V</th><th>parts</th>" +
+         (withTag ? "<th></th>" : "") + "</tr></thead>";
+}
+function sweep(c){
+  if (!sweepCache[c]){
+    sweepCache[c] = {ADD:CORE.disagreements(c, "ADD"), SUB:CORE.disagreements(c, "SUB")};
+    if (c === "ov") sweepCache[c].eq = CORE.ovEqCarry();
+  }
+  return sweepCache[c];
+}
+function tile(k, v, cls){
+  return '<div class="stat"><div class="k">' + k + '</div><div class="v ' + (cls || "") + '">' + v + "</div></div>";
+}
+function reveal(k){
+  ctx = k;
+  var T = TEXT[k];
+  el("ctxtitle").textContent = T.title;
+  document.querySelectorAll(".ph").forEach(function(b){ b.classList.toggle("live", b.dataset.k === k); });
+  el("vplan").innerHTML = '<div class="h">' + T.vplan[0] + "</div><pre>" + T.vplan[1] + "</pre>";
+  if (k === "decoy"){
+    el("readings").innerHTML = "<p class=\"prose\" style=\"font-size:.9rem\">No pair of readings to " +
+      "build: a part may return anything here, and a test may check nothing — both facts are on " +
+      "the page, in plain sight. Compare that with a sentence that <em>seems</em> to bind and " +
+      "does not: the reader who never notices the choice is the one who ships it.</p>";
+    el("pinned").textContent = "";
+    el("wtable").innerHTML = "";
+    el("tiles").innerHTML =
+      tile("op encodings defined in the table", "8 / 8", "ok") +
+      tile("input combinations this sentence governs", "0 / " + th(1 << 19), "ok") +
+      tile("conforming splits it can cause", "0", "ok");
+    el("runner").style.display = "none";
+    return;
+  }
+  el("runner").style.display = "";
+  el("readings").innerHTML = T.readings.map(function(r){
+    return '<div class="reading"><h3>' + r[0] + "</h3><pre>" + r[1] + "</pre></div>";
+  }).join("");
+  el("pinned").textContent = "Held fixed: " + T.pinned;
+  el("wtable").innerHTML = '<table class="wt">' + tableHead(true) + "<tbody>" +
+    T.rows.map(function(r){ return rowHtml(r.op, r.a, r.b, r.tag, r.wit); }).join("") +
+    "</tbody></table>";
+  var s = sweep(k);
+  if (k === "ov"){
+    el("tiles").innerHTML =
+      tile("ADD pairs where the parts split", th(s.ADD.n) + " / " + th(s.ADD.total), "bad") +
+      tile("SUB pairs where the parts split", th(s.SUB.n) + " / " + th(s.SUB.total), "bad") +
+      tile("reading A: overflow == carry on", th(s.eq.eq) + " / " + th(s.eq.total), "warn");
+  } else {
+    el("tiles").innerHTML =
+      tile("SUB pairs where the parts split", th(s.SUB.n) + " / " + th(s.SUB.total), "bad") +
+      tile("ADD pairs where the parts split", th(s.ADD.n) + " / " + th(s.ADD.total), "ok") +
+      tile("SUB pairs where result differs", th(s.SUB.resDiff) + " — every split is a silent flag", "warn");
+  }
+  runRunner();
+}
+function parseHex(id){
+  var v = parseInt(el(id).value.replace(/^0x/i, ""), 16);
+  return isNaN(v) ? 0 : (v & 0xFF);
+}
+function runRunner(){
+  if (!ctx || ctx === "decoy") return;
+  var op = el("rop").value, a = parseHex("ra"), b = parseHex("rb");
+  var p = CORE.pair(ctx, op, a, b);
+  var split = CORE.FIELDS.filter(function(k){ return p.div[k]; });
+  el("rout").innerHTML = '<table class="wt">' + tableHead(false) + "<tbody>" +
+    rowHtml(op, a, b, undefined, p.any) + "</tbody></table>" +
+    '<div class="verdict ' + (p.any ? "bad" : "ok") + '">' + (p.any
+      ? "<b>The parts split on " + split.join(", ") + " at " + op + " " + hex(a) + ", " + hex(b) +
+        ".</b> Both conform to the quoted sentence. No test derived from that sentence alone can call either one wrong — the fix is a sharper requirement, not a cleverer test."
+      : "<b>The parts agree on this input.</b> Agreement on the vectors you happened to try is " +
+        "what a green regression shows too. The sweep above says how much of the space splits — " +
+        "hunt a witness, or load one from the chips.") + "</div>";
+}
+el("chips").innerHTML = PRESETS.map(function(p, i){
+  return '<button data-c="' + i + '">' + p.op + " " + hex(p.a) + (p.op === "ADD" ? "+" : "−") + hex(p.b) + "</button>";
+}).join("");
+document.querySelectorAll("[data-c]").forEach(function(b){
+  b.addEventListener("click", function(){
+    var p = PRESETS[+b.dataset.c];
+    el("rop").value = p.op;
+    el("ra").value = p.a.toString(16).toUpperCase().padStart(2, "0");
+    el("rb").value = p.b.toString(16).toUpperCase().padStart(2, "0");
+    runRunner();
+  });
+});
+["rop","ra","rb"].forEach(function(id){
+  el(id).addEventListener("input", runRunner);
+  el(id).addEventListener("change", runRunner);
+});
+
+/* ---- predict-then-reveal: the highlight is the prediction ---- */
+document.querySelectorAll(".ph").forEach(function(b){
+  b.addEventListener("click", function(){
+    if (!committed){
+      document.querySelectorAll(".ph").forEach(function(x){ x.classList.remove("sel"); });
+      b.classList.add("sel");
+      selected = b;
+      el("commit").disabled = false;
+      el("pverdict").innerHTML = "Highlighted: “" + b.textContent.trim() + "”. Commit to see what two conforming parts do with it.";
+      return;
+    }
+    document.querySelectorAll(".ph").forEach(function(x){ x.classList.remove("sel"); });
+    b.classList.add("sel");
+    show(b);
+  });
+});
+function show(b){
+  var k = b.dataset.k;
+  if (k === "ov" || k === "cy" || k === "decoy"){
+    el("pverdict").innerHTML = TEXT[k].verdict;
+    reveal(k);
+  } else {
+    el("pverdict").innerHTML = TEXT[k];
+  }
+}
+el("commit").addEventListener("click", function(){
+  if (!selected || committed) return;
+  committed = true;
+  el("main").classList.remove("locked");
+  el("commit").textContent = "Committed";
+  el("commit").disabled = true;
+  var k = selected.dataset.k;
+  if (!(k === "ov" || k === "cy" || k === "decoy")){
+    reveal("ov");           /* precise pick: open the nearest live ambiguity for contrast */
+    el("pverdict").innerHTML = TEXT[k] + " Below, for contrast: the overflow split that lives two phrases away.";
+    return;
+  }
+  show(selected);
+});
+})(); }
+</script>
+</body>
+</html>

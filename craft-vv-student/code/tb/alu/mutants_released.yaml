@@ -1,0 +1,38 @@
+# ALU mutation pool -- RELEASED (practice).  Score = found / total.
+# Run these locally to calibrate your testbench: `just mutate alu`.
+# Each mutant is a small, exact source transformation of dut/alu.sv.
+# A mutant is "found" when your testbench FAILS on it. (We say found, not killed.)
+dut: alu.sv
+mutants:
+  - id: add2sub
+    desc: "ADD computes a - b instead of a + b"
+    find: "add_ext  = {1'b0, a} + {1'b0, b};"
+    replace: "add_ext  = {1'b0, a} - {1'b0, b};"
+  - id: and2or
+    desc: "AND behaves like OR"
+    find: "OP_AND: result = a & b;"
+    replace: "OP_AND: result = a | b;"
+  - id: xor2and
+    desc: "XOR behaves like AND"
+    find: "OP_XOR: result = a ^ b;"
+    replace: "OP_XOR: result = a & b;"
+  - id: slt_unsigned
+    desc: "SLT uses an unsigned comparison"
+    find: "($signed(a) < $signed(b))"
+    replace: "(a < b)"
+  - id: drop_add_carry
+    desc: "ADD never reports carry-out"
+    find: "carry    = add_ext[WIDTH];"
+    replace: "carry    = 1'b0;"
+  - id: zero_inverted
+    desc: "zero flag is inverted"
+    find: "zero = (result == '0);"
+    replace: "zero = (result != '0);"
+  - id: sll2srl
+    desc: "shift-left behaves like shift-right"
+    find: "result = a << b[SH-1:0];"
+    replace: "result = a >> b[SH-1:0];"
+  - id: drop_add_overflow
+    desc: "ADD never reports signed overflow"
+    find: "overflow = (a[WIDTH-1] == b[WIDTH-1]) && (result[WIDTH-1] != a[WIDTH-1]);"
+    replace: "overflow = 1'b0;"

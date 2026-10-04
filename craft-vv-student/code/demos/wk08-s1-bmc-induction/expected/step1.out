@@ -1,0 +1,5 @@
+planted full_offbyone: full asserts one entry too early (cnt == DEPTH-1)
+[step1_planted_bmc] summary: engine_0 (smtbmc z3) returned FAIL
+[step1_planted_bmc] summary: counterexample trace: step1_planted_bmc/engine_0/trace.vcd
+[step1_planted_bmc] summary:   failed assertion fifo_formal.$assert$fifo_formal.sv:56$58 at fifo_formal.sv:56.37-59.47 step 9
+[step1_planted_bmc] DONE (FAIL, rc=0)

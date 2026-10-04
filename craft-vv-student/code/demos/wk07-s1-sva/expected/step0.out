@@ -1,0 +1,21 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Verilator version 5.020 2024-01-01
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787515047
+Found test step0_two_checkers.test_two_checkers
+running test_two_checkers (1/1)
+demo seed = 5
+immediate : check() looked 20 times -- a Python assert checks only when called
+blind     : 8 of 28 driven cycles had no check() call at all
+concurrent: 9 properties from dut/fifo_sva.sv sampled at every posedge, blind cycles included
+test_two_checkers passed
+**********************************************************************************************
+                                                        ** TEST                                  STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        **********************************************************************************************
+                                                        ** step0_two_checkers.test_two_checkers   PASS         305.00           0.01      58952.39  **
+                                                        **********************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                        305.00           0.08       3793.50  **
+                                                        **********************************************************************************************
+
+- :0: Verilog $finish

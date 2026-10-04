@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coverage Closure · CRAFT V&amp;V Week 6</title>
+<style>
+:root{
+  --navy:#1B2A4A; --gold:#D4A843; --green:#27AE60; --blue:#2E86AB;
+  --red:#E74C3C; --purple:#9B59B6;
+  --ground:#F4F6F9; --surface:#fff; --surface2:#EDF0F5;
+  --ink:#16223B; --ink2:#3E4C68; --ink3:#6B7791; --rule:#D9DEE7;
+  --cell:#2E86AB;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#0D1524; --surface:#141E33; --surface2:#1B273F;
+    --ink:#E7ECF5; --ink2:#B6C1D6; --ink3:#8592AC; --rule:#2A3752;
+    --gold:#E9BE58; --green:#5FD48C; --blue:#5AA9C9; --red:#FF8776; --purple:#BE85D6;
+    --cell:#5AA9C9;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font:16px/1.55 "Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 18px 60px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:1.5rem;margin:0;letter-spacing:-.01em}
+h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin:0 0 8px}
+p{margin:0;max-width:70ch;color:var(--ink2)}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+header{border-bottom:2px solid var(--ink);padding-bottom:12px;display:flex;flex-direction:column;gap:6px}
+.kicker{font:600 .7rem/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px 18px}
+.grid{display:grid;grid-template-columns:minmax(240px,1fr) minmax(340px,1.6fr);gap:16px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+button{font:inherit;cursor:pointer;border-radius:4px;border:1px solid var(--rule);
+  background:var(--surface2);color:var(--ink);padding:7px 12px;transition:none}
+button:hover{border-color:var(--ink3)}
+button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+@media (prefers-color-scheme:dark){button.on{background:var(--gold);color:#12203a;border-color:var(--gold)}}
+button.go{background:var(--green);color:#fff;border-color:var(--green);font-weight:600;padding:9px 18px}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+#predict,#done{border-left:4px solid var(--purple);background:var(--surface2);padding:12px 16px;border-radius:0 5px 5px 0}
+#predict .q,#done .q{font-weight:600;margin-bottom:9px}
+.locked{opacity:.45;pointer-events:none}
+.ctl{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.ctl label{font-size:.85rem;color:var(--ink2)}
+input[type=number]{width:88px;font:inherit;padding:4px 6px;border:1px solid var(--rule);
+  border-radius:4px;background:var(--surface2);color:var(--ink);font-family:ui-monospace,monospace}
+table.bins{border-collapse:collapse;width:100%;font-family:ui-monospace,monospace;font-size:.82rem}
+table.bins th,table.bins td{border:1px solid var(--rule);padding:7px 6px;text-align:center;font-variant-numeric:tabular-nums}
+table.bins th{color:var(--ink3);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;border:none}
+table.bins td{background:var(--surface2);min-width:60px}
+table.bins td.hit{color:var(--ink)}
+table.bins td.miss{color:var(--ink3)}
+table.bins td.bug{outline:2px solid var(--red);outline-offset:-2px;position:relative}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-top:14px}
+.stat{background:var(--surface2);border-radius:5px;padding:9px 11px}
+.stat .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)}
+.stat .v{font:700 1.25rem/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;margin-top:3px}
+.v.ok{color:var(--green)} .v.bad{color:var(--red)} .v.warn{color:var(--gold)}
+.verdict{margin-top:14px;border-left:4px solid var(--rule);padding:10px 14px;background:var(--surface2);border-radius:0 5px 5px 0;font-size:.92rem}
+.verdict.ok{border-left-color:var(--green)}
+.verdict.bad{border-left-color:var(--red)}
+.verdict.warn{border-left-color:var(--gold)}
+.verdict b{color:var(--ink)}
+canvas{width:100%;height:150px;display:block;background:var(--surface2);border-radius:5px}
+table.mini{border-collapse:collapse;width:100%;font-family:ui-monospace,monospace;font-size:.78rem;margin-top:10px}
+table.mini th,table.mini td{padding:4px 8px;text-align:right;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums}
+table.mini th{color:var(--ink3);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em}
+table.mini td.no{color:var(--red);font-weight:700}
+table.mini td.yes{color:var(--green)}
+table.mini td.l,table.mini th.l{text-align:left}
+footer{font-size:.8rem;color:var(--ink3);border-top:1px solid var(--rule);padding-top:12px}
+footer p{color:var(--ink3)}
+/* projector mode: ?present=1 */
+body.present{font-size:21px}
+body.present .prose,body.present footer{display:none}
+body.present h1{font-size:2rem}
+body.present .stat .v{font-size:1.7rem}
+body.present table.bins{font-size:1rem}
+body.present table.mini{font-size:.95rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="kicker">CRAFT V&amp;V · Week 6 · functional coverage &amp; closure</span>
+  <h1>Coverage Closure</h1>
+  <p class="prose">The Week 6 cross — occupancy &times; operation on the Weeks 4–6 FIFO — filling
+  live from shaped stimulus. This is the curve every closure dashboard shows. Watch it close,
+  then answer the one question the dashboard itself cannot.</p>
+</header>
+
+<div id="predict" class="panel">
+  <div class="q">Before it runs: twelve bins — occupancy {empty, partial, full} &times; operation
+  {idle, write, read, simul} — driven by Week 5's shaped stream (85% primary enable, 10%
+  overlap, no guards). Seed 5, 250-cycle budget. What does the cross do?</div>
+  <div class="presets">
+    <button data-p="closes">Closes inside the budget</button>
+    <button data-p="plateau">Plateaus short of 100%</button>
+    <button data-p="lottery">Depends on the seed</button>
+  </div>
+  <div id="pverdict" style="font-size:.9rem;color:var(--ink3);margin-top:9px">Commit to an answer —
+  the run starts once you do.</div>
+</div>
+
+<div class="grid">
+  <div class="panel" id="controls">
+    <h2>Run</h2>
+    <div class="ctl">
+      <label for="seed">Seed</label>
+      <input type="number" id="seed" value="5" min="1" max="9999">
+    </div>
+    <div class="ctl">
+      <label for="cycles">Cycle budget</label>
+      <input type="number" id="cycles" value="250" min="50" max="2000" step="50">
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="go" id="run">Run</button>
+    </div>
+    <p class="prose" style="font-size:.85rem;margin-top:12px">Stimulus, fixed: fill and drain
+    phases of 25 cycles; in each phase the primary enable fires at 85%, the opposite one at
+    10%, from a single roll — so simultaneous read+write arrives at 10%. No guards: boundary
+    attempts (write at full, read at empty) are allowed through. Occupancy is sampled on the
+    count <em>before</em> the operation; the operation is recorded as driven, not as accepted.</p>
+  </div>
+
+  <div class="panel">
+    <h2>The cross · occ &times; op</h2>
+    <table class="bins" id="bins" aria-label="Coverage bins: occupancy by operation, hit counts"></table>
+    <div class="stats">
+      <div class="stat"><div class="k">Cross</div><div class="v" id="scross">—</div></div>
+      <div class="stat"><div class="k">Bins hit</div><div class="v" id="sbins">—</div></div>
+      <div class="stat"><div class="k">Cycle</div><div class="v" id="scycle">—</div></div>
+      <div class="stat"><div class="k">Closed at</div><div class="v" id="sclosed">—</div></div>
+    </div>
+    <h2 style="margin-top:16px">Convergence · cross% against cycle</h2>
+    <canvas id="curve" width="900" height="150" aria-label="Cross coverage percentage against cycle number"></canvas>
+    <div class="verdict" id="verdict">Commit a prediction above to start the run.</div>
+  </div>
+</div>
+
+<div id="done" class="panel" style="display:none">
+  <div class="q" id="doneq">—</div>
+  <div class="presets">
+    <button data-d="ship">Done — the plan is exercised, ship it</button>
+    <button data-d="more">Not yet — more cycles, more seeds</button>
+    <button data-d="cannot">This run cannot say</button>
+  </div>
+  <div id="dverdict" style="font-size:.9rem;color:var(--ink3);margin-top:9px">Commit before you
+  look any deeper. This is the moment closure reviews exist for.</div>
+</div>
+
+<div id="reveal" style="display:none;flex-direction:column;gap:18px">
+  <div class="panel">
+    <h2>What the model never looked at</h2>
+    <p class="prose" style="margin-bottom:10px"><b style="color:var(--ink)">The FIFO you drove has
+    carried a planted bug from cycle&nbsp;0:</b> on a simultaneous read+write, the memory write
+    lands at the <em>read</em> pointer instead of the write pointer. The incoming word is dropped
+    into a dead slot; a stale word ships later. <code>count</code>, <code>full</code> and
+    <code>empty</code> stay correct forever — occupancy tells the truth while the data lies.</p>
+    <div class="verdict bad" id="sbverdict">—</div>
+    <table class="mini" id="sbtable"></table>
+    <div class="verdict warn" id="binverdict" style="margin-top:14px">—</div>
+  </div>
+
+  <div class="panel">
+    <h2>Same seed, corrected RTL</h2>
+    <table class="mini" id="cmp"></table>
+    <div class="verdict bad" id="cmpverdict">—</div>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button id="sweep">Sweep 10 seeds</button>
+    </div>
+    <div id="sweepwrap"></div>
+  </div>
+
+  <div class="panel">
+    <h2>The gap, stated</h2>
+    <p class="prose"><b style="color:var(--ink)">Coverage bounds your ignorance; it does not
+    eliminate it.</b> 100% is a statement about your model: every case the model names was
+    exercised. Correctness is a statement about data, and no bin looks at data — a coverpoint
+    counts that an event happened, never whether its result was right. No bigger
+    occ&nbsp;&times;&nbsp;op model fixes this; the fault class is invisible to event counting by
+    construction. Closure closes the <em>model</em>. Checks — the scoreboard, the flag compares,
+    next week's assertions — are what close the gap. That is the closure memo HW6 asks for: what
+    my model can see, what it cannot, and why that difference is acceptable.</p>
+  </div>
+</div>
+
+<footer>
+  <p><b>What this models.</b> One clock per cycle, the gating in <code>code/dut/fifo.sv</code>:
+  a write is taken only when not full, a read only when not empty, a simultaneous read+write
+  leaves the count unchanged. Depth 8, 8-bit data, read-before-write memory order. The stimulus
+  and the 3&times;4 cross are the ones in <code>code/demos/wk06-s2-closure/step3_weak_model.py</code>;
+  the scoreboard is a reference queue, Week 4's. The planted fault is this widget's own — it is
+  not in the released mutant pool.</p>
+  <p style="margin-top:8px">The classroom version of the same gap: <code>just demo 06 s2 3</code> —
+  a crossless model reads 100% twice over while two mutants stay alive (found/total 6/8). This
+  page reproduces the phenomenon, not the exact <code>pyvsc</code> stream, so its cycle numbers
+  are close to the demo's, not identical.</p>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+/* ================= core model — exercised headlessly by the self-test ======
+   FIFO gating as in the constraint-sandbox exemplar (depth 8): a write is
+   taken only when not full, a read only when not empty, simultaneous
+   read+write leaves the count unchanged. Extended with the memory array the
+   coverage model never looks at. Stimulus and cross mirror
+   code/demos/wk06-s2-closure/step3_weak_model.py: one roll 0..99 per cycle;
+   FILL: wr = roll<85, rd = roll<10; DRAIN: rd = roll<85, wr = roll<10;
+   25-cycle phases; occ sampled on count BEFORE the op; op as driven.
+   Planted bug: on an accepted simultaneous read+write the memory write lands
+   at the read pointer instead of the write pointer. count/flags untouched. */
+var DEPTH = 8, PHASE_LEN = 25;
+var OCC = ["empty", "partial", "full"], OP = ["idle", "write", "read", "simul"];
+
+function rng(seed){                                   /* mulberry32 */
+  var a = seed >>> 0;
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function occBin(count){ return count === 0 ? 0 : (count === DEPTH ? 2 : 1); }
+function opBin(wr, rd){ return wr && rd ? 3 : (wr ? 1 : (rd ? 2 : 0)); }
+function stimulus(r, cycle){
+  var fill = Math.floor(cycle / PHASE_LEN) % 2 === 0;
+  var roll = Math.floor(r() * 100);
+  var data = Math.floor(r() * 256);
+  var wr, rd;
+  if (fill){ wr = roll < 85 ? 1 : 0; rd = roll < 10 ? 1 : 0; }
+  else     { rd = roll < 85 ? 1 : 0; wr = roll < 10 ? 1 : 0; }
+  return {wr: wr, rd: rd, data: data};
+}
+function newFifo(){ return {mem: new Array(DEPTH).fill(0), wp: 0, rp: 0, count: 0}; }
+function fifoStep(f, wr, rd, data, buggy){
+  var full = f.count === DEPTH, empty = f.count === 0;
+  var accW = wr && !full ? 1 : 0, accR = rd && !empty ? 1 : 0;
+  var rdata = accR ? f.mem[f.rp] : null;              /* read-before-write */
+  if (accW){
+    var target = (buggy && accR) ? f.rp : f.wp;       /* the planted bug */
+    f.mem[target] = data;
+    f.wp = (f.wp + 1) % DEPTH;
+  }
+  if (accR) f.rp = (f.rp + 1) % DEPTH;
+  f.count += accW - accR;
+  return {accW: accW, accR: accR, rdata: rdata, corrupted: !!(buggy && accW && accR)};
+}
+function runSim(seed, cycles, buggy){
+  var r = rng(seed), f = newFifo(), refq = [];
+  var grid = [[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+  var hit = 0, trace = [], samples = [], closure = -1;
+  var mism = [], firstCorrupt = -1, corrupts = 0;
+  for (var c = 0; c < cycles; c++){
+    var s = stimulus(r, c);
+    var o = occBin(f.count), p = opBin(s.wr, s.rd);
+    if (grid[o][p] === 0) hit++;
+    grid[o][p]++;
+    samples.push([o, p]);
+    var res = fifoStep(f, s.wr, s.rd, s.data, buggy);
+    if (res.accW) refq.push(s.data);
+    if (res.accR){
+      var exp = refq.shift();
+      if (res.rdata !== exp) mism.push({cycle: c, exp: exp, got: res.rdata});
+    }
+    if (res.corrupted){ corrupts++; if (firstCorrupt < 0) firstCorrupt = c; }
+    trace.push(+(100 * hit / 12).toFixed(1));
+    if (hit === 12 && closure < 0) closure = c;
+  }
+  return {grid: grid, trace: trace, samples: samples, closure: closure,
+          mismatches: mism, firstCorrupt: firstCorrupt, corrupts: corrupts, hit: hit};
+}
+var CORE = {DEPTH: DEPTH, PHASE_LEN: PHASE_LEN, OCC: OCC, OP: OP, rng: rng,
+            occBin: occBin, opBin: opBin, stimulus: stimulus, newFifo: newFifo,
+            fifoStep: fifoStep, runSim: runSim};
+if (typeof document === "undefined"){
+  if (typeof globalThis !== "undefined") globalThis.COV_CORE = CORE;
+  return;
+}
+/* ============================== end core model ============================ */
+
+if (new URLSearchParams(location.search).get("present") === "1") document.body.classList.add("present");
+var el = function(id){ return document.getElementById(id); };
+var hx = function(v){ return "0x" + v.toString(16).toUpperCase().padStart(2, "0"); };
+var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+var state = {res: null, clean: null, anim: 0, running: false, revealed: false, committed: false};
+
+/* ---- bins table ---- */
+function binsHTML(counts, upto, bugCell){
+  var html = "<tr><th>occ \\ op</th>";
+  OP.forEach(function(p){ html += "<th>" + p + "</th>"; });
+  html += "</tr>";
+  for (var o = 0; o < 3; o++){
+    html += "<tr><th style='text-align:right'>" + OCC[o] + "</th>";
+    for (var p = 0; p < 4; p++){
+      var n = counts[o][p];
+      var cls = n ? "hit" : "miss";
+      if (bugCell && o === 1 && p === 3) cls += " bug";
+      html += "<td class='" + cls + "' id='cell" + o + p + "'>" + (n ? n : "–") + "</td>";
+    }
+    html += "</tr>";
+  }
+  return html;
+}
+function gridUpto(res, upto){
+  var g = [[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+  for (var i = 0; i < upto; i++) g[res.samples[i][0]][res.samples[i][1]]++;
+  return g;
+}
+
+function drawCurve(res, upto){
+  var cv = el("curve"), ctx = cv.getContext("2d");
+  var W = cv.width, H = cv.height;
+  var css = getComputedStyle(document.body);
+  ctx.clearRect(0, 0, W, H);
+  var n = res ? res.trace.length : 0;
+  var X = function(c){ return 34 + (W - 44) * c / Math.max(1, n - 1); };
+  var Y = function(pct){ return H - 18 - (H - 34) * pct / 100; };
+  ctx.strokeStyle = css.getPropertyValue("--rule").trim(); ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  [0, 50, 100].forEach(function(pct){
+    ctx.beginPath(); ctx.moveTo(34, Y(pct)); ctx.lineTo(W - 10, Y(pct)); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  ctx.fillStyle = css.getPropertyValue("--ink3").trim();
+  ctx.font = "10px ui-monospace,monospace"; ctx.textAlign = "right";
+  [0, 50, 100].forEach(function(pct){ ctx.fillText(pct + "%", 30, Y(pct) + 3); });
+  if (!res) return;
+  ctx.strokeStyle = css.getPropertyValue("--cell").trim(); ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  for (var c = 0; c < upto; c++){
+    var x = X(c), y = Y(res.trace[c]);
+    c ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  }
+  ctx.stroke();
+  ctx.textAlign = "center";
+  if (state.revealed && res.mismatches.length){
+    var mx = X(res.mismatches[0].cycle);
+    ctx.strokeStyle = css.getPropertyValue("--red").trim(); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(mx, Y(100) - 8); ctx.lineTo(mx, Y(0)); ctx.stroke();
+    ctx.fillStyle = css.getPropertyValue("--red").trim();
+    ctx.fillText("first bad read · " + res.mismatches[0].cycle, Math.max(70, mx), Y(100) - 12);
+  }
+  if (res.closure >= 0 && upto > res.closure){
+    var cx = X(res.closure);
+    ctx.strokeStyle = css.getPropertyValue("--gold").trim(); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(cx, Y(100) + 6); ctx.lineTo(cx, Y(0)); ctx.stroke();
+    ctx.fillStyle = css.getPropertyValue("--gold").trim();
+    ctx.fillText("closed · " + res.closure, Math.min(W - 60, cx + 2), H - 4);
+  }
+}
+
+function stats(res, upto){
+  var g = gridUpto(res, upto), hit = 0;
+  for (var o = 0; o < 3; o++) for (var p = 0; p < 4; p++) if (g[o][p]) hit++;
+  el("bins").innerHTML = binsHTML(g, upto, state.revealed);
+  var pct = (100 * hit / 12).toFixed(1);
+  el("scross").textContent = pct + "%";
+  el("scross").className = "v " + (hit === 12 ? "ok" : "warn");
+  el("sbins").textContent = hit + "/12";
+  el("sbins").className = "v " + (hit === 12 ? "ok" : "warn");
+  el("scycle").textContent = upto;
+  el("scycle").className = "v";
+  var closed = res.closure >= 0 && upto > res.closure;
+  el("sclosed").textContent = closed ? res.closure : "—";
+  el("sclosed").className = "v " + (closed ? "ok" : "");
+}
+
+/* ---- the run ---- */
+function startRun(){
+  var seed = +el("seed").value || 1, cycles = Math.max(50, +el("cycles").value || 250);
+  state.res = runSim(seed, cycles, true);
+  state.clean = runSim(seed, cycles, false);
+  state.anim = 0; state.running = true;
+  el("done").style.display = "none";
+  el("verdict").className = "verdict";
+  el("verdict").textContent = "Running…";
+  var stepN = reduced ? cycles : Math.max(1, Math.round(cycles / 120));
+  function frame(){
+    state.anim = Math.min(cycles, state.anim + stepN);
+    stats(state.res, state.anim);
+    drawCurve(state.res, state.anim);
+    if (state.anim < cycles){ requestAnimationFrame(frame); return; }
+    state.running = false;
+    finishRun();
+  }
+  requestAnimationFrame(frame);
+}
+function finishRun(){
+  var res = state.res, v = el("verdict");
+  gradeQ1(res);
+  if (res.closure >= 0){
+    v.className = "verdict ok";
+    v.innerHTML = "<b>Model closed: 12/12 bins at cycle " + res.closure + ".</b> The curve has " +
+      "been flat since — every cycle after " + res.closure + " bought zero new coverage.";
+    if (!state.revealed){
+      el("doneq").innerHTML = "Cross closed: <b>12/12 at cycle " + res.closure + "</b> of " +
+        res.trace.length + ". Every occupancy saw every operation — boundary attempts included — " +
+        "and nothing failed. Are you done?";
+      el("done").style.display = "";
+    } else {
+      renderReveal();
+    }
+  } else {
+    v.className = "verdict warn";
+    v.innerHTML = "<b>" + res.hit + "/12 bins by cycle " + res.trace.length + " — the model did " +
+      "not close.</b> Raise the budget; the question this page asks needs 100%.";
+    if (state.revealed) renderReveal();
+  }
+}
+
+/* ---- predict 1 ---- */
+function sweepData(cycles){
+  var rows = [];
+  for (var s = 1; s <= 10; s++){
+    var r = runSim(s, cycles, true);
+    rows.push({seed: s, closure: r.closure, mism: r.mismatches.length, hit: r.hit});
+  }
+  return rows;
+}
+function gradeQ1(res){
+  if (!state.q1) return;
+  var closed = res.closure >= 0;
+  var sw = sweepData(res.trace.length);
+  var worst = Math.max.apply(null, sw.map(function(x){ return x.closure; }));
+  var allClose = sw.every(function(x){ return x.closure >= 0; });
+  var m;
+  if (state.q1 === "closes")
+    m = closed ? "<b>Right.</b> Closed at cycle " + res.closure + ". Nothing guards the enables, " +
+        "so write-at-full and read-at-empty attempts arrive on their own; the 10% overlap " +
+        "delivers simul everywhere the walk goes."
+      : "<b>You called closes; this budget said otherwise (" + res.hit + "/12).</b> Raise the budget.";
+  else if (state.q1 === "plateau")
+    m = closed ? "<b>That was Tuesday's run.</b> Its plateau at 66.7% was a constraint — " +
+        "<code>c_tidy</code> forcing four attempt bins off. This stream has no guards, and it " +
+        "closed at cycle " + res.closure + "."
+      : "<b>A plateau — but check why before you trust the instinct:</b> " + res.hit + "/12 at this " +
+        "budget. Raise it and this stream closes; no bin here is unreachable.";
+  else
+    m = allClose ? "<b>Reasonable suspicion — wrong here.</b> Seeds 1–10 all close, worst at " +
+        "cycle " + worst + ". Reachability, not luck, decides whether attempt bins fill: " +
+        "with no guards, every bin sits on the walk's path."
+      : "<b>Some truth to it at this budget</b> — but raise the cycles and every seed closes; " +
+        "no bin here is unreachable.";
+  el("pverdict").innerHTML = m;
+  state.q1 = null;
+}
+el("controls").classList.add("locked");
+document.querySelectorAll("[data-p]").forEach(function(b){
+  b.addEventListener("click", function(){
+    document.querySelectorAll("[data-p]").forEach(function(x){ x.classList.remove("on"); });
+    b.classList.add("on");
+    state.q1 = b.dataset.p; state.committed = true;
+    el("controls").classList.remove("locked");
+    el("pverdict").textContent = "Committed. Watch the curve.";
+    startRun();
+  });
+});
+
+/* ---- predict 2: done? ---- */
+document.querySelectorAll("[data-d]").forEach(function(b){
+  b.addEventListener("click", function(){
+    document.querySelectorAll("[data-d]").forEach(function(x){ x.classList.remove("on"); });
+    b.classList.add("on");
+    var res = state.res, m;
+    if (b.dataset.d === "ship")
+      m = "<b>That is what the dashboard says — and the dashboard is wrong.</b> Here is what " +
+          "shipped with it:";
+    else if (b.dataset.d === "more")
+      m = "<b>More cycles buy more of a number that cannot move.</b> The curve has been flat " +
+          "since cycle " + res.closure + " because the model is exhausted, not because the " +
+          "design is clean — and the ten-seed sweep below closes the same way every time. " +
+          "The problem is not the amount of stimulus:";
+    else
+      m = "<b>Right — a coverage report cannot say done.</b> Here is how wrong things were " +
+          "while it read green:";
+    el("dverdict").innerHTML = m;
+    state.revealed = true;
+    renderReveal();
+  });
+});
+
+function renderReveal(){
+  var res = state.res, clean = state.clean, n = res.trace.length;
+  el("reveal").style.display = "flex";
+  stats(res, n); drawCurve(res, n);
+
+  /* scoreboard */
+  var M = res.mismatches;
+  if (M.length){
+    var f = M[0];
+    var closeLine = res.closure >= 0
+      ? (f.cycle < res.closure
+          ? " The model closed at cycle " + res.closure + " — the data path had already been " +
+            "wrong for " + (res.closure - res.firstCorrupt) + " cycles, and a checking " +
+            "testbench would already have failed."
+          : " The first bad read surfaced after the model closed — the corruption itself " +
+            "started at cycle " + res.firstCorrupt + ".")
+      : "";
+    el("sbverdict").innerHTML = "<b>A reference-queue scoreboard over the same " + n +
+      " cycles: " + M.length + " mismatch" + (M.length > 1 ? "es" : "") + ", the first at cycle " +
+      f.cycle + "</b> — the read returned " + hx(f.got) + "; the queue says " + hx(f.exp) + "." +
+      closeLine;
+    var rows = "<tr><th>cycle</th><th>expected</th><th>read returned</th><th></th></tr>";
+    M.slice(0, 4).forEach(function(mm){
+      rows += "<tr><td>" + mm.cycle + "</td><td>" + hx(mm.exp) + "</td><td class='no'>" +
+              hx(mm.got) + "</td><td class='l no'>MISMATCH</td></tr>";
+    });
+    if (M.length > 4) rows += "<tr><td colspan='4' class='l'>… " + (M.length - 4) + " more</td></tr>";
+    el("sbtable").innerHTML = rows;
+  } else {
+    el("sbverdict").innerHTML = "<b>No mismatch inside this budget</b> — the stale slot was " +
+      "never read back. The corruption is still in the memory (" + res.corrupts +
+      " misplaced writes); run longer or change the seed and it ships.";
+    el("sbtable").innerHTML = "";
+  }
+
+  /* the bin it lives in */
+  var K = res.grid[1][3];
+  el("binverdict").innerHTML = "<b>Where it lives: (partial, simul) — hit " + K + " times. " +
+    "Covered, green, closed.</b> " + res.corrupts + " of those " + K + " hits corrupted a memory " +
+    "slot. A bin counts that its event happened; nothing in it looks at a data value. This bug " +
+    "does not sit in a coverage hole — it sits <em>inside a covered bin</em>, which is why no " +
+    "amount of closure was ever going to find it.";
+
+  /* corrected RTL, same seed */
+  var same = JSON.stringify(res.grid) === JSON.stringify(clean.grid) && res.closure === clean.closure;
+  var pct = function(r){ return (100 * r.hit / 12).toFixed(1) + "%"; };
+  var cl = function(r){ return r.closure >= 0 ? "cycle " + r.closure : "—"; };
+  el("cmp").innerHTML =
+    "<tr><th class='l'>design</th><th>cross</th><th>closed at</th><th>scoreboard</th></tr>" +
+    "<tr><td class='l'>planted bug</td><td>" + pct(res) + "</td><td>" + cl(res) +
+    "</td><td class='no'>" + res.mismatches.length + " mismatches</td></tr>" +
+    "<tr><td class='l'>corrected</td><td>" + pct(clean) + "</td><td>" + cl(clean) +
+    "</td><td class='yes'>" + clean.mismatches.length + " mismatches</td></tr>";
+  el("cmpverdict").innerHTML = same
+    ? "<b>The two coverage reports are identical — bin for bin, cycle for cycle.</b> A number " +
+      "that reads the same on the correct design and the corrupted one certifies neither. The " +
+      "scoreboard is what told them apart."
+    : "<b>Coverage barely moved between the two; the scoreboard is what told them apart.</b>";
+}
+
+/* ---- sweep ---- */
+el("sweep").addEventListener("click", function(){
+  var n = state.res ? state.res.trace.length : 250;
+  var rows = "<tr><th>seed</th><th>closed at</th><th>cross</th><th>scoreboard</th></tr>", bad = 0;
+  sweepData(n).forEach(function(r){
+    if (r.mism) bad++;
+    rows += "<tr><td>" + r.seed + "</td><td>" + (r.closure >= 0 ? r.closure : "—") + "</td><td>" +
+      (100 * r.hit / 12).toFixed(1) + "%</td><td class='" + (r.mism ? "no" : "yes") + "'>" +
+      r.mism + " mismatches</td></tr>";
+  });
+  el("sweepwrap").innerHTML =
+    '<h2 style="margin-top:16px">Ten seeds, same stimulus, same model</h2>' +
+    '<table class="mini">' + rows + '</table>' +
+    '<div class="verdict bad"><b>' + bad + ' of 10 seeds ship the bug — and every one of them ' +
+    'closes coverage.</b> Changing the seed changes which stale bytes come out. It cannot ' +
+    'change what the model is blind to.</div>';
+});
+
+/* ---- wiring ---- */
+el("run").addEventListener("click", function(){ if (!state.running) startRun(); });
+el("seed").addEventListener("change", function(){ if (state.committed && !state.running) startRun(); });
+el("cycles").addEventListener("change", function(){ if (state.committed && !state.running) startRun(); });
+if (window.matchMedia)
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){
+    if (state.res) drawCurve(state.res, state.anim || state.res.trace.length);
+  });
+
+el("bins").innerHTML = binsHTML([[0,0,0,0],[0,0,0,0],[0,0,0,0]], 0, false);
+drawCurve(null, 0);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+# RV32I core mutation pool -- RELEASED (practice).  Score = found / total.
+# Each mutant is a small, exact source transformation of rv32i_core.sv.
+# A mutant is "found" when your testbench FAILS on it. (We say found, not killed.)
+# Run:  python -m craft_mutate.mutate --tb capstone/riscv \
+#           --pool capstone/riscv/mutants_released.yaml --dut-dir capstone/riscv --sim icarus
+dut: rv32i_core.sv
+mutants:
+  - id: add_becomes_sub
+    desc: "ALU ADD subtracts (breaks add/addi and all address arithmetic)"
+    find: "ALU_ADD: alu_result = rs1_val + alu_b;"
+    replace: "ALU_ADD: alu_result = rs1_val - alu_b;"
+  - id: and_becomes_or
+    desc: "ALU AND behaves like OR (and/andi wrong)"
+    find: "ALU_AND: alu_result = rs1_val & alu_b;"
+    replace: "ALU_AND: alu_result = rs1_val | alu_b;"
+  - id: or_becomes_and
+    desc: "ALU OR behaves like AND (or/ori wrong)"
+    find: "ALU_OR:  alu_result = rs1_val | alu_b;"
+    replace: "ALU_OR:  alu_result = rs1_val & alu_b;"
+  - id: xor_becomes_and
+    desc: "ALU XOR behaves like AND"
+    find: "ALU_XOR: alu_result = rs1_val ^ alu_b;"
+    replace: "ALU_XOR: alu_result = rs1_val & alu_b;"
+  - id: beq_polarity
+    desc: "BEQ branches on not-equal instead of equal"
+    find: "beq_taken = branch & (rs1_val == rs2_val);"
+    replace: "beq_taken = branch & (rs1_val != rs2_val);"
+  - id: jal_link_wrong
+    desc: "JAL writes the ALU result instead of the return address (pc+4)"
+    find: "2'b10:   wb_data = pc_plus4;"
+    replace: "2'b10:   wb_data = alu_result;"
+  - id: pc_increment_2
+    desc: "PC advances by 2 instead of 4 (instruction stream misaligns)"
+    find: "pc_plus4  = pc + 32'd4;"
+    replace: "pc_plus4  = pc + 32'd2;"
+  - id: load_writeback_addr
+    desc: "LW writes back the effective address instead of the loaded word"
+    find: "2'b01:   wb_data = dmem_rdata;"
+    replace: "2'b01:   wb_data = alu_result;"

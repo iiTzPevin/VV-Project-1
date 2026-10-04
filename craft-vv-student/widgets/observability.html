@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Observability Explorer · CRAFT V&amp;V Week 1</title>
+<style>
+:root{
+  --navy:#1B2A4A; --gold:#D4A843; --green:#27AE60; --blue:#2E86AB;
+  --red:#E74C3C; --purple:#9B59B6;
+  --ground:#F4F6F9; --surface:#fff; --surface2:#EDF0F5;
+  --ink:#16223B; --ink2:#3E4C68; --ink3:#6B7791; --rule:#D9DEE7;
+  --wire:#3E4C68; --tapc:#B8860B;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#0D1524; --surface:#141E33; --surface2:#1B273F;
+    --ink:#E7ECF5; --ink2:#B6C1D6; --ink3:#8592AC; --rule:#2A3752;
+    --gold:#E9BE58; --green:#5FD48C; --blue:#5AA9C9; --red:#FF8776; --purple:#BE85D6;
+    --wire:#B6C1D6; --tapc:#E9BE58;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font:16px/1.55 "Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 18px 60px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:1.5rem;margin:0;letter-spacing:-.01em}
+h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin:0 0 8px}
+p{margin:0;max-width:72ch;color:var(--ink2)}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+header{border-bottom:2px solid var(--ink);padding-bottom:12px;display:flex;flex-direction:column;gap:6px}
+.kicker{font:600 .7rem/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px 18px}
+.grid{display:grid;grid-template-columns:minmax(300px,1.1fr) minmax(320px,1fr);gap:16px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+
+button{font:inherit;cursor:pointer;border-radius:4px;border:1px solid var(--rule);
+  background:var(--surface2);color:var(--ink);padding:7px 12px}
+button:hover{border-color:var(--ink3)}
+button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+@media (prefers-color-scheme:dark){button.on{background:var(--gold);color:#12203a;border-color:var(--gold)}}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+.modes{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center}
+.modes .lab{font-size:.78rem;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em}
+
+#predict{border-left:4px solid var(--purple);background:var(--surface2);padding:12px 16px;border-radius:0 5px 5px 0}
+#predict .q{font-weight:600;margin-bottom:9px;max-width:none}
+.locked{opacity:.45;pointer-events:none}
+
+svg{width:100%;height:auto;display:block;background:var(--surface2);border-radius:5px}
+.gbody{fill:var(--surface);stroke:var(--ink2);stroke-width:1.6}
+.gt{font:600 9px ui-monospace,monospace;fill:var(--ink3)}
+.wirep{fill:none;stroke:var(--wire);stroke-width:1.6}
+.hit{fill:none;stroke:transparent;stroke-width:14;cursor:pointer;pointer-events:stroke}
+.dot{fill:var(--wire)}
+.pillrect{fill:var(--surface);stroke:var(--rule);stroke-width:1.4;cursor:pointer}
+.pilltext{font:700 11px ui-monospace,monospace;fill:var(--ink);text-anchor:middle;cursor:pointer}
+.net.fault .pillrect{stroke:var(--red);stroke-width:2.2}
+.net.tapped .pillrect{stroke:var(--tapc);stroke-width:2.2;stroke-dasharray:4 3}
+.net.hot .wirep{stroke:var(--red);stroke-dasharray:5 4}
+.badge{font:700 9.5px ui-monospace,monospace;text-anchor:middle}
+.badge.sa{fill:var(--red)} .badge.tp{fill:var(--tapc)}
+.vann{font:600 10.5px ui-monospace,monospace;text-anchor:middle;fill:var(--ink3)}
+.vann.diff{fill:var(--red)}
+.net:focus-visible .pillrect{stroke:var(--gold);stroke-width:2.6}
+.iolab{font:700 12px ui-monospace,monospace;fill:var(--ink)}
+
+table.tt{border-collapse:collapse;width:100%;font-family:ui-monospace,monospace;font-size:.82rem}
+table.tt th,table.tt td{padding:4px 8px;text-align:center;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums}
+table.tt th{color:var(--ink3);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.05em}
+table.tt th button{padding:3px 8px;font-size:.72rem}
+table.tt th.tap{color:var(--tapc)}
+table.tt td.red{color:var(--red);font-weight:700}
+table.tt td.tapd{color:var(--tapc);font-weight:700}
+table.tt td.dim{color:var(--ink3)}
+table.tt tr.fail td:first-child{box-shadow:inset 3px 0 0 var(--red)}
+table.tt tbody tr{cursor:pointer}
+table.tt tbody tr:hover td{background:var(--surface2)}
+table.tt tbody tr.sel td{background:var(--surface2)}
+table.tt tbody tr:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.ttwrap{overflow-x:auto}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:14px}
+.stat{background:var(--surface2);border-radius:5px;padding:9px 11px}
+.stat .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)}
+.stat .v{font:700 1.15rem/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;margin-top:3px}
+.v.ok{color:var(--green)} .v.bad{color:var(--red)} .v.warn{color:var(--gold)}
+
+.verdict{margin-top:14px;border-left:4px solid var(--rule);padding:10px 14px;background:var(--surface2);border-radius:0 5px 5px 0;font-size:.92rem}
+.verdict.ok{border-left-color:var(--green)}
+.verdict.bad{border-left-color:var(--red)}
+.verdict.warn{border-left-color:var(--gold)}
+.verdict b{color:var(--ink)}
+.hunt{margin-top:12px;font-size:.88rem;color:var(--ink2);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+footer{font-size:.8rem;color:var(--ink3);border-top:1px solid var(--rule);padding-top:12px}
+footer p{color:var(--ink3);max-width:none}
+
+body.present{font-size:20px}
+body.present .prose,body.present footer{display:none}
+body.present h1{font-size:2rem}
+body.present table.tt{font-size:1.02rem}
+body.present .stat .v{font-size:1.6rem}
+body.present .verdict{font-size:1.05rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="kicker">CRAFT V&amp;V · Week 1 · controllability &amp; observability</span>
+  <h1>Observability Explorer</h1>
+  <p class="prose">The carry slice of Tuesday's adder, drawn as gates:
+  <code>sum = p ^ cin</code>, <code>cout = g | t | r</code>. Six gates, three inputs —
+  8 vectors is exhaustive, and this run drives all 8 every time. The claim under test
+  is the one everybody arrives with: <em>if it's wrong, a test will fail.</em></p>
+</header>
+
+<div id="predict" class="panel">
+  <div class="q">Before you touch it: a defect pins one wire of this netlist to a constant
+  (stuck-at-0 or stuck-at-1). You drive all 8 input vectors and compare <code>sum</code>
+  and <code>cout</code> against a good part on every single one. Must at least one vector fail?</div>
+  <div class="presets">
+    <button data-p="yes">Yes — exhaustive input plus every pin checked is airtight</button>
+    <button data-p="no">No — a stuck wire can still hide</button>
+  </div>
+  <div id="pverdict" style="font-size:.9rem;color:var(--ink3);margin-top:8px">Commit to an answer — the netlist unlocks once you do.</div>
+</div>
+
+<div id="main" class="locked">
+<div class="grid">
+
+  <div class="panel">
+    <h2>Netlist — click a net</h2>
+    <div class="modes">
+      <span class="lab">click means</span>
+      <button id="mfault" class="on">Plant a stuck-at</button>
+      <button id="mtap">Add a tap</button>
+      <span class="lab" style="margin-left:8px">checker watches</span>
+      <button id="psum" class="on" aria-pressed="true">sum</button>
+      <button id="pcout" aria-pressed="false">cout</button>
+    </div>
+    <svg id="nl" viewBox="0 0 470 312" role="group" aria-label="Gate-level netlist of the adder carry slice"></svg>
+    <div class="hunt"><span><b>Hunt:</b> of the <span class="n18">18</span> single stuck-at
+    faults on this netlist, one survives every test that reads only the pins. Find it.</span>
+    <button id="show">Show the survivor</button>
+    <button id="reset">Reset</button></div>
+    <p class="prose" style="margin-top:10px;font-size:.85rem">In fault mode a click cycles
+    a net through stuck-at-0, stuck-at-1, healthy. One fault at a time — the single
+    stuck-at model. Taps go on the internal nets <code>p</code>, <code>g</code>,
+    <code>t</code>, <code>r</code>; the pins are the two watch buttons above.
+    Click a truth-table row to see that vector's values on the drawing.</p>
+  </div>
+
+  <div class="panel">
+    <h2>All 8 vectors, every run</h2>
+    <div class="ttwrap"><table class="tt" id="tt"></table></div>
+    <div class="stats">
+      <div class="stat"><div class="k">Fault</div><div class="v" id="sfault">—</div></div>
+      <div class="stat"><div class="k">Activated · controllability</div><div class="v" id="sact">—</div></div>
+      <div class="stat"><div class="k">Observed · observability</div><div class="v" id="sobs">—</div></div>
+      <div class="stat"><div class="k">Faults this watch set can ever catch</div><div class="v" id="scatch">—</div></div>
+    </div>
+    <div class="verdict" id="verdict">Plant a fault to run the comparison.</div>
+  </div>
+</div>
+</div>
+
+<footer class="panel" style="border:0;background:none;padding-left:2px">
+  <p><b>What this models.</b> Gate-by-gate evaluation over all 2<sup>3</sup> input vectors:
+  <code>p = a ^ b</code>, <code>g = a &amp; b</code>, <code>t = p &amp; cin</code>,
+  <code>r = b &amp; cin</code>, <code>sum = p ^ cin</code>, <code>cout = g | t | r</code>.
+  A planted fault forces one net to a constant; everything downstream sees the forced value.
+  A test "fails" on a vector when any watched signal differs from the good part.</p>
+  <p style="margin-top:8px"><b>The survivor, named.</b> <code>cout</code> needs only
+  <code>g | t</code>; the <code>r = b &amp; cin</code> term is redundant cover — belt-and-braces
+  a review waved through. Wherever <code>r</code> matters, <code>g | t</code> already answers, so
+  <code>r</code> stuck-at-0 changes no output on any vector: activated <span class="nact">2</span>
+  of 8, observed 0, forever. Measured on this netlist: watching <code>sum</code> alone can ever
+  catch <span class="n10">10</span> of <span class="n18">18</span> faults; watching both pins,
+  <span class="n17">17</span> of <span class="n18">18</span>; one tap on <code>r</code> closes the
+  last — <span class="ntap">2</span> of 8 vectors show it there. Redundant logic is where stuck-ats
+  go to hide, which is why synthesis tools hunt redundancy and why fault-model people care.</p>
+  <p style="margin-top:8px"><b>Same axis, one level up.</b> The lecture's <code>addc.sv</code> run
+  (<code>just demo 01 s1 2</code>) drives 65,536 pairs: wrong on 128, observed at
+  <code>sum</code> 0 times, at <code>carry_out</code> 128 times. There the wrong value reached an
+  unwatched pin; here it never reaches a pin at all. Scan chains and a
+  controllability/observability testability score exist to buy back exactly this visibility —
+  in a testbench, the tap is one added assert on an internal net.</p>
+</footer>
+</div>
+
+<script>
+"use strict";
+var CORE = (function(){
+  var NETS = ["a","b","cin","p","g","t","r","sum","cout"];
+  var INTERNAL = ["p","g","t","r"];
+  var OUTPUTS = ["sum","cout"];
+  function evalNet(bits, fault){
+    var v = {};
+    function set(n, val){ v[n] = (fault && fault.net === n) ? fault.sv : val; }
+    set("a", bits[0]); set("b", bits[1]); set("cin", bits[2]);
+    set("p", v.a ^ v.b);
+    set("g", v.a & v.b);
+    set("t", v.p & v.cin);
+    set("r", v.b & v.cin);
+    set("sum", v.p ^ v.cin);
+    set("cout", v.g | v.t | v.r);
+    return v;
+  }
+  function vectors(){
+    var out = [];
+    for (var i = 0; i < 8; i++) out.push([(i>>2)&1, (i>>1)&1, i&1]);
+    return out;
+  }
+  function analyze(fault){
+    var rows = vectors().map(function(bits){
+      var good = evalNet(bits, null), bad = evalNet(bits, fault);
+      var diff = {};
+      NETS.forEach(function(n){ diff[n] = fault ? (good[n] !== bad[n]) : false; });
+      return {bits:bits, good:good, bad:bad, diff:diff};
+    });
+    var act = fault ? rows.filter(function(r){ return r.good[fault.net] !== fault.sv; }).length : 0;
+    var diffAt = {};
+    NETS.forEach(function(n){ diffAt[n] = rows.filter(function(r){ return r.diff[n]; }).length; });
+    return {rows:rows, act:act, diffAt:diffAt};
+  }
+  function allFaults(){
+    var out = [];
+    NETS.forEach(function(n){ [0,1].forEach(function(sv){ out.push({net:n, sv:sv}); }); });
+    return out;
+  }
+  function detectableCount(watch){
+    return allFaults().filter(function(f){
+      var an = analyze(f);
+      return watch.some(function(n){ return an.diffAt[n] > 0; });
+    }).length;
+  }
+  function maskedFaults(){
+    return allFaults().filter(function(f){
+      var an = analyze(f);
+      return OUTPUTS.every(function(n){ return an.diffAt[n] === 0; });
+    });
+  }
+  return {NETS:NETS, INTERNAL:INTERNAL, OUTPUTS:OUTPUTS, evalNet:evalNet,
+          vectors:vectors, analyze:analyze, allFaults:allFaults,
+          detectableCount:detectableCount, maskedFaults:maskedFaults};
+})();
+
+if (typeof document === "undefined"){
+  if (typeof globalThis !== "undefined") globalThis.OBS_CORE = CORE;
+} else { (function(){
+
+if (new URLSearchParams(location.search).get("present") === "1") document.body.classList.add("present");
+var el = function(id){ return document.getElementById(id); };
+var SVGNS = "http://www.w3.org/2000/svg";
+
+/* ---------- static facts, computed once from the model ---------- */
+var N_FAULTS = CORE.allFaults().length;
+var N_SUM = CORE.detectableCount(["sum"]);
+var N_BOTH = CORE.detectableCount(["sum","cout"]);
+var MASKED = CORE.maskedFaults()[0];                       /* {net:"r", sv:0} */
+var N_TAPCLOSE = CORE.detectableCount(["sum","cout",MASKED.net]);
+var MASKED_AN = CORE.analyze(MASKED);
+document.querySelectorAll(".n18").forEach(function(s){ s.textContent = N_FAULTS; });
+document.querySelectorAll(".n10").forEach(function(s){ s.textContent = N_SUM; });
+document.querySelectorAll(".n17").forEach(function(s){ s.textContent = N_BOTH; });
+document.querySelectorAll(".ntap").forEach(function(s){ s.textContent = MASKED_AN.diffAt[MASKED.net]; });
+document.querySelectorAll(".nact").forEach(function(s){ s.textContent = MASKED_AN.act; });
+
+/* ---------- state ---------- */
+var unlocked = false;
+var mode = "fault";                    /* fault | tap */
+var fault = null;                      /* {net, sv} */
+var probes = {sum:true, cout:false};   /* the weak test watches sum only */
+var taps = [];                         /* subset of CORE.INTERNAL */
+var inspect = -1;                      /* truth-table row on the drawing */
+
+/* ---------- netlist drawing ---------- */
+var GATES = [
+  {type:"XOR", x:96,  cy:74,  ins:2},
+  {type:"AND", x:96,  cy:142, ins:2},
+  {type:"AND", x:204, cy:204, ins:2},
+  {type:"AND", x:96,  cy:256, ins:2},
+  {type:"XOR", x:308, cy:60,  ins:2},
+  {type:"OR",  x:308, cy:204, ins:3}
+];
+var WIRES = {
+  a:   [[[34,52],[72,52],[72,66],[96,66]], [[56,52],[56,134],[96,134]]],
+  b:   [[[34,96],[80,96],[80,82],[96,82]], [[48,96],[48,248],[96,248]], [[48,150],[96,150]]],
+  cin: [[[34,236],[64,236],[64,264],[96,264]], [[64,236],[64,212],[204,212]],
+        [[188,212],[188,120],[288,120],[288,68],[308,68]]],
+  p:   [[[136,74],[160,74],[160,52],[308,52]], [[160,74],[160,196],[204,196]]],
+  g:   [[[130,142],[280,142],[280,192],[308,192]]],
+  t:   [[[238,204],[308,204]]],
+  r:   [[[130,256],[272,256],[272,216],[308,216]]],
+  sum: [[[348,60],[446,60]]],
+  cout:[[[342,204],[446,204]]]
+};
+var DOTS = {a:[[56,52]], b:[[48,96],[48,150]], cin:[[64,236],[188,212]], p:[[160,74]], t:[], g:[], r:[], sum:[], cout:[]};
+var PILLS = {a:[22,52,22], b:[22,96,22], cin:[20,236,30], p:[234,52,22], g:[210,142,22],
+             t:[272,193,22], r:[210,256,22], sum:[400,60,34], cout:[398,204,38]};
+
+function mk(tag, attrs, parent){
+  var n = document.createElementNS(SVGNS, tag);
+  Object.keys(attrs).forEach(function(k){ n.setAttribute(k, attrs[k]); });
+  if (parent) parent.appendChild(n);
+  return n;
+}
+function gatePath(gtype, x, cy){
+  if (gtype === "AND") return "M" + x + "," + (cy-16) + " h18 a16,16 0 0 1 0,32 h-18 z";
+  var bx = gtype === "XOR" ? x + 6 : x;
+  return "M" + bx + "," + (cy-16) + " Q" + (bx+20) + "," + (cy-16) + " " + (bx+34) + "," + cy +
+         " Q" + (bx+20) + "," + (cy+16) + " " + bx + "," + (cy+16) +
+         " Q" + (bx+9) + "," + cy + " " + bx + "," + (cy-16) + " z";
+}
+var svg = el("nl");
+GATES.forEach(function(g){
+  var grp = mk("g", {"class":"gate"}, svg);
+  if (g.type === "XOR")
+    mk("path", {d:"M" + g.x + "," + (g.cy-16) + " Q" + (g.x+9) + "," + g.cy + " " + g.x + "," + (g.cy+16),
+                "class":"gbody", fill:"none"}, grp);
+  mk("path", {d:gatePath(g.type, g.x, g.cy), "class":"gbody"}, grp);
+  mk("text", {x:g.x + (g.type === "AND" ? 13 : 18), y:g.cy + 3, "class":"gt",
+              "text-anchor":"middle"}, grp).textContent = g.type;
+});
+var netEls = {};
+CORE.NETS.forEach(function(name){
+  var grp = mk("g", {"class":"net", "data-net":name, tabindex:"0", role:"button",
+                     "aria-label":"net " + name}, svg);
+  WIRES[name].forEach(function(pts){
+    var d = pts.map(function(p,i){ return (i ? "L" : "M") + p[0] + "," + p[1]; }).join(" ");
+    mk("path", {d:d, "class":"wirep"}, grp);
+    mk("path", {d:d, "class":"hit"}, grp);
+  });
+  DOTS[name].forEach(function(p){ mk("circle", {cx:p[0], cy:p[1], r:2.6, "class":"dot"}, grp); });
+  var pl = PILLS[name];
+  mk("rect", {x:pl[0]-pl[2]/2, y:pl[1]-9, width:pl[2], height:18, rx:9, "class":"pillrect"}, grp);
+  mk("text", {x:pl[0], y:pl[1]+3.5, "class":"pilltext"}, grp).textContent = name;
+  var badge = mk("text", {x:pl[0], y:pl[1]+22, "class":"badge"}, grp);
+  var vann  = mk("text", {x:pl[0], y:pl[1]-14, "class":"vann"}, grp);
+  netEls[name] = {grp:grp, badge:badge, vann:vann};
+  function act(){ if (unlocked) netClick(name); }
+  grp.addEventListener("click", act);
+  grp.addEventListener("keydown", function(ev){
+    if (ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); act(); }
+  });
+});
+mk("text", {x:452, y:64,  "class":"iolab"}, svg).textContent = "sum";
+mk("text", {x:452, y:208, "class":"iolab"}, svg).textContent = "cout";
+
+/* ---------- interactions ---------- */
+function netClick(name){
+  if (mode === "fault"){
+    if (!fault || fault.net !== name) fault = {net:name, sv:0};
+    else if (fault.sv === 0) fault = {net:name, sv:1};
+    else fault = null;
+  } else {
+    if (CORE.INTERNAL.indexOf(name) < 0){
+      flash(CORE.OUTPUTS.indexOf(name) >= 0
+        ? "That is a pin — watch it with the sum / cout buttons. Taps go on internal nets."
+        : "That is a driven input. Taps go on the internal nets p, g, t, r.");
+      return;
+    }
+    var i = taps.indexOf(name);
+    if (i >= 0) taps.splice(i, 1); else taps.push(name);
+  }
+  render();
+}
+var flashTimer = null;
+function flash(msg){
+  var v = el("verdict");
+  v.className = "verdict warn";
+  v.innerHTML = msg;
+  if (flashTimer) clearTimeout(flashTimer);
+  flashTimer = setTimeout(render, 2600);
+}
+el("mfault").addEventListener("click", function(){ mode = "fault"; el("mfault").classList.add("on"); el("mtap").classList.remove("on"); });
+el("mtap").addEventListener("click", function(){ mode = "tap"; el("mtap").classList.add("on"); el("mfault").classList.remove("on"); });
+["sum","cout"].forEach(function(o){
+  el("p" + o).addEventListener("click", function(){
+    probes[o] = !probes[o];
+    el("p" + o).classList.toggle("on", probes[o]);
+    el("p" + o).setAttribute("aria-pressed", probes[o] ? "true" : "false");
+    render();
+  });
+});
+el("show").addEventListener("click", function(){
+  fault = {net:MASKED.net, sv:MASKED.sv};
+  probes = {sum:true, cout:true};
+  taps = []; mode = "tap"; inspect = -1;
+  el("psum").classList.add("on"); el("pcout").classList.add("on");
+  el("pcout").setAttribute("aria-pressed", "true");
+  el("mtap").classList.add("on"); el("mfault").classList.remove("on");
+  render();
+});
+el("reset").addEventListener("click", function(){
+  fault = null; taps = []; probes = {sum:true, cout:false}; mode = "fault"; inspect = -1;
+  el("psum").classList.add("on"); el("pcout").classList.remove("on");
+  el("pcout").setAttribute("aria-pressed", "false");
+  el("mfault").classList.add("on"); el("mtap").classList.remove("on");
+  render();
+});
+
+/* ---------- render ---------- */
+function watchList(){
+  var w = [];
+  if (probes.sum) w.push("sum");
+  if (probes.cout) w.push("cout");
+  return w.concat(taps);
+}
+function render(){
+  if (flashTimer){ clearTimeout(flashTimer); flashTimer = null; }
+  var an = CORE.analyze(fault);
+  var watch = watchList();
+  var outWatch = watch.filter(function(n){ return CORE.OUTPUTS.indexOf(n) >= 0; });
+  var redRows = an.rows.map(function(r){ return watch.some(function(n){ return r.diff[n]; }); });
+  var red = redRows.filter(Boolean).length;
+  var outRed = an.rows.filter(function(r){ return outWatch.some(function(n){ return r.diff[n]; }); }).length;
+
+  /* truth table */
+  var cols = ["sum","cout"].concat(taps);
+  var h = "<thead><tr><th>a</th><th>b</th><th>cin</th>";
+  ["sum","cout"].forEach(function(o){
+    h += '<th><button data-th="' + o + '" title="toggle whether the checker watches ' + o + '"' +
+         (probes[o] ? ' class="on">' + o + " ✓" : ">" + o + " — unwatched") + "</button></th>";
+  });
+  taps.forEach(function(t){ h += '<th class="tap">' + t + " · tap</th>"; });
+  h += "</tr></thead><tbody>";
+  an.rows.forEach(function(r, i){
+    h += '<tr tabindex="0" data-row="' + i + '"' +
+         ((redRows[i] ? " class=\"fail" : " class=\"") + (i === inspect ? " sel\"" : "\"")) +
+         ' aria-label="vector a=' + r.bits[0] + " b=" + r.bits[1] + " cin=" + r.bits[2] + '">' +
+         "<td>" + r.bits.join("</td><td>") + "</td>";
+    cols.forEach(function(n){
+      var watched = watch.indexOf(n) >= 0;
+      if (!watched){ h += '<td class="dim">·</td>'; return; }
+      var isTap = taps.indexOf(n) >= 0;
+      if (fault && r.diff[n])
+        h += '<td class="' + (isTap ? "tapd" : "red") + '">' + r.good[n] + "→" + r.bad[n] + "</td>";
+      else h += "<td>" + (fault ? r.bad[n] : r.good[n]) + "</td>";
+    });
+    h += "</tr>";
+  });
+  el("tt").innerHTML = h + "</tbody>";
+  el("tt").querySelectorAll("[data-th]").forEach(function(b){
+    b.addEventListener("click", function(){ el("p" + b.dataset.th).click(); });
+  });
+  el("tt").querySelectorAll("[data-row]").forEach(function(tr){
+    function pick(){ inspect = (inspect === +tr.dataset.row) ? -1 : +tr.dataset.row; render(); }
+    tr.addEventListener("click", pick);
+    tr.addEventListener("keydown", function(ev){
+      if (ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); pick(); }
+    });
+  });
+
+  /* stats */
+  el("sfault").textContent = fault ? fault.net + " s-a-" + fault.sv : "—";
+  el("sfault").className = "v" + (fault ? " bad" : "");
+  el("sact").textContent = fault ? an.act + " / 8" : "—";
+  el("sact").className = "v " + (fault ? (an.act ? "ok" : "bad") : "");
+  el("sobs").textContent = fault ? red + " / 8" : "—";
+  el("sobs").className = "v " + (fault ? (red ? "ok" : "bad") : "");
+  var catchable = watch.length ? CORE.detectableCount(watch) : 0;
+  el("scatch").textContent = catchable + " / " + N_FAULTS;
+  el("scatch").className = "v " + (catchable === N_FAULTS ? "ok" : (catchable >= N_BOTH ? "warn" : "bad"));
+
+  /* verdict */
+  var v = el("verdict"), m;
+  if (!fault){
+    v.className = "verdict";
+    m = "Plant a stuck-at, then read the table: it is the full 8-vector comparison " +
+        "against a good part, restricted to what the checker watches. " +
+        "Your current watch set could ever catch <b>" + catchable + " of " + N_FAULTS + "</b> faults.";
+  } else if (outRed > 0){
+    var hitPins = outWatch.filter(function(n){ return an.diffAt[n] > 0; });
+    v.className = "verdict ok";
+    m = "<b>Caught at the pins — " + outRed + " of 8 vectors fail.</b> Activated " + an.act +
+        (an.act === outRed ? " and observed every time" :
+         ", observed " + outRed + " — the other activations are absorbed before any pin") +
+        ". Any checker watching " + hitPins.join(" and ") + " turns red. This is the case the naive model expects.";
+  } else if (red > 0){
+    v.className = "verdict ok";
+    m = "<b>Invisible at every watched pin — alive at the tap.</b> Net <b>" +
+        taps.filter(function(t){ return an.diffAt[t] > 0; }).join(", ") +
+        "</b> carries the wrong value on " + red + " of 8 vectors, and no pin ever changes. " +
+        "One added observation point turned an unfindable bug into a red test. In silicon that " +
+        "tap is a scan cell; in a testbench it is one assert on an internal signal.";
+  } else if (!(probes.sum && probes.cout)){
+    v.className = "verdict warn";
+    m = "<b>Green — 0 of 8 vectors fail. The fault was activated " + an.act + " times.</b> " +
+        "The wrong value either dies inside the logic or is sitting on a pin you are not watching. " +
+        "You watch " + (outWatch.join(", ") || "nothing") + ". Tuesday's addc bug lived exactly here: " +
+        "activated 128 times, observed 0 — until the carry_out probe. Add the other pin.";
+  } else {
+    v.className = "verdict bad";
+    m = "<b>Green with both pins watched.</b> Activated " + an.act + " of 8 — and observed 0. " +
+        "Every downstream path absorbs the error, so no vector set can ever fail a pins-only " +
+        "checker. Exhaustive stimulus, full output checking, wrong silicon. " +
+        "Switch to <b>Add a tap</b> and click the faulted net to see the error live inside.";
+  }
+  v.innerHTML = m;
+
+  /* drawing state */
+  CORE.NETS.forEach(function(name){
+    var e = netEls[name];
+    e.grp.classList.toggle("fault", !!fault && fault.net === name);
+    e.grp.classList.toggle("tapped", taps.indexOf(name) >= 0);
+    e.badge.textContent = (fault && fault.net === name) ? "s-a-" + fault.sv
+                        : (taps.indexOf(name) >= 0 ? "tap" : "");
+    e.badge.setAttribute("class", "badge " + ((fault && fault.net === name) ? "sa" : "tp"));
+    var hot = false, txt = "";
+    if (inspect >= 0){
+      var row = an.rows[inspect];
+      hot = fault ? row.diff[name] : false;
+      txt = fault && row.diff[name] ? row.good[name] + "→" + row.bad[name] : String(row.good[name]);
+    }
+    e.grp.classList.toggle("hot", hot);
+    e.vann.textContent = txt;
+    e.vann.setAttribute("class", "vann" + (hot ? " diff" : ""));
+    e.grp.setAttribute("aria-label", "net " + name +
+      (fault && fault.net === name ? ", stuck at " + fault.sv : "") +
+      (taps.indexOf(name) >= 0 ? ", tapped" : ""));
+  });
+}
+
+/* ---------- predict-then-reveal ---------- */
+document.querySelectorAll("[data-p]").forEach(function(b){
+  b.addEventListener("click", function(){
+    var right = b.dataset.p === "no";
+    el("pverdict").innerHTML = (right ? "<b>Right.</b> " : "<b>Not quite.</b> ") +
+      "Of the <b>" + N_FAULTS + "</b> single stuck-at faults on this netlist (" +
+      CORE.NETS.length + " nets × stuck-at-0/1), <b>" + N_BOTH +
+      "</b> fail at least one of the 8 vectors at the pins — and <b>one never does</b>, " +
+      "with every pin watched on every vector. Exhaustive stimulus is not the whole game. " +
+      "The netlist is unlocked: plant faults and find the survivor.";
+    el("main").classList.remove("locked");
+    unlocked = true;
+    document.querySelectorAll("[data-p]").forEach(function(x){ x.classList.remove("on"); });
+    b.classList.add("on");
+  });
+});
+render();
+})(); }
+</script>
+</body>
+</html>

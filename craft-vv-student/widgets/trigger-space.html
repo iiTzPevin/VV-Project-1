@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trigger Space · CRAFT V&amp;V Week 8</title>
+<style>
+:root{
+  --navy:#1B2A4A; --gold:#D4A843; --green:#27AE60; --blue:#2E86AB;
+  --red:#E74C3C; --purple:#9B59B6;
+  --ground:#F4F6F9; --surface:#fff; --surface2:#EDF0F5;
+  --ink:#16223B; --ink2:#3E4C68; --ink3:#6B7791; --rule:#D9DEE7;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#0D1524; --surface:#141E33; --surface2:#1B273F;
+    --ink:#E7ECF5; --ink2:#B6C1D6; --ink3:#8592AC; --rule:#2A3752;
+    --gold:#E9BE58; --green:#5FD48C; --blue:#5AA9C9; --red:#FF8776; --purple:#BE85D6;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font:16px/1.55 "Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 18px 60px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:1.5rem;margin:0;letter-spacing:-.01em}
+h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin:0 0 8px}
+p{margin:0;max-width:72ch;color:var(--ink2)}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+header{border-bottom:2px solid var(--ink);padding-bottom:12px;display:flex;flex-direction:column;gap:6px}
+.kicker{font:600 .7rem/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px 18px}
+.grid{display:grid;grid-template-columns:minmax(290px,1fr) minmax(340px,1.4fr);gap:16px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+
+button{font:inherit;cursor:pointer;border-radius:4px;border:1px solid var(--rule);
+  background:var(--surface2);color:var(--ink);padding:7px 12px}
+button:hover{border-color:var(--ink3)}
+button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+@media (prefers-color-scheme:dark){button.on{background:var(--gold);color:#12203a;border-color:var(--gold)}}
+button.go{background:var(--green);color:#fff;border-color:var(--green);font-weight:600;padding:9px 18px}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chips.small button{padding:4px 9px;font-size:.85rem}
+
+.ctl{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.ctl label{font-size:.85rem;color:var(--ink2);display:flex;justify-content:space-between;gap:10px}
+.ctl label b{font-family:ui-monospace,monospace;color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--blue)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:4px}
+.stat{background:var(--surface2);border-radius:5px;padding:9px 11px}
+.stat .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)}
+.stat .v{font:700 1.12rem/1.25 ui-monospace,monospace;font-variant-numeric:tabular-nums;margin-top:3px}
+.v.ok{color:var(--green)} .v.bad{color:var(--red)} .v.warn{color:var(--gold)}
+
+.verdict{margin-top:12px;border-left:4px solid var(--rule);padding:10px 14px;background:var(--surface2);border-radius:0 5px 5px 0;font-size:.92rem}
+.verdict.ok{border-left-color:var(--green)}
+.verdict.bad{border-left-color:var(--red)}
+.verdict.warn{border-left-color:var(--gold)}
+.verdict b{color:var(--ink)}
+
+.formal{margin-top:12px;border:1px solid var(--green);border-radius:6px;padding:10px 14px;font-size:.88rem}
+.formal b{color:var(--green)}
+.formal .mono{font-size:.85em}
+
+#predict{border-left:4px solid var(--purple);background:var(--surface2);padding:12px 16px;border-radius:0 5px 5px 0}
+#predict .q{font-weight:600;margin-bottom:9px}
+.locked{opacity:.45;pointer-events:none}
+
+canvas{width:100%;display:block;background:var(--surface2);border-radius:5px}
+.cap{font-size:.72rem;color:var(--ink3);margin:4px 0 12px;font-family:ui-monospace,monospace}
+
+table.camp{border-collapse:collapse;width:100%;font-family:ui-monospace,monospace;font-size:.78rem;margin-top:10px}
+table.camp th,table.camp td{padding:4px 8px;text-align:right;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums}
+table.camp th{color:var(--ink3);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em}
+table.camp td.no{color:var(--red);font-weight:700}
+table.camp td.yes{color:var(--green)}
+
+footer{font-size:.8rem;color:var(--ink3);border-top:1px solid var(--rule);padding-top:12px}
+footer p{color:var(--ink3)}
+
+body.present{font-size:21px}
+body.present .prose,body.present footer{display:none}
+body.present h1{font-size:2rem}
+body.present .stat .v{font-size:1.5rem}
+body.present table.camp{font-size:1rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="kicker">CRAFT V&amp;V · Week 8 · capstone · formal &amp; security</span>
+  <h1>Trigger Space</h1>
+  <p class="prose">The Week 8 arbiter carries a backdoor: on <code>req == 4'b1010</code> it
+  raises <code>grant == 4'b0100</code> — a grant to line 2, which never requested. Its trigger
+  is one pattern in a 4-bit space, and plain random stimulus lands on it in milliseconds. The
+  instinct this widget exists to break: <em>"then random will find any backdoor eventually."</em>
+  The backdoor designer picks the compare width. Widen it and watch what "eventually" costs.</p>
+</header>
+
+<div id="predict" class="panel">
+  <div class="q">A trigger hidden behind a 32-bit compare — a handful of magic states in a
+  2<sup>32</sup> space. Your simulator runs 1,500 vectors/s, overnight (8 h). The chance the
+  campaign hits the trigger is—</div>
+  <div class="chips">
+    <button data-p="sure">Near-certain (&gt;90%)</button>
+    <button data-p="coin">Better than a coin flip</button>
+    <button data-p="long">A long shot (1–50%)</button>
+    <button data-p="never">Under 1%</button>
+  </div>
+  <div id="pverdict" style="font-size:.9rem;color:var(--ink3)">Commit to an answer — the controls unlock once you do.</div>
+</div>
+
+<div class="grid">
+
+  <div class="panel" id="controls">
+    <h2>The space, the trigger, the campaign</h2>
+    <div class="chips small" id="presets">
+      <button data-b="4"  data-t="0">the course arbiter · 2<sup>4</sup></button>
+      <button data-b="24" data-t="2">24-bit compare</button>
+      <button data-b="32" data-t="2" class="on">32-bit magic</button>
+      <button data-b="40" data-t="0">40-bit magic</button>
+    </div>
+    <div class="ctl">
+      <label>Space: 2<sup>b</sup> patterns, b = <b id="lb">32</b></label>
+      <input type="range" id="b" min="2" max="48" value="32" aria-label="Space size in bits">
+    </div>
+    <div class="ctl">
+      <label>Trigger region <b><span id="lt">4</span> states</b></label>
+      <input type="range" id="t" min="0" max="4" value="2" aria-label="Trigger states as a power of two">
+    </div>
+    <div class="ctl">
+      <label>Vectors per second <b id="lr">1.5k</b></label>
+      <input type="range" id="r" min="0" max="8" step="0.05" value="3.176" aria-label="Vectors per second, log scale">
+    </div>
+    <div class="ctl">
+      <label>Time budget</label>
+      <div class="chips small" id="budgets" style="margin:0">
+        <button data-sec="300">coffee · 5 min</button>
+        <button data-sec="4500">lecture · 75 min</button>
+        <button data-sec="28800" class="on">overnight · 8 h</button>
+        <button data-sec="216000">weekend · 60 h</button>
+        <button data-sec="2592000">a month</button>
+        <button data-sec="31557600">a year</button>
+      </div>
+    </div>
+    <button class="go" id="camp">Run 10 seeded campaigns</button>
+    <div id="campwrap"></div>
+  </div>
+
+  <div class="panel">
+    <h2>The vanishing region</h2>
+    <canvas id="zoom" width="920" height="190" aria-label="The state space as a square, zoomed repeatedly until the trigger region becomes visible"></canvas>
+    <div class="cap" id="zoomcap"></div>
+    <h2>Budget against expectation · log scale</h2>
+    <canvas id="line" width="920" height="86" aria-label="Log-scale line comparing vectors in the budget to the expected vectors to first hit"></canvas>
+    <div class="cap" id="linecap"></div>
+    <div class="stats">
+      <div class="stat"><div class="k">Vectors in budget</div><div class="v" id="sn">—</div></div>
+      <div class="stat"><div class="k">Odds per vector</div><div class="v" id="sp">—</div></div>
+      <div class="stat"><div class="k">P(hit in budget)</div><div class="v" id="sP">—</div></div>
+      <div class="stat"><div class="k">Expected time to hit</div><div class="v" id="se">—</div></div>
+    </div>
+    <div class="verdict" id="verdict">Commit to a prediction above to see the numbers.</div>
+    <div class="formal"><b>The other tool.</b> The same safety contract —
+    <code class="mono">assert ((grant &amp; ~req) == 0)</code> — through SymbiYosys:
+    the <code class="mono">trojan</code> task FAILs at step&nbsp;1 and hands back the exact
+    trigger, <code class="mono">req = 4'b1010 &rarr; grant = 4'b0100</code>; the
+    <code class="mono">good</code> task PASSes by k-induction — absence for every input, not
+    "none found". Measured on this repo: every run lands in under a second.
+    <code class="mono">just demo 08 s2 1</code></div>
+  </div>
+</div>
+
+<footer>
+  <p><b>What this models.</b> One uniform random vector per cycle; a hit is landing in the
+  trigger region — T of 2<sup>b</sup> patterns, so P(hit)/vector = T/2<sup>b</sup> and
+  P(hit within N vectors) = 1 &minus; (1 &minus; T/2<sup>b</sup>)<sup>N</sup>. The arbiter of
+  <code>dut/arbiter_trojan.sv</code> is the b=4, T=1 case: <code>wire magic = (N == 4) &amp;&amp;
+  (req == 4'b1010); assign grant = magic ? 4'b0100 : grant_rr;</code>. Production backdoors
+  differ by one number — the width of the compare. Sampling is with replacement, as random
+  stimulus is; even a perfect no-repeat enumerator needs 2<sup>b</sup>/2T tries on average, the
+  same order. A k-cycle arming sequence multiplies the space again: the region then lives in
+  (2<sup>b</sup>)<sup>k</sup>.</p>
+  <p style="margin-top:8px"><b>The default rate is measured, not guessed:</b> the Week 5 demo's
+  captured cocotb run advances 15,077.52 ns of simulated time per wall-clock second — about
+  1,500 cycles/s at its 10 ns clock. Slide it to your own simulator. The formal runtimes are the
+  Week 8 demo's, measured in the course container. Campaigns use a seeded mulberry32, so a seed
+  reproduces exactly.</p>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- core math (DOM-free; the node self-test drives these) ---------- */
+
+/* deterministic PRNG (mulberry32) so a seed reproduces exactly */
+function mulberry32(seed){
+  var a = seed >>> 0;
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function pHit(b, T){                       /* per-vector hit probability, clamped */
+  var S = Math.pow(2, b);
+  return Math.min(T, S) / S;
+}
+function pWithin(p, N){                    /* P(at least one hit in N draws), stable for tiny p */
+  if (p <= 0 || N <= 0) return 0;
+  if (p >= 1) return 1;
+  return -Math.expm1(N * Math.log1p(-p));
+}
+function expVectors(p){ return 1 / p; }    /* geometric mean: expected draws to first hit */
+function expTime(p, rate){ return 1 / (p * rate); }
+function firstHit(rng, p){                 /* one geometric draw via inverse CDF */
+  if (p >= 1) return 1;
+  return Math.floor(Math.log1p(-rng()) / Math.log1p(-p)) + 1;
+}
+function band(P){                          /* the gate's answer bands */
+  return P >= 0.9 ? 'sure' : P >= 0.5 ? 'coin' : P >= 0.01 ? 'long' : 'never';
+}
+
+var YEAR = 31557600, UNIVERSE = 1.38e10;   /* seconds/Julian year; age of universe in years */
+function fmtBig(x){
+  if (!isFinite(x)) return '∞';
+  if (x < 1e4)  return String(Math.round(x));
+  if (x < 1e6)  return (x/1e3).toPrecision(3) + 'k';
+  if (x < 1e9)  return (x/1e6).toPrecision(3) + ' million';
+  if (x < 1e12) return (x/1e9).toPrecision(3) + ' billion';
+  if (x < 1e15) return (x/1e12).toPrecision(3) + ' trillion';
+  return '10^' + Math.log10(x).toFixed(1);
+}
+function fmtP(P){
+  if (P > 0.999) return '>99.9%';
+  if (P >= 0.1)  return (100*P).toFixed(1) + '%';
+  if (P >= 0.001) return (100*P).toFixed(2) + '%';
+  if (P <= 0) return '0';
+  return '1 in ' + fmtBig(1/P);
+}
+function fmtDur(s){
+  if (!isFinite(s)) return '∞';
+  if (s < 1e-6) return (s*1e9).toPrecision(3) + ' ns';
+  if (s < 1e-3) return (s*1e6).toPrecision(3) + ' µs';
+  if (s < 1)    return (s*1e3).toPrecision(3) + ' ms';
+  if (s < 60)   return s.toPrecision(3) + ' s';
+  if (s < 3600) return (s/60).toPrecision(3) + ' min';
+  if (s < 86400) return (s/3600).toPrecision(3) + ' h';
+  if (s < YEAR)  return (s/86400).toPrecision(3) + ' days';
+  var y = s / YEAR;
+  if (y < 1e6)  return fmtBig(y) + ' years';
+  if (y < UNIVERSE) return fmtBig(y) + ' years';
+  return fmtBig(y) + ' years (≈' + fmtBig(y/UNIVERSE) + '× the age of the universe)';
+}
+function runCampaigns(p, N, rate, nSeeds){ /* deterministic seeded campaigns */
+  var rows = [];
+  for (var s = 1; s <= nSeeds; s++){
+    var k = firstHit(mulberry32(s), p);
+    rows.push({seed: s, k: k, hit: k <= N, t: k / rate});
+  }
+  return rows;
+}
+
+if (typeof module !== "undefined" && module.exports){
+  module.exports = {mulberry32:mulberry32, pHit:pHit, pWithin:pWithin, expVectors:expVectors,
+                    expTime:expTime, firstHit:firstHit, band:band, fmtBig:fmtBig, fmtP:fmtP,
+                    fmtDur:fmtDur, runCampaigns:runCampaigns, YEAR:YEAR};
+  return;
+}
+
+/* ---------- DOM ---------- */
+
+if (new URLSearchParams(location.search).get("present") === "1")
+  document.body.classList.add("present");
+
+var el = function(id){ return document.getElementById(id); };
+var budget = 28800, unlocked = false;
+
+function readState(){
+  var b = +el('b').value;
+  var T = Math.pow(2, +el('t').value);
+  var rate = Math.pow(10, +el('r').value);
+  var p = pHit(b, T);
+  var N = rate * budget;
+  return {b:b, T:T, rate:rate, p:p, N:N, P:pWithin(p, N)};
+}
+function fmtRate(r){
+  return r < 1e3 ? String(Math.round(r)) :
+         r < 1e6 ? (r/1e3).toPrecision(2) + 'k' :
+         r < 1e9 ? (r/1e6).toPrecision(2) + 'M' : (r/1e9).toPrecision(2) + 'G';
+}
+
+function drawZoom(st){
+  var cv = el('zoom'), ctx = cv.getContext('2d');
+  var W = cv.width, H = cv.height;
+  var css = getComputedStyle(document.body);
+  var rule = css.getPropertyValue('--rule').trim(), red = css.getPropertyValue('--red').trim(),
+      gold = css.getPropertyValue('--gold').trim(), ink3 = css.getPropertyValue('--ink3').trim(),
+      surf = css.getPropertyValue('--surface').trim();
+  ctx.clearRect(0,0,W,H);
+  var f = st.p;                       /* area fraction of the trigger */
+  var SP = 132, Z = 4096, minSide = 4;
+  var z = 0;
+  while (z < 4 && SP * Math.sqrt(f * Math.pow(Z, z)) < minSide) z++;
+  var panels = z + 1;
+  var gap = panels > 1 ? (W - panels * SP) / (panels - 1) : 0;
+  ctx.font = '12px ui-monospace,monospace';
+  ctx.textAlign = 'center';
+  for (var i = 0; i < panels; i++){
+    var x0 = i * (SP + gap), y0 = 14;
+    ctx.fillStyle = surf; ctx.fillRect(x0, y0, SP, SP);
+    ctx.strokeStyle = rule; ctx.lineWidth = 1; ctx.strokeRect(x0 + .5, y0 + .5, SP - 1, SP - 1);
+    var statesHere = Math.pow(2, st.b) / Math.pow(Z, i);
+    ctx.fillStyle = ink3;
+    ctx.fillText(i === 0 ? '2^' + st.b + ' states' : '×4096 zoom · ' + fmtBig(statesHere) + ' states',
+                 x0 + SP/2, y0 + SP + 16);
+    var last = i === panels - 1;
+    if (!last){
+      /* the window the next panel magnifies: 1/64 of this panel's side */
+      var ws = Math.max(SP/64, 2), wx = x0 + SP*0.62, wy = y0 + SP*0.30;
+      ctx.strokeStyle = gold; ctx.lineWidth = 1.5; ctx.strokeRect(wx, wy, ws, ws);
+      /* connector to the next panel */
+      ctx.strokeStyle = ink3; ctx.setLineDash([3,3]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(wx + ws, wy); ctx.lineTo(x0 + SP + gap, y0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(wx + ws, wy + ws); ctx.lineTo(x0 + SP + gap, y0 + SP); ctx.stroke();
+      ctx.setLineDash([]);
+    } else {
+      var ts = Math.max(SP * Math.sqrt(f * Math.pow(Z, z)), 2);
+      var tx = x0 + SP*0.62, ty = y0 + SP*0.30;
+      ctx.fillStyle = red; ctx.fillRect(tx, ty, ts, ts);
+      ctx.fillStyle = red;
+      ctx.fillText('trigger · ' + st.T + (st.T === 1 ? ' state' : ' states'), x0 + SP/2, y0 + SP + 30);
+    }
+  }
+  el('zoomcap').textContent = z === 0
+    ? 'at 2^' + st.b + ' the trigger region is visible without zooming — this is the classroom case'
+    : 'drawn to scale: ' + z + ' zoom step' + (z>1?'s':'') + ' of ×4,096 each before the trigger region reaches pixel size';
+}
+
+function drawLine(st){
+  var cv = el('line'), ctx = cv.getContext('2d');
+  var W = cv.width, H = cv.height;
+  var css = getComputedStyle(document.body);
+  ctx.clearRect(0,0,W,H);
+  var E = expVectors(st.p);
+  var maxD = Math.max(Math.log10(E), Math.log10(st.N), 6) + 1;
+  var X = function(v){ return 30 + (W - 60) * Math.log10(Math.max(v,1)) / maxD; };
+  var axY = H - 26;
+  ctx.strokeStyle = css.getPropertyValue('--rule').trim(); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(20, axY); ctx.lineTo(W - 20, axY); ctx.stroke();
+  ctx.font = '11px ui-monospace,monospace'; ctx.textAlign = 'center';
+  ctx.fillStyle = css.getPropertyValue('--ink3').trim();
+  for (var d = 0; d <= maxD; d += 3){
+    var x = X(Math.pow(10, d));
+    ctx.beginPath(); ctx.moveTo(x, axY - 3); ctx.lineTo(x, axY + 3); ctx.stroke();
+    ctx.fillText(d === 0 ? '1' : '10^' + d, x, axY + 16);
+  }
+  function marker(v, color, label, up){
+    var x = X(v), y = up ? axY - 34 : axY - 14;
+    ctx.strokeStyle = color; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x, axY); ctx.lineTo(x, y + 4); ctx.stroke();
+    ctx.fillStyle = color; ctx.textAlign = x > W - 190 ? 'right' : 'left';
+    ctx.fillText(label, x > W - 190 ? x - 4 : x + 4, y);
+  }
+  marker(st.N, css.getPropertyValue('--blue').trim(), 'your budget: ' + fmtBig(st.N) + ' vectors', false);
+  marker(E, css.getPropertyValue('--red').trim(), 'expected to first hit: ' + fmtBig(E), true);
+  el('linecap').textContent = E > st.N
+    ? 'the gap is ×' + fmtBig(E / st.N) + ' — every 10 bits of compare width costs ×1,024'
+    : 'your budget covers the expectation ×' + fmtBig(st.N / E) + ' — random wins this one';
+}
+
+function reveal(){
+  var st = readState();
+  el('sn').textContent = fmtBig(st.N);
+  el('sp').textContent = '1 in ' + fmtBig(1 / st.p);
+  el('sP').textContent = fmtP(st.P);
+  el('sP').className = 'v ' + (st.P >= 0.9 ? 'ok' : st.P >= 0.1 ? 'warn' : 'bad');
+  var E = expTime(st.p, st.rate);
+  el('se').textContent = fmtDur(E);
+  el('se').className = 'v ' + (E <= budget ? 'ok' : 'bad');
+
+  var v = el('verdict'), m;
+  if (st.P >= 0.9){
+    v.className = 'verdict ok';
+    m = '<b>Random wins here.</b> Expected first hit after ' + fmtDur(E) + ', and the budget ' +
+        'covers the expectation ' + fmtBig(st.N / expVectors(st.p)) + ' times over. This is the ' +
+        'classroom case: at 2<sup>4</sup>, the arbiter’s trigger is a sixteenth of the ' +
+        'space. The backdoor designer read the same math — which is why a shipped trigger is ' +
+        'not 4 bits wide. Slide b up and watch.';
+  } else if (st.P >= 0.1){
+    v.className = 'verdict warn';
+    m = '<b>A coin flip, roughly: ' + fmtP(st.P) + '.</b> Whether this campaign catches the ' +
+        'backdoor is a seed lottery at campaign scale — same phenomenon as Week 5’s ' +
+        'full-boundary lottery, with a security payload. Expected time to first hit: ' +
+        fmtDur(E) + '.';
+  } else {
+    v.className = 'verdict bad';
+    m = '<b>"Eventually" has a price: ' + fmtDur(E) + ' expected.</b> Within this budget the ' +
+        'chance is ' + fmtP(st.P) + '. And the campaign’s silence proves nothing: ' +
+        'P(no hit | backdoor present) = ' + fmtP(1 - st.P) + ' — a green run is what you ' +
+        'expect to see whether or not the trojan is there. The proof’s green is a ' +
+        'different object: absence, for every input, in under a second (measured).';
+  }
+  v.innerHTML = m;
+  drawZoom(st); drawLine(st);
+}
+
+function campaigns(){
+  var st = readState();
+  var rows = runCampaigns(st.p, st.N, st.rate, 10);
+  var hits = rows.filter(function(r){ return r.hit; }).length;
+  var html = '<table class="camp"><tr><th>seed</th><th>first hit at vector</th><th>time</th><th>in budget?</th></tr>';
+  rows.forEach(function(r){
+    html += '<tr><td>' + r.seed + '</td><td>' + fmtBig(r.k) + '</td><td>' + fmtDur(r.t) +
+            '</td><td class="' + (r.hit ? 'yes">hit' : 'no">NO') + '</td></tr>';
+  });
+  html += '</table><div class="verdict ' + (hits === 0 ? 'bad' : hits === 10 ? 'ok' : 'warn') + '">' +
+    (hits === 0
+      ? '<b>0 of 10 campaigns hit</b> — and each ran the full budget. Ten green regressions, one live backdoor.'
+      : hits === 10
+        ? '<b>10 of 10 hit.</b> At this width random is a fine bug-finder. The question is who chose the width.'
+        : '<b>' + hits + ' of 10 campaigns hit.</b> P(hit) = ' + fmtP(st.P) +
+          ' — the seed decides, not the testbench.') + '</div>';
+  el('campwrap').innerHTML = html;
+}
+
+/* wiring */
+function labels(){
+  var st = readState();
+  el('lb').textContent = st.b;
+  el('lt').textContent = st.T;
+  el('lr').textContent = fmtRate(st.rate);
+}
+['b','t','r'].forEach(function(k){
+  el(k).addEventListener('input', function(){
+    document.querySelectorAll('#presets button').forEach(function(x){ x.classList.remove('on'); });
+    labels(); if (unlocked){ reveal(); el('campwrap').innerHTML = ''; }
+  });
+});
+document.querySelectorAll('#presets button').forEach(function(b){
+  b.addEventListener('click', function(){
+    el('b').value = b.dataset.b; el('t').value = b.dataset.t;
+    document.querySelectorAll('#presets button').forEach(function(x){ x.classList.remove('on'); });
+    b.classList.add('on');
+    labels(); if (unlocked){ reveal(); el('campwrap').innerHTML = ''; }
+  });
+});
+document.querySelectorAll('#budgets button').forEach(function(b){
+  b.addEventListener('click', function(){
+    budget = +b.dataset.sec;
+    document.querySelectorAll('#budgets button').forEach(function(x){ x.classList.remove('on'); });
+    b.classList.add('on');
+    if (unlocked){ reveal(); el('campwrap').innerHTML = ''; }
+  });
+});
+el('camp').addEventListener('click', campaigns);
+
+/* predict-then-reveal gate */
+el('controls').classList.add('locked');
+document.querySelectorAll('[data-p]').forEach(function(bt){
+  bt.addEventListener('click', function(){
+    var st = readState();                       /* computed from the live defaults, not hardcoded */
+    var right = bt.dataset.p === band(st.P);
+    el('pverdict').innerHTML = (right ? '<b>Right.</b> ' : '<b>Not quite.</b> ') +
+      'P(hit) = <b>' + fmtP(st.P) + '</b> — ' + fmtBig(st.N) + ' vectors against odds of 1 in ' +
+      fmtBig(1 / st.p) + ' per vector. Expected time to first hit: <b>' +
+      fmtDur(expTime(st.p, st.rate)) + '</b>. Now move the sliders: find the width where random ' +
+      'does win, and the width where the sun burns out first. The formal answer takes under a ' +
+      'second either way (measured).';
+    el('controls').classList.remove('locked');
+    unlocked = true;
+    document.querySelectorAll('[data-p]').forEach(function(x){ x.classList.remove('on'); });
+    bt.classList.add('on');
+    reveal(); campaigns();
+  });
+});
+
+labels();
+})();
+</script>
+</body>
+</html>

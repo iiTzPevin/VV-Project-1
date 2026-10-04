@@ -1,0 +1,85 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>found / total &mdash; score to grade</title>
+<style>
+:root{--navy:#1B2A4A;--gold:#D4A843;--green:#27AE60;--blue:#2E86AB;--red:#E74C3C;
+--ground:#F4F6F9;--surface:#fff;--surface2:#EDF0F5;--ink:#16223B;--ink2:#3E4C68;--ink3:#6B7791;--rule:#D9DEE7;--bar:#2E86AB}
+@media(prefers-color-scheme:dark){:root{--ground:#0D1524;--surface:#141E33;--surface2:#1B273F;--ink:#E7ECF5;--ink2:#B6C1D6;--ink3:#8592AC;--rule:#2A3752;--gold:#E9BE58;--green:#5FD48C;--blue:#5AA9C9;--red:#FF8776;--bar:#5AA9C9}}
+*{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font:16px/1.55 "Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:640px;margin:0 auto;padding:24px 18px 60px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:1.45rem;margin:0}.kick{font:600 .7rem/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+header{border-bottom:2px solid var(--ink);padding-bottom:12px}p{margin:0;color:var(--ink2);max-width:60ch}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px 18px}
+label{font-size:.85rem;color:var(--ink2);display:block;margin-bottom:4px}
+input,select{font:inherit;padding:6px 8px;border:1px solid var(--rule);border-radius:4px;background:var(--surface2);color:var(--ink);font-family:ui-monospace,monospace}
+input[type=number]{width:90px}.row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px}
+.grade{font:800 3rem/1 ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.g-full{color:var(--green)}.g-part{color:var(--gold)}.g-zero{color:var(--red)}
+.meter{height:16px;border-radius:8px;background:var(--surface2);overflow:hidden;position:relative;margin:12px 0}
+.meter i{display:block;height:100%;border-radius:8px;background:var(--bar)}
+.thresh{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--red)}
+.thresh span{position:absolute;top:-18px;left:-14px;font:700 .62rem/1 ui-monospace,monospace;color:var(--red);white-space:nowrap}
+.stat{display:flex;justify-content:space-between;font-size:.9rem;color:var(--ink2);padding:4px 0;border-bottom:1px solid var(--surface2)}
+.stat b{font-family:ui-monospace,monospace;color:var(--ink)}
+.verdict{margin-top:12px;border-left:4px solid var(--rule);padding:10px 14px;background:var(--surface2);border-radius:0 5px 5px 0;font-size:.92rem}
+.verdict.full{border-left-color:var(--green)}.verdict.part{border-left-color:var(--gold)}.verdict.zero{border-left-color:var(--red)}
+footer{font-size:.8rem;color:var(--ink3);border-top:1px solid var(--rule);padding-top:12px}
+body.present .prose,body.present footer{display:none}body.present{font-size:20px}body.present .grade{font-size:4rem}
+code{font-family:ui-monospace,monospace;background:var(--surface2);padding:.1em .35em;border-radius:3px}
+</style></head><body><div class="wrap">
+<header><div class="kick">CRAFT V&amp;V &middot; utility</div><h1>found / total &rarr; grade</h1></header>
+<p class="prose">Your score on a mutation-graded component is the fraction your suite <em>finds</em>.
+<b>\mutfullcredit&nbsp;=&nbsp;90%</b> earns full marks (the course default); below that, credit scales linearly to the threshold. Above it, full.</p>
+<div class="panel">
+  <div class="row">
+    <div><label for="lab">lab (sets threshold)</label><select id="lab"></select></div>
+    <div><label for="found">found</label><input type="number" id="found" min="0" value="7"></div>
+    <div><label for="total">total</label><input type="number" id="total" min="1" value="8"></div>
+  </div>
+  <div class="grade g-part" id="grade">&mdash;</div>
+  <div class="meter"><i id="fill"></i><div class="thresh" id="tmark"><span id="tlabel">90%</span></div></div>
+  <div class="stat"><span>found / total</span><b id="frac">7 / 8</b></div>
+  <div class="stat"><span>score</span><b id="pct">87.5%</b></div>
+  <div class="stat"><span>threshold (full credit)</span><b id="thr">90%</b></div>
+  <div class="stat"><span>survivors (not found)</span><b id="surv">1</b></div>
+  <div class="verdict part" id="verdict"></div>
+</div>
+<footer><p>Partial credit below threshold is modelled as linear from 0 to the threshold &mdash; the syllabus says
+&ldquo;partial credit scales,&rdquo; so confirm the exact curve with your section. A survivor is a mutant your suite did not find;
+the number, not the grade, is what tells you what you are not exercising.</p></footer>
+</div><script>
+(function(){"use strict";
+var LABS=[["(custom)",90],["alu · wk3",90],["fifo · wk4",90],["fifo_crv · wk5",90],["fifo_cov · wk6",90],
+["fifo_sva · wk7",90],["uart_sva · wk7",90],["axil_uvm · wk9",90],["axil_ral · wk10",90],
+["capstone_riscv · wk11",90],["capstone_axi · wk11",90],["capstone_trojan · wk13",90]];
+function present(){try{return new URLSearchParams(location.search).get("present")==="1"}catch(e){return false}}
+if(present())document.body.classList.add("present");
+var el=function(i){return document.getElementById(i)};
+var sel=el("lab");LABS.forEach(function(l,i){var o=document.createElement("option");o.value=i;o.textContent=l[0];sel.appendChild(o)});
+function grade(found,total,thr){ // linear 0..thr -> 0..100, clamp full at/above thr
+  if(total<=0)return 0;var p=100*found/total;
+  if(p>=thr)return 100;return Math.max(0,100*p/thr);}
+function draw(){
+  var found=Math.max(0,+el("found").value||0),total=Math.max(1,+el("total").value||1);
+  if(found>total){found=total;el("found").value=total;}
+  var thr=LABS[+sel.value][1];
+  var pct=100*found/total,g=grade(found,total,thr);
+  el("frac").textContent=found+" / "+total;
+  el("pct").textContent=pct.toFixed(1)+"%";
+  el("thr").textContent=thr+"%";el("tlabel").textContent=thr+"%";
+  el("surv").textContent=(total-found);
+  el("tmark").style.left=thr+"%";
+  el("fill").style.width=pct.toFixed(1)+"%";
+  var ge=el("grade"),ve=el("verdict"),cls=g>=100?"full":(g<=0?"zero":"part");
+  ge.textContent=g>=100?"FULL":g.toFixed(0)+"%";
+  ge.className="grade g-"+cls;ve.className="verdict "+cls;
+  el("fill").style.background=g>=100?"var(--green)":(g<=0?"var(--red)":"var(--gold)");
+  ve.innerHTML=g>=100
+    ?"<b>Full credit.</b> "+found+"/"+total+" is at or above the "+thr+"% bar. Now read your FINDINGS: a perfect score on a sample is not proof about the population &mdash; name what the pool does not contain."
+    :(g<=0?"<b>Zero on this component.</b> Every mutant survived &mdash; the suite drives the design but checks nothing that these mutations break."
+    :"<b>"+g.toFixed(0)+"% &mdash; partial.</b> "+(total-found)+" mutant"+((total-found)==1?"":"s")+" survived. You need "+Math.ceil(thr*total/100)+"/"+total+" to reach the bar; each survivor names a case you are not reaching or not checking.");
+}
+["found","total"].forEach(function(i){el(i).addEventListener("input",draw)});
+sel.addEventListener("change",draw);draw();
+})();
+</script></body></html>

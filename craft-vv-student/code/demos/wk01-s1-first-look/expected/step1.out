@@ -1,0 +1,33 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787510207
+Found test step1_the_vector.test_the_vector
+running test_the_vector (1/1)
+demo seed = 5
+
+                                                             a     b       sum   carry_out
+                                                          ----  ----      ----   ---------
+                                                          0x01  0x02      0x03   0
+                                                          0x00  0x00      0x00   0
+                                                          0x37  0x28      0x5f   0
+                                                          0xff  0x01      0x00   1
+                                                          0x05  0x05      0x0a   0
+                                                          0x80  0x7f      0xff   0
+                                                          0x90  0x90      0x20   0   <-- WRONG (model says sum=0x20 carry_out=1)
+test_the_vector failed
+                                                        Traceback (most recent call last):
+                                                          File "/home/claude/vv-full/code/demos/wk01-s1-first-look/step1_the_vector.py", line 32, in test_the_vector
+                                                            assert (s, c) == gold(a, b), \
+                                                        AssertionError: a=0x90 b=0x90: got sum=0x20 carry_out=0, model says sum=0x20 carry_out=1
+                                                        assert (32, 0) == (32, 1)
+                                                         +  where (32, 1) = gold(144, 144)
+******************************************************************************************
+                                                        ** TEST                              STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ******************************************************************************************
+                                                        ** step1_the_vector.test_the_vector   FAIL           7.00           0.00       5987.83  **
+                                                        ******************************************************************************************
+                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                      7.00           0.09         74.16  **
+                                                        ******************************************************************************************
+

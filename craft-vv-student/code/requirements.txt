@@ -1,0 +1,20 @@
+# CRAFT V&V — Python stack, pinned to the eustis shared course env
+# (cocotb 1.9.2 + Verilator 5.020, as installed by IT at /opt/course/cocotb-env).
+# Create locally:  python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+cocotb==1.9.2
+cocotb-bus
+cocotb-coverage
+pyuvm==2.9.1
+# PINNED. The Week 5 Session 2 lecture demo turns on a specific pyvsc behavior:
+# vsc.dist ignores an enclosing vsc.implies and applies its distribution
+# unconditionally (hard relational constraints inside implies ARE gated -- the
+# defect is specific to dist). code/setup/verify_env.sh asserts this at setup
+# time. If you move this pin, re-run that check and re-verify
+# code/demos/wk05-s2-constraints/ before teaching Week 5.
+pyvsc==0.9.5.27214109393
+pytest
+pyyaml
+# Optional bus VIP (used in some AXI/UART exercises). Install only if needed;
+# newer releases may pull a cocotb 2.x — keep cocotb pinned at 1.9.2.
+# cocotbext-axi
+# cocotbext-uart

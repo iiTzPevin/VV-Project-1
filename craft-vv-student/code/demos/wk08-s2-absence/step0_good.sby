@@ -1,0 +1,23 @@
+# Step 0 -- the honest arbiter, proven. Same task as formal/arbiter/arbiter.sby
+# `good`, run from the demo dir so the work directory lands here.
+#   sby -f step0_good.sby
+# k-induction over the safety contract compiled inside dut/arbiter.sv
+# (`ifdef FORMAL`): grant subset of req, one-hot-or-zero, progress.
+# PASS here is a statement about ALL requests and ALL reachable states, for
+# all time: no input -- magic or otherwise -- makes this arbiter grant a
+# line that did not request. That is what "no backdoor" means formally.
+
+[options]
+mode prove
+depth 12
+expect pass
+
+[engines]
+smtbmc z3
+
+[script]
+read_verilog -sv -formal -DFORMAL arbiter.sv
+prep -top arbiter
+
+[files]
+../../dut/arbiter.sv

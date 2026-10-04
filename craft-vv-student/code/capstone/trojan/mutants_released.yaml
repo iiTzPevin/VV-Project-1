@@ -1,0 +1,38 @@
+# secure_gate mutation pool -- RELEASED (practice).  Score = found / total.
+# Small, exact source transformations of the CLEAN variant secure_gate_clean.sv.
+# A mutant is "found" when your testbench FAILS on it. (We say found, not killed.)
+# NOTE: the planted trojan (secure_gate_trojan.sv) is NOT a mutant in this pool --
+# it is the adversarial variant caught by proving the security property. These
+# mutants train the functional/observability side of the suite.
+# Run:  python -m craft_mutate.mutate --tb capstone/trojan \
+#           --pool capstone/trojan/mutants_released.yaml --dut-dir capstone/trojan --sim icarus
+dut: secure_gate_clean.sv
+mutants:
+  - id: key_always_ok
+    desc: "gate ignores the key and is always unlocked"
+    find: "assign key_ok   = (key == EXPECTED_KEY);"
+    replace: "assign key_ok   = 1'b1;"
+  - id: key_compare_low16
+    desc: "key check compares only the low 16 bits (near-miss keys unlock)"
+    find: "assign key_ok   = (key == EXPECTED_KEY);"
+    replace: "assign key_ok   = (key[15:0] == EXPECTED_KEY[15:0]);"
+  - id: unlock_inverted
+    desc: "unlocked is inverted (wrong key opens, right key locks)"
+    find: "assign unlocked = key_ok;"
+    replace: "assign unlocked = ~key_ok;"
+  - id: data_leak_when_locked
+    desc: "data_out always passes data_in (no masking while locked)"
+    find: "assign data_out = unlocked ? data_in : '0;"
+    replace: "assign data_out = data_in;"
+  - id: data_zero_when_unlocked
+    desc: "data path inverted: outputs zero when unlocked, data when locked"
+    find: "assign data_out = unlocked ? data_in : '0;"
+    replace: "assign data_out = unlocked ? '0 : data_in;"
+  - id: count_never_increments
+    desc: "access_count is stuck (never advances while unlocked)"
+    find: "else if (unlocked) cnt <= cnt + 8'd1;"
+    replace: "else if (unlocked) cnt <= cnt;"
+  - id: count_increments_when_locked
+    desc: "access_count advances every cycle, even while locked"
+    find: "else if (unlocked) cnt <= cnt + 8'd1;"
+    replace: "else cnt <= cnt + 8'd1;"

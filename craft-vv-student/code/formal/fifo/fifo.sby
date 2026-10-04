@@ -1,0 +1,31 @@
+# SymbiYosys safety proof for the FWFT FIFO (dut/fifo.sv, via fifo_formal.sv).
+#   sby -f fifo.sby           # runs BOTH tasks
+#   sby -f fifo.sby bmc       # bounded model check to depth 20 (finds shallow bugs fast)
+#   sby -f fifo.sby prove     # unbounded proof by k-induction
+#
+# Both tasks prove the same safety invariants (count in [0,DEPTH], full/empty
+# consistency, no overflow/underflow behavior).  `bmc` checks them up to a
+# bound; `prove` closes them for all time by temporal induction.  Engine is
+# smtbmc with z3.  dut/fifo.sv is instantiated unmodified by fifo_formal.sv.
+
+[tasks]
+bmc
+prove
+
+[options]
+bmc:   mode bmc
+bmc:   depth 20
+prove: mode prove
+prove: depth 15
+expect pass
+
+[engines]
+smtbmc z3
+
+[script]
+read_verilog -sv -formal -DFORMAL fifo_formal.sv fifo.sv
+prep -top fifo_formal
+
+[files]
+fifo_formal.sv
+../../dut/fifo.sv

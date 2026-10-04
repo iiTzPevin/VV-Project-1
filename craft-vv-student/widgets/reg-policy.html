@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Register Policy · CRAFT V&amp;V Week 10</title>
+<style>
+:root{
+  --navy:#1B2A4A; --gold:#D4A843; --green:#27AE60; --blue:#2E86AB;
+  --red:#E74C3C; --purple:#9B59B6;
+  --ground:#F4F6F9; --surface:#fff; --surface2:#EDF0F5;
+  --ink:#16223B; --ink2:#3E4C68; --ink3:#6B7791; --rule:#D9DEE7;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#0D1524; --surface:#141E33; --surface2:#1B273F;
+    --ink:#E7ECF5; --ink2:#B6C1D6; --ink3:#8592AC; --rule:#2A3752;
+    --gold:#E9BE58; --green:#5FD48C; --blue:#5AA9C9; --red:#FF8776; --purple:#BE85D6;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font:16px/1.55 "Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 18px 60px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:1.5rem;margin:0;letter-spacing:-.01em}
+h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin:0 0 8px}
+p{margin:0;max-width:70ch;color:var(--ink2)}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+header{border-bottom:2px solid var(--ink);padding-bottom:12px;display:flex;flex-direction:column;gap:6px}
+.kicker{font:600 .7rem/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px 18px}
+.grid{display:grid;grid-template-columns:minmax(300px,1fr) minmax(340px,1.25fr);gap:16px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+
+button{font:inherit;cursor:pointer;border-radius:4px;border:1px solid var(--rule);
+  background:var(--surface2);color:var(--ink);padding:7px 12px}
+button:hover{border-color:var(--ink3)}
+button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+@media (prefers-color-scheme:dark){button.on{background:var(--gold);color:#12203a;border-color:var(--gold)}}
+button.go{background:var(--green);color:#fff;border-color:var(--green);font-weight:600;padding:9px 18px}
+button.go:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chips.small button{padding:4px 9px;font-size:.85rem}
+
+input[type=text]{width:150px;font:inherit;padding:5px 8px;border:1px solid var(--rule);
+  border-radius:4px;background:var(--surface2);color:var(--ink);font-family:ui-monospace,monospace}
+label{font-size:.85rem;color:var(--ink2)}
+
+table.regs{border-collapse:collapse;width:100%;font-family:ui-monospace,monospace;font-size:.82rem}
+table.regs th,table.regs td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums}
+table.regs th{color:var(--ink3);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em}
+table.regs tr.sel td{background:var(--surface2)}
+table.regs td.flops{color:var(--ink)}
+table.regs td.rb{color:var(--ink2)}
+.pol{display:inline-block;padding:1px 7px;border-radius:3px;font-size:.7rem;font-weight:700;letter-spacing:.04em;color:#fff;background:var(--blue)}
+.pol.ro{background:var(--purple)} .pol.w1c{background:var(--gold);color:#12203a} .pol.lk{background:var(--red)}
+.tblwrap{overflow-x:auto}
+
+#mut{border:1px solid var(--red);color:var(--red);background:transparent;font-weight:600}
+#mut.on{background:var(--red);color:#fff;border-color:var(--red)}
+.mutnote{display:none;border-left:4px solid var(--red);background:var(--surface2);padding:8px 12px;
+  border-radius:0 5px 5px 0;font-size:.82rem;margin-top:10px}
+.mutnote.show{display:block}
+
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+@media(max-width:520px){.pair{grid-template-columns:1fr}}
+.vcell{background:var(--surface2);border-radius:5px;padding:9px 11px}
+.vcell .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)}
+.vcell .v{font:700 1.15rem/1.3 ui-monospace,monospace;margin-top:3px}
+.v.ok{color:var(--green)} .v.bad{color:var(--red)} .v.warn{color:var(--gold)} .v.dim{color:var(--ink3)}
+.pair.clash .vcell{box-shadow:inset 0 0 0 2px var(--gold)}
+
+.verdict{margin-top:12px;border-left:4px solid var(--rule);padding:10px 14px;background:var(--surface2);border-radius:0 5px 5px 0;font-size:.92rem}
+.verdict.ok{border-left-color:var(--green)}
+.verdict.bad{border-left-color:var(--red)}
+.verdict.warn{border-left-color:var(--gold)}
+.verdict b{color:var(--ink)}
+
+#predict{border-left:4px solid var(--purple);background:var(--surface2);padding:12px 16px;border-radius:0 5px 5px 0}
+#predict .q{font-weight:600;margin-bottom:9px}
+.locked{opacity:.45;pointer-events:none}
+
+#plist{display:flex;flex-direction:column;gap:6px;margin:10px 0 12px}
+#plist button{text-align:left}
+.log{font-family:ui-monospace,monospace;font-size:.76rem;margin-top:14px;border-top:1px solid var(--rule);
+  padding-top:8px;display:flex;flex-direction:column-reverse;gap:4px;max-height:230px;overflow-y:auto}
+.log div{color:var(--ink2)} .log b{color:var(--ink)}
+.log .lred{color:var(--red)} .log .lgreen{color:var(--green)}
+
+footer{font-size:.8rem;color:var(--ink3);border-top:1px solid var(--rule);padding-top:12px}
+footer p{color:var(--ink3)}
+footer code{font-size:.95em}
+
+/* projector mode: ?present=1 */
+body.present{font-size:21px}
+body.present .prose,body.present footer{display:none}
+body.present h1{font-size:2rem}
+body.present table.regs{font-size:1rem}
+body.present .vcell .v{font-size:1.5rem}
+body.present .log{font-size:.95rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="kicker">CRAFT V&amp;V · Week 10 · registers &amp; RAL</span>
+  <h1>Register Policy</h1>
+  <p class="prose">The register map from <code>dut/axil_regfile.sv</code>, driven one access at a
+  time. The instinct this widget exists to break: <em>"registers are just more signals — write
+  one, read it back, done."</em> A register carries a <b>policy</b> — RO, RW, W1C, locked — and
+  a read-after-write check tests exactly one of them.</p>
+</header>
+
+<div id="predict" class="panel">
+  <div class="q">After reset, software writes <code>LOCK = 1</code>, then
+  <code>SECURE = 0xDEADBEEF</code>, then reads <code>SECURE</code> back. What does the read return?</div>
+  <div class="chips">
+    <button data-p="deadbeef"><span class="mono">0xDEADBEEF</span> — it's a register, it stores</button>
+    <button data-p="zero"><span class="mono">0x00000000</span> — the write is dropped</button>
+    <button data-p="status"><span class="mono">0x5A5A0F0F</span> — the fixed pattern</button>
+  </div>
+  <div id="pverdict" style="font-size:.9rem;color:var(--ink3)">Commit to an answer — the register map unlocks once you do.</div>
+</div>
+
+<div class="grid">
+
+  <div class="panel" id="controls">
+    <h2>Compose an access · write, then read back</h2>
+    <div class="chips" id="regpick" role="group" aria-label="Register to access">
+      <button data-reg="CTRL">CTRL</button>
+      <button data-reg="STATUS">STATUS</button>
+      <button data-reg="INTR">INTR</button>
+      <button data-reg="LOCK">LOCK</button>
+      <button data-reg="SECURE" class="on">SECURE</button>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+      <label for="wdata">wdata</label>
+      <input type="text" id="wdata" value="0xDEADBEEF" spellcheck="false" aria-label="Write data in hex">
+    </div>
+    <div class="chips small" id="valpick">
+      <button data-v="0x00000001">0x1</button>
+      <button data-v="0xFFFFFFFF">all ones</button>
+      <button data-v="0xA5A50F0F">0xA5A50F0F</button>
+      <button data-v="0xDEADBEEF">0xDEADBEEF</button>
+      <button data-v="0x00000000">0x0</button>
+    </div>
+
+    <div style="font-size:.85rem;color:var(--ink2);margin-top:6px"><b style="color:var(--ink)">Predict the outcome</b> — the access runs only after you commit:</div>
+    <div id="plist" role="group" aria-label="Predicted outcome">
+      <button data-o="store">Stores it — readback equals the write</button>
+      <button data-o="ignore">Ignores it — readback shows the old value</button>
+      <button data-o="w1c">The written 1-bits clear — W1C</button>
+      <button data-o="drop">Dropped — and INTR[0] latches</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="go" id="apply" disabled>Write + read back</button>
+      <button id="lockb">Lock <span class="mono">(LOCK=1)</span></button>
+      <button id="unlockb">Unlock <span class="mono">(LOCK=0)</span></button>
+    </div>
+
+    <h2 style="margin-top:16px">Observe without predicting</h2>
+    <div class="chips small" id="peeks" role="group" aria-label="Read a register">
+      <button data-peek="CTRL">read CTRL</button>
+      <button data-peek="STATUS">read STATUS</button>
+      <button data-peek="INTR">read INTR</button>
+      <button data-peek="LOCK">read LOCK</button>
+      <button data-peek="SECURE">read SECURE</button>
+      <button data-peek="__w1c">W1C round-trip on INTR</button>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      <button id="mut" aria-pressed="false">Plant the policy mutant</button>
+      <button id="rst">Reset DUT</button>
+    </div>
+    <div class="mutnote" id="mutnote"><b>secure_writable_locked planted</b> — one line of
+    <code>axil_regfile.sv</code> changed:<br>
+    <code>if (!lock[0]) secure &lt;= wdata;</code> &rarr; <code>secure &lt;= wdata;</code><br>
+    The violation latch is untouched. Re-run your locked write and watch which check notices.</div>
+  </div>
+
+  <div class="panel">
+    <h2>The map · <span class="mono">dut/specs/axil_regfile.md</span></h2>
+    <div class="tblwrap">
+    <table class="regs" id="regtable">
+      <tr><th>addr</th><th>name</th><th>policy</th><th>flops (hardware)</th><th>last readback</th></tr>
+    </table>
+    </div>
+    <div class="pair" id="vpair">
+      <div class="vcell"><div class="k">read-after-write check says</div><div class="v dim" id="vnaive">—</div></div>
+      <div class="vcell"><div class="k">policy table says</div><div class="v dim" id="vpolicy">—</div></div>
+    </div>
+    <div class="verdict" id="verdict">Pick a register, predict, and run the access. The two
+    verdicts above are different questions: <i>did the value come back</i> versus
+    <i>did the DUT follow its policy</i>.</div>
+    <h2 style="margin-top:16px">Bus log</h2>
+    <div class="log" id="log" role="log" aria-live="polite"></div>
+  </div>
+</div>
+
+<footer>
+  <p><b>What this models.</b> The write path and read mux of <code>dut/axil_regfile.sv</code>,
+  transaction by transaction: CTRL (0x0, RW) and LOCK (0x4, RW) store; STATUS (0x1, RO) ignores
+  writes and reads back its fixed pattern <code>0x5A5A_0F0F</code>; INTR (0x3, W1C) clears the
+  written 1-bits and keeps the 0-bits; SECURE (0x5, locked-RW) stores only while
+  <code>LOCK.bit0 == 0</code> — a locked write is dropped and hardware latches
+  <code>INTR[0]</code>, the security-violation interrupt. Reads are registered:
+  <code>rdata</code>/<code>rvalid</code> arrive one cycle after the read request. SCRATCH and the
+  unmapped addresses are left out here; the semantics shown are the spec's, unabridged.</p>
+  <p style="margin-top:8px"><b>The mutant is from the released pool</b> —
+  <code>secure_writable_locked</code> in <code>tb/axil_ral/mutants_released.yaml</code>: the lock
+  guard is deleted, the violation latch is not. So the alarm still rings while the door opens —
+  and a read-after-write check on SECURE, which failed against the working DUT, passes against
+  the broken one. In the Week 10 demo (measured, <code>DEMO_SEED=5</code>), read-after-write
+  straight down the map scores <b>3/8</b> and every policy mutant survives it; reset walk +
+  bit-bash + policy walk score <b>8/8</b> as one suite. For the real thing:
+  <code>just demo 10 s1 0</code>.</p>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- core model (DOM-free; the node self-test drives these) ---------- */
+
+var RESET = {ctrl:0, status:0x5A5A0F0F, intr:0, lock:0, secure:0};
+var ADDR  = {CTRL:'0x0', STATUS:'0x1', INTR:'0x3', LOCK:'0x4', SECURE:'0x5'};
+var POLICY = {CTRL:'RW', STATUS:'RO', INTR:'W1C', LOCK:'RW', SECURE:'locked-RW'};
+
+function freshState(){ return {ctrl:RESET.ctrl, status:RESET.status, intr:RESET.intr,
+                              lock:RESET.lock, secure:RESET.secure}; }
+
+/* One bus transaction against the register file.
+   acc = {op:'w'|'r', reg:'CTRL'|'STATUS'|'INTR'|'LOCK'|'SECURE', wdata}
+   mutant = secure_writable_locked planted (lock guard deleted; violation latch intact). */
+function regStep(st, acc, mutant){
+  var s = {ctrl:st.ctrl, status:st.status, intr:st.intr, lock:st.lock, secure:st.secure};
+  var out = {rdata:null, violation:false, state:s};
+  if (acc.op === 'w'){
+    var w = acc.wdata >>> 0;
+    if (acc.reg === 'CTRL')   s.ctrl = w;
+    else if (acc.reg === 'STATUS') { /* RO: write ignored */ }
+    else if (acc.reg === 'INTR')   s.intr = (st.intr & ~w) >>> 0;   /* W1C */
+    else if (acc.reg === 'LOCK')   s.lock = w;
+    else if (acc.reg === 'SECURE'){
+      var locked = (st.lock & 1) === 1;
+      if (!locked || mutant) s.secure = w;          /* mutant: guard deleted */
+      if (locked){                                   /* sec_violation logic untouched */
+        out.violation = true;
+        s.intr = (s.intr | 1) >>> 0;
+      }
+    }
+  } else {
+    out.rdata = ({CTRL:s.ctrl, STATUS:s.status, INTR:s.intr,
+                  LOCK:s.lock, SECURE:s.secure})[acc.reg] >>> 0;
+  }
+  return out;
+}
+
+/* The policy table's expected outcome for a write, given the pre-state. */
+function policyOutcome(st, reg){
+  if (reg === 'STATUS') return 'ignore';
+  if (reg === 'INTR')   return 'w1c';
+  if (reg === 'SECURE') return ((st.lock & 1) === 1) ? 'drop' : 'store';
+  return 'store';                                   /* CTRL, LOCK */
+}
+
+/* Write V to reg, read it back. Returns both verdicts. */
+function accessPair(st, reg, wdata, mutant){
+  var before = regStep(st, {op:'r', reg:reg}, mutant).rdata;
+  var w = regStep(st, {op:'w', reg:reg, wdata:wdata}, mutant);
+  var r = regStep(w.state, {op:'r', reg:reg}, mutant);
+  var expected = policyOutcome(st, reg);
+  /* what the DUT did, in the policy table's vocabulary */
+  var did;
+  if (reg === 'STATUS')      did = 'ignore';
+  else if (reg === 'INTR')   did = 'w1c';
+  else if (reg === 'SECURE' && (st.lock & 1) === 1)
+       did = mutant ? 'store-viol' : 'drop';        /* mutant: outside the table */
+  else did = 'store';
+  return {
+    state: w.state, before: before, readback: r.rdata, violation: w.violation,
+    expected: expected, did: did,
+    naivePass: r.rdata === (wdata >>> 0),           /* read-after-write verdict */
+    policyPass: did === expected                    /* does the DUT follow the spec */
+  };
+}
+
+if (typeof module !== "undefined" && module.exports){
+  module.exports = {RESET:RESET, freshState:freshState, regStep:regStep,
+                    policyOutcome:policyOutcome, accessPair:accessPair};
+  return;
+}
+
+/* ---------- DOM ---------- */
+
+if (new URLSearchParams(location.search).get("present") === "1")
+  document.body.classList.add("present");
+
+var el = function(id){ return document.getElementById(id); };
+var state = freshState();
+var mutant = false;
+var selReg = 'SECURE';
+var selOutcome = null;
+var lastRb = {CTRL:null, STATUS:null, INTR:null, LOCK:null, SECURE:null};
+var txn = 0, unlocked = false;
+
+var OUTNAME = {store:'stores it', ignore:'ignored', w1c:'1-bits clear (W1C)',
+               drop:'dropped + INTR[0] latches', 'store-viol':'stored despite the lock — and INTR[0] latched'};
+
+function hex(v){ return '0x' + (v >>> 0).toString(16).toUpperCase().padStart(8, '0'); }
+function parseHex(s){
+  var v = parseInt(String(s).trim().replace(/_/g,''), 16);
+  return isNaN(v) ? null : (v >>> 0);
+}
+
+function drawRegs(){
+  var t = el('regtable');
+  var head = t.rows[0].outerHTML, html = head;
+  ['CTRL','STATUS','INTR','LOCK','SECURE'].forEach(function(r){
+    var pc = POLICY[r] === 'RO' ? 'pol ro' : POLICY[r] === 'W1C' ? 'pol w1c'
+           : POLICY[r] === 'locked-RW' ? 'pol lk' : 'pol';
+    var v = {CTRL:state.ctrl, STATUS:state.status, INTR:state.intr,
+             LOCK:state.lock, SECURE:state.secure}[r];
+    var note = r === 'SECURE' ? ((state.lock & 1) ? ' &nbsp;&larr; locked' : ' &nbsp;&larr; open') : '';
+    html += '<tr' + (r === selReg ? ' class="sel"' : '') + '><td>' + ADDR[r] + '</td><td><b>' +
+      r + '</b></td><td><span class="' + pc + '">' + POLICY[r] + '</span>' + note + '</td>' +
+      '<td class="flops">' + hex(v) + '</td>' +
+      '<td class="rb">' + (lastRb[r] === null ? '—' : hex(lastRb[r])) + '</td></tr>';
+  });
+  t.innerHTML = html;
+}
+
+function logLine(html, cls){
+  var d = document.createElement('div');
+  if (cls) d.className = cls;
+  d.innerHTML = html;
+  el('log').appendChild(d);
+}
+
+function doWrite(reg, v){                     /* helper for scripted writes (lock/unlock/gate) */
+  var res = regStep(state, {op:'w', reg:reg, wdata:v}, mutant);
+  state = res.state; txn++;
+  logLine('#' + txn + ' WR <b>' + reg + '</b> &lt;= ' + hex(v) +
+          (res.violation ? ' &nbsp;<span class="lred">sec_violation &rarr; INTR[0] set</span>' : ''));
+  drawRegs();
+  return res;
+}
+function doRead(reg){
+  var res = regStep(state, {op:'r', reg:reg}, mutant);
+  lastRb[reg] = res.rdata; txn++;
+  logLine('#' + txn + ' RD <b>' + reg + '</b> &rarr; ' + hex(res.rdata) +
+          ' <span style="color:var(--ink3)">(rvalid one cycle later)</span>');
+  drawRegs();
+  return res.rdata;
+}
+
+function setVerdicts(naive, policy, clash){
+  var vn = el('vnaive'), vp = el('vpolicy');
+  vn.textContent = naive === null ? '—' : (naive ? 'PASS' : 'FAIL');
+  vn.className = 'v ' + (naive === null ? 'dim' : naive ? 'ok' : 'bad');
+  vp.textContent = policy === null ? '—' : (policy ? 'PASS' : 'FAIL');
+  vp.className = 'v ' + (policy === null ? 'dim' : policy ? 'ok' : 'bad');
+  el('vpair').className = 'pair' + (clash ? ' clash' : '');
+}
+
+function runAccess(){
+  var v = parseHex(el('wdata').value);
+  if (v === null){ el('wdata').focus(); return; }
+  var res = accessPair(state, selReg, v, mutant);
+  state = res.state; txn += 2;
+  lastRb[selReg] = res.readback;
+  logLine('#' + (txn-1) + ' WR <b>' + selReg + '</b> &lt;= ' + hex(v) +
+          (res.violation ? ' &nbsp;<span class="lred">sec_violation &rarr; INTR[0] set</span>' : ''));
+  logLine('#' + txn + ' RD <b>' + selReg + '</b> &rarr; ' + hex(res.readback) +
+          ' &nbsp;<span class="' + (res.naivePass ? 'lgreen' : 'lred') + '">' +
+          (res.naivePass ? 'rb == wdata' : 'rb != wdata') + '</span>');
+  drawRegs();
+
+  var clash = res.naivePass !== res.policyPass;
+  setVerdicts(res.naivePass, res.policyPass, clash);
+
+  var right = selOutcome === res.did;
+  var vd = el('verdict'), m = right ? '<b>Right.</b> ' : '<b>Not quite — you predicted "' +
+           OUTNAME[selOutcome] + '".</b> ';
+  m += 'The DUT ' + (res.did === 'store-viol' ? '<b>' + OUTNAME['store-viol'] + '</b>'
+                                              : '<b>' + OUTNAME[res.did] + '</b>') +
+       ': wrote ' + hex(v) + ', read back ' + hex(res.readback) + '.';
+
+  if (res.did === 'store-viol'){
+    vd.className = 'verdict bad';
+    m += ' The readback matches, so the read-after-write check reports <b>PASS on a broken ' +
+         'lock</b> — the same check that reported FAIL against the working DUT a moment ago. ' +
+         'The alarm rang (read INTR) but the door opened. Only a check that expects the ' +
+         '<i>drop</i> — the policy, not the storage — sees the bug.';
+  } else if (clash){
+    vd.className = 'verdict warn';
+    m += ' The two checks disagree, and read-after-write is the one that is wrong: ' +
+         (res.did === 'drop'
+           ? 'the drop <i>is</i> the specified behavior, and INTR[0] latching is the evidence. ' +
+             'A read-after-write suite files this correct DUT as broken.'
+           : 'this register is not storage, and a check that expects storage misreads it.');
+  } else {
+    vd.className = 'verdict ok';
+    m += res.did === 'store'
+       ? ' Plain storage — the one case read-after-write tests. In the Week 10 demo that check, ' +
+         'alone, scored 3/8 (measured): every policy mutant survived it.'
+       : ' Both checks agree here — but only because the policy check knew what to expect.';
+  }
+  if (res.did === 'drop')
+    m += ' Now <b>read INTR</b>: bit0 latched. Then run the W1C round-trip to clear it.';
+  vd.innerHTML = m;
+
+  selOutcome = null;
+  el('apply').disabled = true;
+  document.querySelectorAll('#plist button').forEach(function(b){ b.classList.remove('on'); });
+}
+
+/* wiring */
+document.querySelectorAll('#regpick button').forEach(function(b){
+  b.addEventListener('click', function(){
+    selReg = b.dataset.reg;
+    document.querySelectorAll('#regpick button').forEach(function(x){ x.classList.remove('on'); });
+    b.classList.add('on');
+    drawRegs();
+  });
+});
+document.querySelectorAll('#valpick button').forEach(function(b){
+  b.addEventListener('click', function(){ el('wdata').value = b.dataset.v; });
+});
+document.querySelectorAll('#plist button').forEach(function(b){
+  b.addEventListener('click', function(){
+    selOutcome = b.dataset.o;
+    document.querySelectorAll('#plist button').forEach(function(x){ x.classList.remove('on'); });
+    b.classList.add('on');
+    el('apply').disabled = false;
+  });
+});
+el('apply').addEventListener('click', runAccess);
+el('lockb').addEventListener('click', function(){ doWrite('LOCK', 1); });
+el('unlockb').addEventListener('click', function(){ doWrite('LOCK', 0); });
+document.querySelectorAll('#peeks button').forEach(function(b){
+  b.addEventListener('click', function(){
+    if (b.dataset.peek === '__w1c'){
+      var v0 = doRead('INTR');
+      doWrite('INTR', 1);
+      var v1 = doRead('INTR');
+      var vd = el('verdict');
+      vd.className = 'verdict ' + (v0 & 1 ? 'ok' : 'warn');
+      vd.innerHTML = (v0 & 1)
+        ? '<b>W1C round-trip:</b> INTR read ' + hex(v0) + ', wrote 0x1, reads ' + hex(v1) +
+          ' — the 1 cleared the bit it named. This is the spec’s four-step security check: ' +
+          'lock, attempt, observe INTR[0], clear it.'
+        : '<b>Nothing to clear</b> — INTR[0] is 0. Latch it first: lock, then write SECURE.';
+      return;
+    }
+    doRead(b.dataset.peek);
+  });
+});
+el('mut').addEventListener('click', function(){
+  mutant = !mutant;
+  el('mut').classList.toggle('on', mutant);
+  el('mut').setAttribute('aria-pressed', String(mutant));
+  el('mut').textContent = mutant ? 'Mutant planted — remove it' : 'Plant the policy mutant';
+  el('mutnote').classList.toggle('show', mutant);
+  logLine(mutant ? '<b class="lred">mutant planted: secure_writable_locked</b>'
+                 : '<b class="lgreen">mutant removed — RTL restored</b>');
+});
+el('rst').addEventListener('click', function(){
+  state = freshState();
+  lastRb = {CTRL:null, STATUS:null, INTR:null, LOCK:null, SECURE:null};
+  txn = 0;
+  logLine('<b>rst_n pulsed</b> — reset values loaded');
+  drawRegs();
+  setVerdicts(null, null, false);
+});
+
+/* predict-then-reveal gate */
+el('controls').classList.add('locked');
+document.querySelectorAll('[data-p]').forEach(function(b){
+  b.addEventListener('click', function(){
+    /* run the gate sequence through the model: reset -> LOCK=1 -> SECURE=0xDEADBEEF -> read back */
+    state = freshState();
+    doWrite('LOCK', 1);
+    var res = accessPair(state, 'SECURE', 0xDEADBEEF, false);
+    state = res.state; txn += 2; lastRb.SECURE = res.readback;
+    logLine('#' + (txn-1) + ' WR <b>SECURE</b> &lt;= ' + hex(0xDEADBEEF) +
+            ' &nbsp;<span class="lred">sec_violation &rarr; INTR[0] set</span>');
+    logLine('#' + txn + ' RD <b>SECURE</b> &rarr; ' + hex(res.readback) + ' &nbsp;<span class="lred">rb != wdata</span>');
+    var right = b.dataset.p === 'zero';
+    el('pverdict').innerHTML = (right ? '<b>Right.</b> ' : '<b>Not quite.</b> ') +
+      'The read returns <b>' + hex(res.readback) + '</b> — the locked write is dropped, and ' +
+      'something else happened too: hardware latched <code>INTR[0]</code>. A register with a ' +
+      'policy did three things a plain signal would not. Exercise all four policies below, ' +
+      'then plant the mutant and re-run this exact write.';
+    setVerdicts(res.naivePass, res.policyPass, true);
+    el('verdict').className = 'verdict warn';
+    el('verdict').innerHTML = '<b>Look at the pair above.</b> Read-after-write says FAIL — ' +
+      'against a DUT that is following its spec. Keep that in mind for the mutant.';
+    el('controls').classList.remove('locked');
+    unlocked = true;
+    document.querySelectorAll('[data-p]').forEach(function(x){ x.classList.remove('on'); });
+    b.classList.add('on');
+    drawRegs();
+  });
+});
+
+drawRegs();
+})();
+</script>
+</body>
+</html>

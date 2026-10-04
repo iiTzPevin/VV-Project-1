@@ -1,0 +1,27 @@
+/home/claude/vv-full/code/demos/wk02-s2-vplan/../../dut/alu.sv:32: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s2-vplan/../../dut/alu.sv:32: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s2-vplan/../../dut/alu.sv:32: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s2-vplan/../../dut/alu.sv:32: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s2-vplan/../../dut/alu.sv:32: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s2-vplan/../../dut/alu.sv:32: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s2-vplan/../../dut/alu.sv:32: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s2-vplan/../../dut/alu.sv:32: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s2-vplan/../../dut/alu.sv:38: vvp.tgt sorry: Case unique/unique0 qualities are ignored.
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787510411
+Found test step0_no_plan.test_first_instinct
+running test_first_instinct (1/1)
+demo seed = 5
+three vectors, result only, all green -- and no way to say what that is worth
+test_first_instinct passed
+*******************************************************************************************
+                                                        ** TEST                               STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        *******************************************************************************************
+                                                        ** step0_no_plan.test_first_instinct   PASS           3.00           0.00       3928.56  **
+                                                        *******************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                       3.00           0.08         38.56  **
+                                                        *******************************************************************************************
+

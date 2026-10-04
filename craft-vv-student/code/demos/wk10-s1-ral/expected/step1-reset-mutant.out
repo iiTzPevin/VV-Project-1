@@ -1,0 +1,35 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787518498
+Found test step1_reset.test_reset_values
+running test_reset_values (1/1)
+                                                          Every register (and an unmapped address) reads its reset value.
+demo seed = 5
+
+                                                          reset walk -- dut read vs. table vs. mirror:
+                                                          reg      addr  policy      dut         mirror
+                                                          -------  ----  ---------   ----------  ----------
+                                                          CTRL     0x0   RW          0xffffffff  0x00000000  <- MISMATCH
+                                                          STATUS   0x1   RO          0x5a5a0f0f  0x5a5a0f0f  ok
+                                                          SCRATCH  0x2   RW          0x00000000  0x00000000  ok
+                                                          INTR     0x3   W1C         0x00000000  0x00000000  ok
+                                                          LOCK     0x4   RW          0x00000000  0x00000000  ok
+                                                          SECURE   0x5   LOCKED_RW   0x00000000  0x00000000  ok
+                                                          (unmap)  0x7   --          0x00000000  0x00000000  ok
+                                                          7 reads, 1 mismatch(es)
+test_reset_values failed
+                                                        Traceback (most recent call last):
+                                                          File "/home/claude/vv-full/code/demos/wk10-s1-ral/step1_reset.py", line 57, in test_reset_values
+                                                            assert not mismatches, \
+                                                        AssertionError: reset values wrong for: CTRL
+                                                        assert not ['CTRL']
+***************************************************************************************
+                                                        ** TEST                           STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ***************************************************************************************
+                                                        ** step1_reset.test_reset_values   FAIL         175.00           0.00      65901.18  **
+                                                        ***************************************************************************************
+                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                 175.00           0.08       2237.38  **
+                                                        ***************************************************************************************
+

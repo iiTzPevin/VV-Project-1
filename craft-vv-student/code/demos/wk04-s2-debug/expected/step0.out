@@ -1,0 +1,28 @@
+planted released mutant 'ignore_full' -- writes are accepted even when full (overflow)
+  code/dut/fifo.sv
+  -> ~/.vvtemp/wk04-s2-bug/fifo.sv, one line changed:
+  -  assign do_wr = wr_en & ~full;
+  +  assign do_wr = wr_en;
+
+[smoke] the Week-3-style test against the planted DUT (icarus):
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787513351
+Found test smoke_week3.test_smoke
+running test_smoke (1/1)
+demo seed = 5
+three writes, count==3 -- the Week-3 smoke is satisfied
+test_smoke passed
+**************************************************************************************
+                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        **************************************************************************************
+                                                        ** smoke_week3.test_smoke         PASS          51.00           0.00      34264.57  **
+                                                        **************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                 51.00           0.08        648.70  **
+                                                        **************************************************************************************
+
+
+green. A FIFO that overwrites its oldest word on a full-queue write
+walks straight past a three-write smoke. Next: make STEP=1

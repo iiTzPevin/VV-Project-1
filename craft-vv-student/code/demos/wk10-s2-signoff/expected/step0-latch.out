@@ -1,0 +1,14 @@
+lint target: ~/.vvtemp/wk10-mutants/lint_latch/axil_regfile.sv
+  with verible (the course tool):  verible-verilog-lint axil_regfile.sv
+  stand-in on this machine:        verilator --lint-only -Wall axil_regfile.sv
+
+  %Warning-LATCH: ~/.vvtemp/wk10-mutants/lint_latch/axil_regfile.sv:81:5: Latch inferred for signal 'axil_regfile.rd_mux' (not all control paths of combinational always assign a value)
+                                                                   : ... Suggest use of always_latch for intentional latches
+     81 |     always_comb begin
+        |     ^~~~~~~~~~~
+                  ... For warning description see https://verilator.org/warn/LATCH?v=5.020
+                  ... Use "/* verilator lint_off LATCH */" and lint_on around source to disable this message.
+  %Error: Exiting due to 1 warning(s)
+lint: 1 finding(s) [LATCH].  gate: FAIL
+a latch nobody intended, found in under a second, with no testbench
+make: *** [Makefile:33: run] Error 1

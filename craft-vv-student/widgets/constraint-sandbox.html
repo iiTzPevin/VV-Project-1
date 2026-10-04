@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constraint Sandbox · CRAFT V&amp;V Week 5</title>
+<style>
+:root{
+  --navy:#1B2A4A; --gold:#D4A843; --green:#27AE60; --blue:#2E86AB;
+  --red:#E74C3C; --purple:#9B59B6;
+  --ground:#F4F6F9; --surface:#fff; --surface2:#EDF0F5;
+  --ink:#16223B; --ink2:#3E4C68; --ink3:#6B7791; --rule:#D9DEE7;
+  --bar:#2E86AB; --bar-edge:#D4A843;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#0D1524; --surface:#141E33; --surface2:#1B273F;
+    --ink:#E7ECF5; --ink2:#B6C1D6; --ink3:#8592AC; --rule:#2A3752;
+    --gold:#E9BE58; --green:#5FD48C; --blue:#5AA9C9; --red:#FF8776; --purple:#BE85D6;
+    --bar:#5AA9C9; --bar-edge:#E9BE58;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font:16px/1.55 "Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 18px 60px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:1.5rem;margin:0;letter-spacing:-.01em}
+h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin:0 0 8px}
+p{margin:0;max-width:70ch;color:var(--ink2)}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+header{border-bottom:2px solid var(--ink);padding-bottom:12px;display:flex;flex-direction:column;gap:6px}
+.kicker{font:600 .7rem/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px 18px}
+.grid{display:grid;grid-template-columns:minmax(280px,1fr) minmax(320px,1.35fr);gap:16px;align-items:start}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+
+.presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+button{font:inherit;cursor:pointer;border-radius:4px;border:1px solid var(--rule);
+  background:var(--surface2);color:var(--ink);padding:7px 12px;transition:none}
+button:hover{border-color:var(--ink3)}
+button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+@media (prefers-color-scheme:dark){button.on{background:var(--gold);color:#12203a;border-color:var(--gold)}}
+button.go{background:var(--green);color:#fff;border-color:var(--green);font-weight:600;padding:9px 18px}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+.ctl{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.ctl label{font-size:.85rem;color:var(--ink2);display:flex;justify-content:space-between;gap:10px}
+.ctl label b{font-family:ui-monospace,monospace;color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--blue)}
+input[type=number]{width:88px;font:inherit;padding:4px 6px;border:1px solid var(--rule);
+  border-radius:4px;background:var(--surface2);color:var(--ink);font-family:ui-monospace,monospace}
+
+.hist{display:flex;flex-direction:column;gap:3px;font-family:ui-monospace,monospace;font-size:.8rem}
+.row{display:grid;grid-template-columns:22px 1fr 58px;gap:8px;align-items:center}
+.row .n{text-align:right;color:var(--ink3);font-variant-numeric:tabular-nums}
+.row .t{color:var(--ink2);font-variant-numeric:tabular-nums;font-size:.75rem}
+.track{height:15px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.track i{display:block;height:100%;background:var(--bar);border-radius:2px}
+.row.edge .track i{background:var(--bar-edge)}
+.row.edge .n{color:var(--ink);font-weight:700}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:14px}
+.stat{background:var(--surface2);border-radius:5px;padding:9px 11px}
+.stat .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)}
+.stat .v{font:700 1.25rem/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;margin-top:3px}
+.v.ok{color:var(--green)} .v.bad{color:var(--red)} .v.warn{color:var(--gold)}
+
+.verdict{margin-top:14px;border-left:4px solid var(--rule);padding:10px 14px;background:var(--surface2);border-radius:0 5px 5px 0;font-size:.92rem}
+.verdict.ok{border-left-color:var(--green)}
+.verdict.bad{border-left-color:var(--red)}
+.verdict.warn{border-left-color:var(--gold)}
+.verdict b{color:var(--ink)}
+
+#predict{border-left:4px solid var(--purple);background:var(--surface2);padding:12px 16px;border-radius:0 5px 5px 0}
+#predict .q{font-weight:600;margin-bottom:9px}
+.locked{opacity:.45;pointer-events:none}
+
+canvas{width:100%;height:120px;display:block;background:var(--surface2);border-radius:5px}
+
+table.sweep{border-collapse:collapse;width:100%;font-family:ui-monospace,monospace;font-size:.78rem;margin-top:10px}
+table.sweep th,table.sweep td{padding:4px 8px;text-align:right;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums}
+table.sweep th{color:var(--ink3);font-weight:600;text-align:right;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em}
+table.sweep td.no{color:var(--red);font-weight:700}
+table.sweep td.yes{color:var(--green)}
+footer{font-size:.8rem;color:var(--ink3);border-top:1px solid var(--rule);padding-top:12px}
+footer p{color:var(--ink3)}
+
+/* projector mode: ?present=1 */
+body.present{font-size:21px}
+body.present .prose,body.present footer{display:none}
+body.present h1{font-size:2rem}
+body.present .stat .v{font-size:1.7rem}
+body.present .hist{font-size:1rem}
+body.present .row{grid-template-columns:28px 1fr 74px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="kicker">CRAFT V&amp;V · Week 5 · constrained-random verification</span>
+  <h1>Constraint Sandbox</h1>
+  <p class="prose">The FIFO from Weeks 4–6, driven by stimulus you shape. The question this
+  answers is not "does random testing work" — it is <em>where does your stimulus spend its
+  time, and can a bug at the boundary ever be reached?</em></p>
+</header>
+
+<div id="predict" class="panel">
+  <div class="q">Before you run it: with the current settings, will the FIFO ever reach <code>full</code>?</div>
+  <div class="presets">
+    <button data-p="yes">Yes, often</button>
+    <button data-p="rare">Yes, but rarely</button>
+    <button data-p="no">No, never</button>
+  </div>
+  <div id="pverdict" style="font-size:.9rem;color:var(--ink3)">Commit to an answer — the controls unlock once you do.</div>
+</div>
+
+<div class="grid">
+
+  <div class="panel" id="controls">
+    <h2>Stimulus</h2>
+    <div class="presets">
+      <button data-preset="hand">Week 4 hand vectors</button>
+      <button data-preset="uniform" class="on">Uniform random</button>
+      <button data-preset="trap">The dist trap</button>
+      <button data-preset="shaped">Shaped</button>
+    </div>
+
+    <div class="ctl">
+      <label>P(write) while filling <b><span id="lwf">50</span>%</b></label>
+      <input type="range" id="wf" min="0" max="100" value="50">
+    </div>
+    <div class="ctl">
+      <label>P(read) while filling <b><span id="lrf">50</span>%</b></label>
+      <input type="range" id="rf" min="0" max="100" value="50">
+    </div>
+    <div class="ctl">
+      <label>P(write) while draining <b><span id="lwd">50</span>%</b></label>
+      <input type="range" id="wd" min="0" max="100" value="50">
+    </div>
+    <div class="ctl">
+      <label>P(read) while draining <b><span id="lrd">50</span>%</b></label>
+      <input type="range" id="rd" min="0" max="100" value="50">
+    </div>
+    <div class="ctl">
+      <label>Phase length <b><span id="lpl">200</span> cycles</b></label>
+      <input type="range" id="pl" min="5" max="200" value="200">
+    </div>
+    <div class="ctl">
+      <label for="seed">Seed <span style="color:var(--ink3)">·</span> cycles</label>
+      <div style="display:flex;gap:8px">
+        <input type="number" id="seed" value="5" min="1" max="9999">
+        <input type="number" id="cycles" value="200" min="20" max="5000" step="20">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+      <button class="go" id="run">Run</button>
+      <button id="sweep">Sweep 10 seeds</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Occupancy · where the stimulus spends its time</h2>
+    <div class="hist" id="hist"></div>
+    <div class="stats">
+      <div class="stat"><div class="k">Drift · fill / drain</div><div class="v" id="sdrift" style="font-size:1.05rem">—</div></div>
+      <div class="stat"><div class="k">Cycles at empty</div><div class="v" id="sempty">—</div></div>
+      <div class="stat"><div class="k">Cycles at full</div><div class="v" id="sfull">—</div></div>
+      <div class="stat"><div class="k">Writes while full</div><div class="v" id="soflow">—</div></div>
+    </div>
+    <div class="verdict" id="verdict">Run the model to see whether the overflow mutant is reachable.</div>
+    <h2 style="margin-top:16px">Occupancy over time</h2>
+    <canvas id="trace" width="900" height="120" aria-label="Occupancy against cycle number"></canvas>
+    <div id="sweepwrap"></div>
+  </div>
+</div>
+
+<footer>
+  <p><b>Reading the drift.</b> Drift is measured separately for the fill and drain phases —
+  entries added per cycle. Averaging the two would cancel to zero for any working sawtooth,
+  which is why the demo measures per phase too. Near-zero on <em>both</em> means the
+  constraints are shaping nothing, whatever the histogram happens to show.</p>
+  <p style="margin-top:8px"><b>What this models.</b> One clock per cycle, exactly the gating in
+  <code>code/dut/fifo.sv</code>: a write is taken only when not full, a read only when not
+  empty, and a simultaneous read+write leaves the count unchanged. Depth 8.
+  <b>Writes while full</b> counts the cycles where <code>wr_en</code> was asserted with
+  <code>full</code> high — the only cycles on which the released mutant
+  <code>ignore_full</code> can be detected.</p>
+  <p style="margin-top:8px">This reproduces the phenomenon, not the exact stream from
+  <code>pyvsc</code> — the numbers will be close to the Session 2 demo, not identical.
+  For the real thing: <code>just demo 05 s2 4</code>.</p>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var DEPTH = 8;
+if (new URLSearchParams(location.search).get("present") === "1") document.body.classList.add("present");
+
+/* deterministic PRNG so a seed reproduces exactly (mulberry32) */
+function rng(seed){
+  var a = seed >>> 0;
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+var el = function(id){ return document.getElementById(id); };
+var P = {wf:50, rf:50, wd:50, rd:50, pl:200};
+var PRESETS = {
+  hand:    {wf:100, rf:0,  wd:0,  rd:100, pl:4},
+  uniform: {wf:50,  rf:50, wd:50, rd:50,  pl:200},
+  trap:    {wf:53,  rf:54, wd:53, rd:56,  pl:25},
+  shaped:  {wf:85,  rf:10, wd:10, rd:85,  pl:25}
+};
+
+function sim(seed, cycles){
+  var r = rng(seed), count = 0;
+  var bins = new Array(DEPTH+1).fill(0), trace = [], wrFull = 0, rdEmpty = 0;
+  var w = [0,0], rr = [0,0], n = [0,0];        // [fill, drain] tallies
+  for (var c = 0; c < cycles; c++){
+    var filling = Math.floor(c / P.pl) % 2 === 0;
+    var pw = (filling ? P.wf : P.wd) / 100;
+    var pr = (filling ? P.rf : P.rd) / 100;
+    var ph = filling ? 0 : 1;
+    var wr = r() < pw ? 1 : 0;
+    var rdn = r() < pr ? 1 : 0;
+    w[ph] += wr; rr[ph] += rdn; n[ph]++;
+    var full = count === DEPTH, empty = count === 0;
+    if (wr && full) wrFull++;
+    if (rdn && empty) rdEmpty++;
+    var doWr = wr && !full, doRd = rdn && !empty;
+    if (doWr && !doRd) count++;
+    else if (doRd && !doWr) count--;
+    bins[count]++; trace.push(count);
+  }
+  var dF = n[0] ? (w[0]-rr[0])/n[0] : 0;
+  var dD = n[1] ? (w[1]-rr[1])/n[1] : 0;
+  return {bins:bins, trace:trace, wrFull:wrFull, rdEmpty:rdEmpty,
+          driftFill:dF, driftDrain:dD, shaping:Math.max(Math.abs(dF), Math.abs(dD)),
+          onePhase:!n[1], cycles:cycles};
+}
+
+function drawHist(res){
+  var peak = Math.max.apply(null, res.bins) || 1, html = "";
+  for (var i = DEPTH; i >= 0; i--){
+    var edge = (i === 0 || i === DEPTH);
+    var tag = i === DEPTH ? "full" : (i === 0 ? "empty" : "");
+    html += '<div class="row' + (edge ? ' edge' : '') + '">' +
+      '<span class="n">' + i + '</span>' +
+      '<span class="track"><i style="width:' + (100*res.bins[i]/peak).toFixed(1) + '%"></i></span>' +
+      '<span class="t">' + res.bins[i] + (tag ? " " + tag : "") + '</span></div>';
+  }
+  el("hist").innerHTML = html;
+}
+
+function drawTrace(res){
+  var cv = el("trace"), ctx = cv.getContext("2d");
+  var W = cv.width, H = cv.height, n = res.trace.length;
+  var css = getComputedStyle(document.body);
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle = css.getPropertyValue("--rule").trim(); ctx.lineWidth = 1;
+  [0, DEPTH].forEach(function(lv){
+    var y = H - 6 - (H-14) * lv / DEPTH;
+    ctx.beginPath(); ctx.setLineDash([4,4]); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  ctx.strokeStyle = css.getPropertyValue("--bar").trim(); ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  for (var i = 0; i < n; i++){
+    var x = W * i / (n-1 || 1), y = H - 6 - (H-14) * res.trace[i] / DEPTH;
+    i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+  }
+  ctx.stroke();
+}
+
+function verdict(res){
+  var f = res.bins[DEPTH], e = res.bins[0];
+  var sgn = function(x){ return (x >= 0 ? "+" : "") + x.toFixed(2); };
+  el("sdrift").textContent = res.onePhase ? sgn(res.driftFill)
+                                          : sgn(res.driftFill) + " / " + sgn(res.driftDrain);
+  el("sdrift").className = "v " + (res.shaping < 0.15 ? "warn" : "ok");
+  el("sempty").textContent = e; el("sempty").className = "v " + (e ? "ok" : "bad");
+  el("sfull").textContent  = f; el("sfull").className  = "v " + (f ? "ok" : "bad");
+  el("soflow").textContent = res.wrFull; el("soflow").className = "v " + (res.wrFull ? "ok" : "bad");
+
+  var v = el("verdict"), m;
+  if (res.wrFull === 0){
+    v.className = "verdict bad";
+    m = "<b>ignore_full is unreachable with this stimulus.</b> No cycle asserted " +
+        "<code>wr_en</code> while <code>full</code> was high, so no amount of running " +
+        "longer will find it. This is a stimulus problem, not a checking problem.";
+  } else if (res.wrFull < 5){
+    v.className = "verdict warn";
+    m = "<b>Reachable, barely — " + res.wrFull + " chance" + (res.wrFull>1?"s":"") +
+        " in " + res.cycles + " cycles.</b> Change the seed and it may vanish. " +
+        "Detection this thin is luck, not coverage. Try the seed sweep.";
+  } else {
+    v.className = "verdict ok";
+    m = "<b>ignore_full is well covered — " + res.wrFull + " detection opportunities.</b> " +
+        "Now check the per-phase drift: if it is near zero, the boundary time came from an " +
+        "unbiased random walk rather than from your constraints, and the next seed may not " +
+        "repeat it.";
+  }
+  if (res.shaping < 0.15 && res.wrFull > 0){
+    m += " <br><br><b>Per-phase drift is only " + sgn(res.driftFill) + " / " +
+         sgn(res.driftDrain) + ".</b> Whatever shaping you believe you wrote, the stream " +
+         "is not carrying it — the boundary time above came from an unbiased random walk.";
+  }
+  v.innerHTML = m;
+}
+
+var unlocked = false;
+function run(){
+  var res = sim(+el("seed").value || 1, +el("cycles").value || 200);
+  drawHist(res); drawTrace(res); verdict(res);
+  el("sweepwrap").innerHTML = "";
+}
+
+function sweep(){
+  var cy = +el("cycles").value || 200, rows = "", worstFull = Infinity, misses = 0;
+  for (var s = 1; s <= 10; s++){
+    var r = sim(s, cy), f = r.bins[DEPTH], e = r.bins[0], both = f && e;
+    if (!both) misses++;
+    worstFull = Math.min(worstFull, f);
+    rows += "<tr><td>" + s + "</td><td>" + e + "</td><td>" + f + "</td><td class='" +
+            (both ? "yes'>yes" : "no'>NO") + "</td></tr>";
+  }
+  el("sweepwrap").innerHTML =
+    '<h2 style="margin-top:16px">Ten seeds, same constraints</h2>' +
+    '<table class="sweep"><tr><th>seed</th><th>empty</th><th>full</th><th>both?</th></tr>' +
+    rows + '</table><div class="verdict ' + (misses ? "bad" : "ok") + '">' +
+    (misses
+      ? "<b>" + misses + " of 10 seeds never reached a boundary.</b> Whether this regression " +
+        "would catch an overflow bug is decided by the seed, not by your testbench."
+      : "<b>All 10 seeds reached both boundaries</b>, worst-case " + worstFull +
+        " cycles at full. That is what makes it a regression rather than a run.") +
+    "</div>";
+}
+
+/* wiring */
+["wf","rf","wd","rd","pl"].forEach(function(k){
+  var s = el(k), lab = el("l" + k);
+  s.addEventListener("input", function(){
+    P[k] = +s.value;
+    lab.textContent = P[k];
+    document.querySelectorAll("[data-preset]").forEach(function(b){ b.classList.remove("on"); });
+    if (unlocked) run();
+  });
+});
+document.querySelectorAll("[data-preset]").forEach(function(b){
+  b.addEventListener("click", function(){
+    var p = PRESETS[b.dataset.preset];
+    Object.keys(p).forEach(function(k){ P[k] = p[k]; el(k).value = p[k]; el("l"+k).textContent = p[k]; });
+    document.querySelectorAll("[data-preset]").forEach(function(x){ x.classList.remove("on"); });
+    b.classList.add("on");
+    if (unlocked) run();
+  });
+});
+el("run").addEventListener("click", run);
+el("sweep").addEventListener("click", sweep);
+el("seed").addEventListener("change", function(){ if (unlocked) run(); });
+el("cycles").addEventListener("change", function(){ if (unlocked) run(); });
+
+/* predict-then-reveal */
+el("controls").classList.add("locked");
+document.querySelectorAll("[data-p]").forEach(function(b){
+  b.addEventListener("click", function(){
+    var res = sim(+el("seed").value || 1, +el("cycles").value || 200);
+    var actual = res.bins[DEPTH] === 0 ? "no" : (res.bins[DEPTH] < 5 ? "rare" : "yes");
+    var right = b.dataset.p === actual;
+    el("pverdict").innerHTML = (right ? "<b>Right.</b> " : "<b>Not quite.</b> ") +
+      "With these settings the FIFO sits at <code>full</code> for <b>" + res.bins[DEPTH] +
+      "</b> of " + res.cycles + " cycles. Now change the sliders and watch the boundary " +
+      "time move — then hit <b>Sweep 10 seeds</b> and ask whether it moved because of you " +
+      "or because of the seed.";
+    el("controls").classList.remove("locked");
+    unlocked = true;
+    document.querySelectorAll("[data-p]").forEach(function(x){ x.classList.remove("on"); });
+    b.classList.add("on");
+    run();
+  });
+});
+["wf","rf","wd","rd","pl"].forEach(function(k){ el("l"+k).textContent = P[k]; });
+run();
+})();
+</script>
+</body>
+</html>

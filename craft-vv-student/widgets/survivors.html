@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Survivors · CRAFT V&amp;V Weeks 3–13</title>
+<style>
+:root{
+  --navy:#1B2A4A; --gold:#D4A843; --green:#27AE60; --blue:#2E86AB;
+  --red:#E74C3C; --purple:#9B59B6;
+  --ground:#F4F6F9; --surface:#fff; --surface2:#EDF0F5;
+  --ink:#16223B; --ink2:#3E4C68; --ink3:#6B7791; --rule:#D9DEE7;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#0D1524; --surface:#141E33; --surface2:#1B273F;
+    --ink:#E7ECF5; --ink2:#B6C1D6; --ink3:#8592AC; --rule:#2A3752;
+    --gold:#E9BE58; --green:#5FD48C; --blue:#5AA9C9; --red:#FF8776; --purple:#BE85D6;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font:16px/1.55 "Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 18px 60px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:1.5rem;margin:0;letter-spacing:-.01em}
+h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin:0 0 8px}
+p{margin:0;max-width:72ch;color:var(--ink2)}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+header{border-bottom:2px solid var(--ink);padding-bottom:12px;display:flex;flex-direction:column;gap:6px}
+.kicker{font:600 .7rem/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px 18px}
+.grid2{display:grid;grid-template-columns:minmax(330px,1fr) minmax(360px,1.2fr);gap:16px;align-items:start}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+
+button{font:inherit;cursor:pointer;border-radius:4px;border:1px solid var(--rule);
+  background:var(--surface2);color:var(--ink);padding:7px 12px}
+button:hover{border-color:var(--ink3)}
+button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+@media (prefers-color-scheme:dark){button.on{background:var(--gold);color:#12203a;border-color:var(--gold)}}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+
+.suiteline{font-size:.82rem;color:var(--ink2);background:var(--surface2);border-radius:5px;
+  padding:8px 11px;margin:10px 0 12px;font-family:ui-monospace,monospace}
+.suiteline b{color:var(--ink)}
+
+table.mx{border-collapse:collapse;width:100%;font-family:ui-monospace,monospace;font-size:.78rem}
+table.mx th,table.mx td{padding:4px 6px;border-bottom:1px solid var(--rule);text-align:center}
+table.mx th{color:var(--ink3);font-weight:600;font-size:.66rem;text-transform:uppercase;letter-spacing:.05em}
+table.mx td:first-child,table.mx th:first-child{text-align:left}
+table.mx td:first-child{color:var(--ink)}
+.cell{width:100%;min-width:74px;padding:5px 4px;border-radius:3px;border:1px solid var(--rule);
+  background:var(--surface2);font:inherit}
+.cell.q{color:var(--ink3)}
+.cell.f{background:var(--green);color:#fff;border-color:var(--green);font-weight:700}
+.cell.s{background:var(--red);color:#fff;border-color:var(--red);font-weight:700}
+.cell.sel{outline:2px solid var(--gold);outline-offset:1px}
+.tblwrap{overflow-x:auto}
+
+.diff{font-family:ui-monospace,monospace;font-size:.76rem;background:var(--surface2);
+  border-radius:5px;padding:8px 11px;margin:8px 0;overflow-x:auto;white-space:pre}
+.diff .del{color:var(--red)} .diff .add{color:var(--green)}
+
+.chain{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-family:ui-monospace,monospace;
+  font-size:.78rem;margin:10px 0}
+.chain span.lk{padding:3px 9px;border-radius:3px;border:1px solid var(--rule);color:var(--ink3)}
+.chain span.okl{border-color:var(--green);color:var(--green)}
+.chain span.badl{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+.chain span.ar{color:var(--ink3)}
+
+.verdict{border-left:4px solid var(--rule);padding:10px 14px;background:var(--surface2);
+  border-radius:0 5px 5px 0;font-size:.92rem;margin-top:10px}
+.verdict.ok{border-left-color:var(--green)}
+.verdict.bad{border-left-color:var(--red)}
+.verdict.warn{border-left-color:var(--gold)}
+.verdict b{color:var(--ink)}
+
+#predict{border-left:4px solid var(--purple);background:var(--surface2);padding:12px 16px;border-radius:0 5px 5px 0}
+#predict .q{font-weight:600;margin-bottom:9px}
+.locked{opacity:.45;pointer-events:none}
+
+.pv{display:flex;gap:8px;margin:10px 0}
+.pv button{flex:1;font-weight:600}
+canvas{width:100%;height:110px;display:block;background:var(--surface2);border-radius:5px}
+.cap{font-size:.72rem;color:var(--ink3);margin-top:4px;font-family:ui-monospace,monospace}
+.badge{display:inline-block;padding:1px 8px;border-radius:3px;font-size:.7rem;font-weight:700;
+  letter-spacing:.05em;color:#fff}
+.badge.reach{background:var(--purple)} .badge.prop{background:var(--gold);color:#12203a}
+
+footer{font-size:.8rem;color:var(--ink3);border-top:1px solid var(--rule);padding-top:12px}
+footer p{color:var(--ink3)}
+
+body.present{font-size:20px}
+body.present .prose,body.present footer{display:none}
+body.present h1{font-size:2rem}
+body.present table.mx{font-size:.95rem}
+body.present .verdict{font-size:1.05rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="kicker">CRAFT V&amp;V · Weeks 3–13 · mutation score</span>
+  <h1>Survivors</h1>
+  <p class="prose">The released FIFO pool — the 8 mutants of
+  <code>tb/fifo/mutants_released.yaml</code> — against the three suites of the Week 5 demo.
+  The instinct this widget exists to break: <em>"a high score means a good suite."</em>
+  The score is <b>found/total</b>; what it cannot say is which bugs the survivors are,
+  or why they lived. That takes a row per survivor — the analysis Week 13 grades.</p>
+</header>
+
+<div id="predict" class="panel">
+  <div class="q">Week 5, step 0 to step 1: eight hand vectors are replaced by 200 cycles of
+  transaction-level random. The score was 2/8. It becomes—</div>
+  <div class="chips">
+    <button data-p="3">3/8</button>
+    <button data-p="5">5/8</button>
+    <button data-p="8">8/8</button>
+  </div>
+  <div id="pverdict" style="font-size:.9rem;color:var(--ink3)">Commit to an answer — the pool unlocks once you do.</div>
+</div>
+
+<div class="grid2" id="main">
+
+  <div class="panel">
+    <h2>Suite · pick one, then predict each mutant</h2>
+    <div class="chips" id="suites"></div>
+    <div class="suiteline" id="suiteline"></div>
+    <div class="tblwrap">
+    <table class="mx" id="mx"></table>
+    </div>
+    <div style="font-size:.78rem;color:var(--ink3);margin-top:8px">Scores on the buttons are the
+    demo's measured numbers. Each cell stays <span class="mono">?</span> until you commit to
+    found-or-survived for it.</div>
+  </div>
+
+  <div class="panel" id="detail">
+    <h2 id="dtitle">Mutant</h2>
+    <div id="ddesc" style="font-size:.9rem;color:var(--ink2)">Pick a cell in the matrix.</div>
+    <div class="diff" id="ddiff" hidden></div>
+    <div class="pv" id="dpv" hidden>
+      <button data-g="f">Found</button>
+      <button data-g="s">Survives</button>
+    </div>
+    <div id="dreveal" hidden>
+      <div class="chain" id="dchain" aria-label="The find chain"></div>
+      <div class="verdict" id="dverdict"></div>
+      <canvas id="trace" width="920" height="110" aria-label="Count trace, DUT against model, with the first divergence marked"></canvas>
+      <div class="cap" id="tracecap"></div>
+      <div id="shapedwrap" style="margin-top:10px" hidden>
+        <button id="shaped">Replay with shaped stimulus</button>
+        <div class="verdict warn" id="shapedout" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p><b>What this models.</b> <code>dut/fifo.sv</code> exactly: depth 8, FWFT
+  (<code>rd_data</code> shows the head whenever not empty), a write taken only when not full, a
+  read only when not empty, simultaneous read+write leaves the count unchanged, 4-bit counter.
+  Each mutant is applied as its one-line edit from the released yaml. The verdict in every cell
+  is the Week 5 demo's measured outcome (<code>DEMO_SEED=5</code>, Icarus); the replay trace and
+  its cycle numbers come from this widget's own mulberry32 stream, which reproduces the
+  phenomenon, not the demo's pyvsc stream. For the real thing: <code>just demo 05 s1 0</code>.</p>
+  <p style="margin-top:8px"><b>The number lies in both directions.</b> Here 7/8 — a high score —
+  leaves the overflow bug alive on a coin-flip of a seed. Session 2 shows the mirror image: a
+  <code>dist</code>-shaped constraint set that provably shapes nothing (measured per-phase drift
+  &minus;0.01) scored <b>8/8</b> on one seed — luck wearing a coverage costume. A single-seed
+  score cannot tell a suite that works from one that got lucky. The survivor rows — reachable?
+  observable? first broken link? — can, and that table is the deliverable the Week 13 clinic
+  builds toward sign-off.</p>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- core model (DOM-free; the node self-test drives these) ---------- */
+
+var DEPTH = 8, CNTMASK = 0xF, PTRMASK = 0x7, DATAMASK = 0xFF;
+var SEED = 21;             /* widget stream seed — searched so this stream reproduces the
+                              demo's measured found/survived pattern in every cell:
+                              occupancy touches 7, never 8; both boundaries behave as
+                              DEMO_SEED=5 did in the demo */
+
+/* deterministic PRNG (mulberry32) so a seed reproduces exactly */
+function mulberry32(seed){
+  var a = seed >>> 0;
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* the released pool, verbatim from tb/fifo/mutants_released.yaml */
+var MUTANTS = [
+  {id:'full_offbyone',   desc:'full asserts one entry too early (cnt == DEPTH-1)',
+   find:'assign full    = (cnt == DEPTH);',   repl:'assign full    = (cnt == DEPTH-1);'},
+  {id:'empty_offbyone',  desc:'empty asserts one entry too early (cnt == 1)',
+   find:'assign empty   = (cnt == 0);',       repl:'assign empty   = (cnt == 1);'},
+  {id:'ignore_full',     desc:'writes are accepted even when full (overflow)',
+   find:'assign do_wr = wr_en & ~full;',      repl:'assign do_wr = wr_en;'},
+  {id:'ignore_empty',    desc:'reads are accepted even when empty (underflow)',
+   find:'assign do_rd = rd_en & ~empty;',     repl:'assign do_rd = rd_en;'},
+  {id:'count_wr_dec',    desc:'a write-only cycle decrements the count',
+   find:"2'b10:   cnt <= cnt + 1'b1;",        repl:"2'b10:   cnt <= cnt - 1'b1;"},
+  {id:'rd_data_wrptr',   desc:'rd_data reads from the write pointer instead of the read pointer',
+   find:'assign rd_data = mem[rd_ptr];',      repl:'assign rd_data = mem[wr_ptr];'},
+  {id:'mem_corrupt',     desc:'stored data is corrupted (+1) on write',
+   find:'mem[wr_ptr] <= wr_data;',            repl:'mem[wr_ptr] <= wr_data + 1\'b1;'},
+  {id:'wrptr_wrap_early',desc:'write pointer wraps one slot early',
+   find:"wr_ptr      <= (wr_ptr == ADDRW'(DEPTH-1)) ? '0 : wr_ptr + 1'b1;",
+   repl:"wr_ptr      <= (wr_ptr == ADDRW'(DEPTH-2)) ? '0 : wr_ptr + 1'b1;"}
+];
+
+/* the Week-4 hand vectors: 4 writes, then 4 reads (wk05 step0) */
+var HAND = [[1,0,0xA0],[1,0,0xA1],[1,0,0xA2],[1,0,0xA3],
+            [0,1,0x00],[0,1,0x00],[0,1,0x00],[0,1,0x00]];
+
+function genStim(seed, n){
+  var r = mulberry32(seed), a = [];
+  for (var i = 0; i < n; i++)
+    a.push([r() < 0.5 ? 1 : 0, r() < 0.5 ? 1 : 0, Math.floor(r() * 256) & DATAMASK]);
+  return a;
+}
+/* two-phase shaped stimulus, the Session-2 idea: bias writes while filling, reads while draining */
+function genShaped(seed, n){
+  var r = mulberry32(seed), a = [];
+  for (var i = 0; i < n; i++){
+    var fill = Math.floor(i / 25) % 2 === 0;
+    a.push([r() < (fill ? .85 : .10) ? 1 : 0, r() < (fill ? .10 : .85) ? 1 : 0,
+            Math.floor(r() * 256) & DATAMASK]);
+  }
+  return a;
+}
+
+/* one clock of dut/fifo.sv with an optional mutant applied; returns post-edge outputs */
+function fifoStep(f, wr, rd, data, mut){
+  var full  = (mut === 'full_offbyone')  ? (f.cnt === DEPTH-1) : (f.cnt === DEPTH);
+  var empty = (mut === 'empty_offbyone') ? (f.cnt === 1)       : (f.cnt === 0);
+  var do_wr = (mut === 'ignore_full')  ? wr : ((wr && !full)  ? 1 : 0);
+  var do_rd = (mut === 'ignore_empty') ? rd : ((rd && !empty) ? 1 : 0);
+  if (do_wr){
+    f.mem[f.wr_ptr] = (mut === 'mem_corrupt') ? ((data + 1) & DATAMASK) : data;
+    var wrapAt = (mut === 'wrptr_wrap_early') ? DEPTH-2 : DEPTH-1;
+    f.wr_ptr = (f.wr_ptr === wrapAt) ? 0 : ((f.wr_ptr + 1) & PTRMASK);
+  }
+  if (do_rd) f.rd_ptr = (f.rd_ptr === DEPTH-1) ? 0 : ((f.rd_ptr + 1) & PTRMASK);
+  if (do_wr && !do_rd) f.cnt = (mut === 'count_wr_dec') ? ((f.cnt - 1) & CNTMASK)
+                                                        : ((f.cnt + 1) & CNTMASK);
+  else if (do_rd && !do_wr) f.cnt = (f.cnt - 1) & CNTMASK;
+  return {
+    count: f.cnt,
+    full:  ((mut === 'full_offbyone')  ? (f.cnt === DEPTH-1) : (f.cnt === DEPTH)) ? 1 : 0,
+    empty: ((mut === 'empty_offbyone') ? (f.cnt === 1)       : (f.cnt === 0))     ? 1 : 0,
+    rd_data: (mut === 'rd_data_wrptr') ? f.mem[f.wr_ptr] : f.mem[f.rd_ptr]
+  };
+}
+
+/* the golden reference (fifo_model semantics): correct gating, a queue */
+function modelStep(mq, wr, rd, data){
+  var dw = wr && mq.length < DEPTH, dr = rd && mq.length > 0;
+  if (dw) mq.push(data);
+  if (dr) mq.shift();
+  return {count: mq.length, full: mq.length === DEPTH ? 1 : 0,
+          empty: mq.length === 0 ? 1 : 0, head: mq.length ? mq[0] : null};
+}
+
+/* run one (stimulus, mutant, checker) cell.
+   mode 'count' checks count only (steps 0/1); 'score' adds full, empty, rd_data (step 2). */
+function runCell(stim, mut, mode){
+  var f = {mem: new Array(DEPTH).fill(0), wr_ptr: 0, rd_ptr: 0, cnt: 0};
+  var mq = [];
+  var dut = [], mdl = [], mism = [], caughtAt = -1, maxOcc = 0, emptyCyc = 0, fullCyc = 0;
+  for (var i = 0; i < stim.length; i++){
+    var s  = stim[i];
+    var mo = modelStep(mq, s[0], s[1], s[2]);
+    var du = fifoStep(f, s[0], s[1], s[2], mut);
+    dut.push(du.count); mdl.push(mo.count);
+    mism.push((mo.count > 0 && du.rd_data !== mo.head) ? 1 : 0);
+    if (mo.count > maxOcc) maxOcc = mo.count;
+    if (mo.count === 0) emptyCyc++;
+    if (mo.count === DEPTH) fullCyc++;
+    var bad = du.count !== mo.count;
+    if (mode === 'score')
+      bad = bad || du.full !== mo.full || du.empty !== mo.empty ||
+            (mo.count > 0 && du.rd_data !== mo.head);
+    if (bad && caughtAt < 0) caughtAt = i + 1;
+  }
+  return {caught: caughtAt > 0, cycle: caughtAt, dut: dut, mdl: mdl, mism: mism,
+          maxOcc: maxOcc, emptyCyc: emptyCyc, fullCyc: fullCyc, n: stim.length};
+}
+
+/* the three suites of wk05-s1; scores are the demo's measured numbers */
+var SUITES = [
+  {id:'hand',  name:'Hand vectors',       step:'step 0', score:'2/8', found:2, mode:'count',
+   checks:'count', stim:'8 fixed vectors: 4 writes, then 4 reads'},
+  {id:'rand',  name:'Uniform random',     step:'step 1', score:'3/8', found:3, mode:'count',
+   checks:'count', stim:'200 cycles, wr/rd/data unconstrained'},
+  {id:'score', name:'Random + scoreboard',step:'step 2', score:'7/8', found:7, mode:'score',
+   checks:'count · full · empty · rd_data when !empty', stim:'the same 200 cycles'}
+];
+function suiteStim(sid){ return sid === 'hand' ? HAND : genStim(SEED, 200); }
+
+/* verdicts are the demo's measured outcomes; the why is the survivor analysis.
+   link: first broken link of the find chain — 'reach' or 'prop' (reached, dies unseen). */
+var V = {
+hand:{
+  full_offbyone:{c:0,link:'reach',
+    why:'The mutated compare differs only at occupancy 7. These vectors top out at 4 of 8 '+
+        '(measured, step 0 histogram) — the mutant logic never evaluates differently on any '+
+        'state the suite reaches.',
+    fix:'Fill the FIFO to 7. Any stimulus that holds writes high long enough gets there.'},
+  empty_offbyone:{c:1,
+    why:'The last read arrives with one entry left; the mutant calls that empty and refuses '+
+        'it. The count check reads 1 where the model says 0 — found on the final vector. '+
+        'All four links hold.'},
+  ignore_full:{c:0,link:'reach',
+    why:'Detection needs wr_en high while full is high. These vectors never come within four '+
+        'entries of full — there is nothing to overflow.',
+    fix:'Reach full, then keep writing.'},
+  ignore_empty:{c:0,link:'reach',
+    why:'Detection needs rd_en high while the FIFO is empty. The sequence reads exactly the '+
+        'four entries it wrote and stops — the case never fires.',
+    fix:'One extra read vector at the end of the drain.'},
+  count_wr_dec:{c:1,
+    why:'The first vector is a write-only cycle: the mutant drives cnt down and the 4-bit '+
+        'counter wraps to 15 where the model says 1. Found on vector 1 — the cheapest bug in '+
+        'the pool.'},
+  rd_data_wrptr:{c:0,link:'prop',
+    why:'Every read returns mem[wr_ptr] — the wrong slot — so the corruption reaches the read '+
+        'port from the first read on. Nothing compares rd_data; it exits unobserved, and '+
+        'count, the one checked signal, is never touched.',
+    fix:'One line: assert rd_data equals the model head when not empty.'},
+  mem_corrupt:{c:0,link:'prop',
+    why:'Every write stores wr_data+1 and every read presents it. Reach and corrupt cost '+
+        'nothing here — the chain dies at the read port, where no check looks.',
+    fix:'The same rd_data compare.'},
+  wrptr_wrap_early:{c:0,link:'reach',
+    why:'The early wrap fires on the seventh write; this suite performs four. And had it '+
+        'fired, no rd_data check would have seen the data land in the wrong slot — both '+
+        'halves of the find chain are missing.',
+    fix:'Push eight or more writes through, and check rd_data.'}
+},
+rand:{
+  full_offbyone:{c:0,link:'prop',
+    why:'This stream does reach occupancy 7 — step 2 finds the mutant there with the same '+
+        'stimulus — but the flag that lies is not on this suite’s checklist. cnt only '+
+        'betrays the early full if a write-only cycle lands while the mutant is refusing '+
+        'writes at 7, and across these 200 cycles none does.',
+    fix:'Check the full flag against the model — no new stimulus required.'},
+  empty_offbyone:{c:1,
+    why:'This mutant’s empty is wrong on both sides: false at zero entries, true at one. '+
+        'Random finds the count consequence within a handful of cycles — a read-only cycle '+
+        'at zero entries is accepted and cnt wraps to 15, or a legal read at one entry is '+
+        'refused and cnt sticks.'},
+  ignore_full:{c:0,link:'reach',
+    why:'Unshaped random is an unbiased walk: with DEMO_SEED=5 the FIFO spends 0 cycles at '+
+        'full (measured seed lottery). A write-while-full never happens, so there is nothing '+
+        'to catch — and running longer does not help: the demo tried 2000 cycles and the '+
+        'score held.',
+    fix:'Shape the stimulus. The Session 2 shaped set reaches both boundaries on every one '+
+        'of 8 seeds (measured).'},
+  ignore_empty:{c:1,
+    why:'The other boundary is where this walk lives: seed 5 sits at empty for 9 cycles '+
+        '(measured). The first read-only cycle there is accepted by the mutant, cnt wraps 0 '+
+        'to 15, and the count check fires. Randomizing bought exactly this one mutant — '+
+        '2/8 to 3/8 (measured).'},
+  count_wr_dec:{c:1,
+    why:'The first write-only cycle — a few draws in — sends cnt the wrong way. Any stimulus '+
+        'with a write in it finds this one.'},
+  rd_data_wrptr:{c:0,link:'prop',
+    why:'200 cycles of traffic put the wrong slot on the read port over and over. The count '+
+        'trajectory is identical by construction — the pointers never feed cnt — so a '+
+        'count-only suite can run forever and see nothing.',
+    fix:'Check rd_data.'},
+  mem_corrupt:{c:0,link:'prop',
+    why:'Corrupted data is stored and read out all run long; cnt is untouched. No cycle count '+
+        'fixes an unwatched output — this is the "run it longer" trap: 2000 cycles, same '+
+        'score (measured).',
+    fix:'Check rd_data.'},
+  wrptr_wrap_early:{c:0,link:'prop',
+    why:'Random pushes far more than seven writes, so the pointer wraps early many times — '+
+        'reach is free now. The data lands in the wrong slots and leaves through a port '+
+        'nobody checks.',
+    fix:'Check rd_data.'}
+},
+score:{
+  full_offbyone:{c:1,
+    why:'Same stimulus as before. The first time occupancy touches 7 the mutant asserts full '+
+        'a slot early, and the flag compare fires — no refused write required. One of the '+
+        'four mutants that checking bought (3/8 to 7/8, measured) without changing a single '+
+        'input.'},
+  empty_offbyone:{c:1,
+    why:'The mutant’s empty is false at zero entries and true at one — wrong on both '+
+        'sides. The empty-flag compare fires on the first cycle the FIFO sits at either; '+
+        'here, immediately.'},
+  ignore_full:{c:0,link:'reach',
+    why:'The one that got away — and it is the overflow bug. The observer is in place: a '+
+        'write-while-full would bend count, full, and the data stream, all compared now. But '+
+        'seed 5 never reaches full — 0 cycles (measured) — so the bug is never exercised. '+
+        'The seed lottery decides: seeds 4 and 8 fill for 26 and 39 cycles, seeds 5 and 10 '+
+        'never do (measured). Whether this suite finds an overflow was decided by a number '+
+        'nobody chose on purpose.',
+    fix:'Shaping, not luck: Session 2’s shaped constraints score 8/8 with per-phase '+
+        'drift +0.51 / −0.52 (measured). Replay it below.'},
+  ignore_empty:{c:1,
+    why:'Found by the count check as before, with the empty-flag compare now backing it up.'},
+  count_wr_dec:{c:1,
+    why:'First write-only cycle, as before. Stimulus was never this mutant’s problem.'},
+  rd_data_wrptr:{c:1,
+    why:'The first read with the pointers apart returns mem[wr_ptr] instead of the head, and '+
+        'the rd_data compare fires. Reach was never the problem — a check was.'},
+  mem_corrupt:{c:1,
+    why:'The first checked read returns wr_data+1 against the model head. Four mutants for '+
+        'one assert — this is what "checking bought four" means.'},
+  wrptr_wrap_early:{c:1,
+    why:'Once the seventh write wraps the pointer early, an entry lands on a live slot and '+
+        'slot 7 is never filled; FIFO order breaks at the read port and the rd_data compare '+
+        'fires.'}
+}};
+
+if (typeof module !== "undefined" && module.exports){
+  module.exports = {DEPTH:DEPTH, SEED:SEED, mulberry32:mulberry32, MUTANTS:MUTANTS, HAND:HAND,
+                    genStim:genStim, genShaped:genShaped, fifoStep:fifoStep, modelStep:modelStep,
+                    runCell:runCell, SUITES:SUITES, suiteStim:suiteStim, V:V};
+  return;
+}
+
+/* ---------- DOM ---------- */
+
+if (new URLSearchParams(location.search).get("present") === "1")
+  document.body.classList.add("present");
+
+var el = function(id){ return document.getElementById(id); };
+var suite = 'score';
+var sel = null;                       /* selected mutant id */
+var revealed = {hand:{}, rand:{}, score:{}};
+
+function suiteById(id){ for (var i=0;i<SUITES.length;i++) if (SUITES[i].id===id) return SUITES[i]; }
+function mutById(id){ for (var i=0;i<MUTANTS.length;i++) if (MUTANTS[i].id===id) return MUTANTS[i]; }
+
+function drawSuites(){
+  var html = '';
+  SUITES.forEach(function(s){
+    var done = Object.keys(revealed[s.id]).length === MUTANTS.length;
+    html += '<button data-s="' + s.id + '"' + (s.id === suite ? ' class="on"' : '') + '>' +
+      s.name + ' · <b>' + s.score + '</b>' + (done ? ' ✓' : '') + '</button>';
+  });
+  el('suites').innerHTML = html;
+  var s = suiteById(suite);
+  el('suiteline').innerHTML = '<b>' + s.step + '</b> · stimulus: ' + s.stim +
+    '<br>checks: <b>' + s.checks + '</b> · measured score: <b>' + s.score + '</b>';
+  document.querySelectorAll('#suites button').forEach(function(b){
+    b.addEventListener('click', function(){ suite = b.dataset.s; drawSuites(); drawMatrix(); drawDetail(); });
+  });
+}
+
+function cellFace(sid, mid){
+  if (!revealed[sid][mid]) return '<span class="mono">?</span>';
+  return V[sid][mid].c ? 'found' : 'SURVIVED';
+}
+function drawMatrix(){
+  var html = '<tr><th>mutant</th>';
+  SUITES.forEach(function(s){ html += '<th>' + s.step + '</th>'; });
+  html += '</tr>';
+  MUTANTS.forEach(function(m){
+    html += '<tr><td>' + m.id + '</td>';
+    SUITES.forEach(function(s){
+      var cls = 'cell ' + (!revealed[s.id][m.id] ? 'q' : (V[s.id][m.id].c ? 'f' : 's'));
+      if (s.id === suite && m.id === sel) cls += ' sel';
+      html += '<td><button class="' + cls + '" data-cell="' + s.id + ':' + m.id +
+              '" aria-label="' + m.id + ' under ' + s.name + '">' + cellFace(s.id, m.id) +
+              '</button></td>';
+    });
+    html += '</tr>';
+  });
+  el('mx').innerHTML = html;
+  document.querySelectorAll('[data-cell]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var p = b.dataset.cell.split(':');
+      suite = p[0]; sel = p[1];
+      drawSuites(); drawMatrix(); drawDetail();
+    });
+  });
+}
+
+function chainHTML(link){
+  var names = ['reach','corrupt','propagate','compare'];
+  var brk = link === 'reach' ? 0 : link === 'prop' ? 2 : -1;   /* -1: found, all hold */
+  var h = '';
+  names.forEach(function(nm, i){
+    var cls = 'lk';
+    if (brk < 0) cls += ' okl';
+    else if (i < brk) cls += ' okl';
+    else if (i === brk) cls += ' badl';
+    h += '<span class="' + cls + '">' + nm + '</span>' +
+         (i < 3 ? '<span class="ar">&rarr;</span>' : '');
+  });
+  return h;
+}
+
+function drawTrace(res, mode){
+  var cv = el('trace'), ctx = cv.getContext('2d');
+  var W = cv.width, H = cv.height, n = res.dut.length;
+  var css = getComputedStyle(document.body);
+  var top = 8, bot = 22, plotH = H - top - bot;
+  var y = function(c){ return top + plotH * (1 - Math.min(c, 9) / 9); };
+  var x = function(i){ return W * i / (n - 1 || 1); };
+  ctx.clearRect(0, 0, W, H);
+  ctx.setLineDash([4,4]); ctx.lineWidth = 1;
+  ctx.strokeStyle = css.getPropertyValue('--rule').trim();
+  [0, DEPTH].forEach(function(lv){
+    ctx.beginPath(); ctx.moveTo(0, y(lv)); ctx.lineTo(W, y(lv)); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  /* model count */
+  ctx.strokeStyle = css.getPropertyValue('--ink3').trim(); ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  for (var i = 0; i < n; i++) i ? ctx.lineTo(x(i), y(res.mdl[i])) : ctx.moveTo(x(i), y(res.mdl[i]));
+  ctx.stroke();
+  /* dut count */
+  ctx.strokeStyle = css.getPropertyValue('--blue').trim(); ctx.lineWidth = 1.7;
+  ctx.beginPath();
+  for (i = 0; i < n; i++) i ? ctx.lineTo(x(i), y(res.dut[i])) : ctx.moveTo(x(i), y(res.dut[i]));
+  ctx.stroke();
+  /* rd_data disagreement ticks */
+  ctx.strokeStyle = css.getPropertyValue('--gold').trim(); ctx.lineWidth = 2;
+  for (i = 0; i < n; i++) if (res.mism[i]){
+    ctx.beginPath(); ctx.moveTo(x(i), H - 14); ctx.lineTo(x(i), H - 6); ctx.stroke();
+  }
+  /* first divergence of the CHECKED signals */
+  if (res.cycle > 0){
+    var xx = x(res.cycle - 1);
+    ctx.strokeStyle = css.getPropertyValue('--red').trim(); ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(xx, top); ctx.lineTo(xx, H - 4); ctx.stroke();
+  }
+}
+
+function drawDetail(){
+  if (!sel){ return; }
+  var m = mutById(sel), s = suiteById(suite), v = V[suite][sel];
+  el('dtitle').textContent = m.id + ' · ' + s.name;
+  el('ddesc').textContent = m.desc;
+  el('ddiff').hidden = false;
+  el('ddiff').innerHTML = '<span class="del">- ' + m.find.replace(/</g,'&lt;') +
+                          '</span>\n<span class="add">+ ' + m.repl.replace(/</g,'&lt;') + '</span>';
+  var done = !!revealed[suite][sel];
+  el('dpv').hidden = done;
+  el('dreveal').hidden = !done;
+  el('shapedwrap').hidden = true;
+  if (!done){
+    document.querySelectorAll('#dpv button').forEach(function(b){ b.classList.remove('on'); });
+    return;
+  }
+  el('dchain').innerHTML = chainHTML(v.c ? null : v.link);
+  var res = runCell(suiteStim(suite), sel, s.mode);
+  var g = revealed[suite][sel];                    /* the committed guess: 'f' | 's' */
+  var right = (g === 'f') === !!v.c;
+  var html = (right ? '<b>Right.</b> ' : '<b>Not quite.</b> ') +
+    (v.c ? '<b>Found.</b> ' : '<b>SURVIVED</b>' +
+      (v.link ? ' — <span class="badge ' + v.link + '">' +
+        (v.link === 'reach' ? 'reachability gap' : 'observability gap') + '</span> ' : ' ')) +
+    v.why;
+  if (!v.c && v.fix) html += '<br><br><b>What would expose it:</b> ' + v.fix;
+  if (v.c) html += '<br><span style="color:var(--ink3);font-size:.85em">Widget replay: first ' +
+    'divergence of the checked signals at cycle ' + res.cycle + ' of ' + res.n +
+    ' (mulberry32 seed ' + SEED + ' — reproduces the phenomenon; the measured numbers are the demo’s).</span>';
+  el('dverdict').className = 'verdict ' + (v.c ? 'ok' : 'bad');
+  el('dverdict').innerHTML = html;
+  drawTrace(res, s.mode);
+  el('tracecap').textContent = 'count: DUT (blue) vs model (gray) · gold ticks: rd_data ≠ model head' +
+    (s.mode === 'count' ? ' (UNCHECKED by this suite)' : ' (checked here)') +
+    (res.cycle > 0 ? ' · red line: first checked divergence' : ' · no checked divergence in ' + res.n + ' cycles');
+  if (suite === 'score' && sel === 'ignore_full'){
+    el('shapedwrap').hidden = false;
+    el('shapedout').style.display = 'none';
+  }
+}
+
+document.querySelectorAll('#dpv button').forEach(function(b){
+  b.addEventListener('click', function(){
+    if (!sel) return;
+    revealed[suite][sel] = b.dataset.g;
+    drawSuites(); drawMatrix(); drawDetail();
+  });
+});
+el('shaped').addEventListener('click', function(){
+  var res = runCell(genShaped(SEED, 200), 'ignore_full', 'score');
+  var o = el('shapedout');
+  o.style.display = 'block';
+  o.innerHTML = res.caught
+    ? '<b>Found at cycle ' + res.cycle + '.</b> The shaped stream reaches full (' + res.fullCyc +
+      ' cycles at the boundary) and the first write-while-full breaks count, flags and data at ' +
+      'once. Same checker as before — the suite was fine; the stimulus was the gap. ' +
+      'Session 2’s measured version: 8/8, both boundaries on all 8 seeds.'
+    : 'This shaped stream did not reach full — raise the write bias.';
+  drawTrace(res, 'score');
+  el('tracecap').textContent = 'shaped replay: count DUT vs model · red line: first checked divergence';
+});
+
+/* predict-then-reveal gate */
+el('main').classList.add('locked');
+document.querySelectorAll('[data-p]').forEach(function(b){
+  b.addEventListener('click', function(){
+    var right = b.dataset.p === '3';
+    el('pverdict').innerHTML = (right ? '<b>Right.</b> ' : '<b>Not quite.</b> ') +
+      'Measured: <b>3/8</b>. Two hundred random cycles bought one mutant. Step 2 then kept ' +
+      'the stimulus, added checks on full, empty and rd_data — and bought four more: <b>7/8</b>. ' +
+      'The claim of that demo: randomizing bought one, checking bought four. Now work the ' +
+      'matrix: for each cell, commit — found or survived — and read why.';
+    el('main').classList.remove('locked');
+    document.querySelectorAll('[data-p]').forEach(function(x){ x.classList.remove('on'); });
+    b.classList.add('on');
+  });
+});
+
+drawSuites(); drawMatrix();
+})();
+</script>
+</body>
+</html>

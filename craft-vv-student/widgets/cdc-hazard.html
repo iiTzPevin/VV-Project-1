@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CDC Hazard · CRAFT V&amp;V Week 10</title>
+<style>
+:root{
+  --navy:#1B2A4A; --gold:#D4A843; --green:#27AE60; --blue:#2E86AB;
+  --red:#E74C3C; --purple:#9B59B6;
+  --ground:#F4F6F9; --surface:#fff; --surface2:#EDF0F5;
+  --ink:#16223B; --ink2:#3E4C68; --ink3:#6B7791; --rule:#D9DEE7;
+  --band:rgba(212,168,67,.28); --bandhit:rgba(231,76,60,.30);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#0D1524; --surface:#141E33; --surface2:#1B273F;
+    --ink:#E7ECF5; --ink2:#B6C1D6; --ink3:#8592AC; --rule:#2A3752;
+    --gold:#E9BE58; --green:#5FD48C; --blue:#5AA9C9; --red:#FF8776; --purple:#BE85D6;
+    --band:rgba(233,190,88,.22); --bandhit:rgba(255,135,118,.28);
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font:16px/1.55 "Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 18px 60px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:1.5rem;margin:0;letter-spacing:-.01em}
+h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin:0 0 8px}
+p{margin:0;max-width:72ch;color:var(--ink2)}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+header{border-bottom:2px solid var(--ink);padding-bottom:12px;display:flex;flex-direction:column;gap:6px}
+.kicker{font:600 .7rem/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px 18px}
+.grid{display:grid;grid-template-columns:minmax(280px,1fr) minmax(320px,1.9fr);gap:16px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+
+button{font:inherit;cursor:pointer;border-radius:4px;border:1px solid var(--rule);
+  background:var(--surface2);color:var(--ink);padding:7px 12px}
+button:hover{border-color:var(--ink3)}
+button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+@media (prefers-color-scheme:dark){button.on{background:var(--gold);color:#12203a;border-color:var(--gold)}}
+button.go{background:var(--green);color:#fff;border-color:var(--green);font-weight:600}
+button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+.ctl{display:flex;flex-direction:column;gap:4px;margin-bottom:11px}
+.ctl label{font-size:.85rem;color:var(--ink2);display:flex;justify-content:space-between;gap:10px}
+.ctl label b{font-family:ui-monospace,monospace;color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--blue)}
+input[type=number]{width:88px;font:inherit;padding:4px 6px;border:1px solid var(--rule);
+  border-radius:4px;background:var(--surface2);color:var(--ink);font-family:ui-monospace,monospace}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:14px}
+.stat{background:var(--surface2);border-radius:5px;padding:9px 11px}
+.stat .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)}
+.stat .v{font:700 1.25rem/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;margin-top:3px}
+.v.ok{color:var(--green)} .v.bad{color:var(--red)} .v.warn{color:var(--gold)}
+
+.verdict{margin-top:14px;border-left:4px solid var(--rule);padding:10px 14px;background:var(--surface2);border-radius:0 5px 5px 0;font-size:.92rem}
+.verdict.ok{border-left-color:var(--green)}
+.verdict.bad{border-left-color:var(--red)}
+.verdict.warn{border-left-color:var(--gold)}
+.verdict b{color:var(--ink)}
+
+#predict{border-left:4px solid var(--purple);background:var(--surface2);padding:12px 16px;border-radius:0 5px 5px 0}
+#predict .q{font-weight:600;margin-bottom:9px}
+.locked{opacity:.45;pointer-events:none}
+
+canvas{width:100%;display:block;background:var(--surface2);border-radius:5px}
+#waves{height:auto}
+
+#log{margin-top:10px;font:.78rem/1.5 ui-monospace,monospace;color:var(--ink2);
+  display:flex;flex-direction:column;gap:2px;max-height:9.5em;overflow-y:auto}
+#log .hit{color:var(--red)}
+#log .okc{color:var(--green)}
+.gcdnote{margin-top:10px;font-size:.82rem;color:var(--ink3)}
+.gcdnote.bad{color:var(--red)}
+
+footer{font-size:.8rem;color:var(--ink3);border-top:1px solid var(--rule);padding-top:12px}
+footer p{color:var(--ink3)}
+
+/* projector mode: ?present=1 */
+body.present{font-size:21px}
+body.present .prose,body.present footer{display:none}
+body.present h1{font-size:2rem}
+body.present .stat .v{font-size:1.7rem}
+body.present #log{font-size:1rem;max-height:7em}
+body.present .verdict{font-size:1.05rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="kicker">CRAFT V&amp;V · Week 10 · signoff survey — CDC</span>
+  <h1>CDC Hazard</h1>
+  <p class="prose">Two clocks with no shared edge — periods 7.0 and 11.3 ns, relatively prime,
+  so every phase relationship eventually occurs. A signal launched by <code>aclk</code> is
+  sampled raw by a <code>dclk</code> flop, no synchronizer. The claim under test is the one
+  from the reframe box: <em>"simulation would have caught it."</em></p>
+</header>
+
+<div id="predict" class="panel">
+  <div class="q">Commit before stepping: sooner or later <code>async_in</code> toggles inside the
+  capture flop's setup/hold window. At that edge, what does the zero-delay RTL simulation you
+  have run all course (cocotb + Icarus) show?</div>
+  <div class="presets">
+    <button data-g="x">An X propagates from the flop</button>
+    <button data-g="t">The simulator reports a setup/hold violation</button>
+    <button data-g="n">Nothing — the capture looks clean</button>
+  </div>
+  <div id="pverdict" style="font-size:.9rem;color:var(--ink3);margin-top:9px">Commit to an answer — the controls unlock once you do.</div>
+</div>
+
+<div class="grid">
+
+  <div class="panel" id="controls">
+    <h2>The crossing</h2>
+    <div class="ctl">
+      <label>aclk period <b><span id="lta">7.0</span> ns</b></label>
+      <input type="range" id="ta" min="30" max="200" step="1" value="70">
+    </div>
+    <div class="ctl">
+      <label>dclk period <b><span id="ltd">11.3</span> ns</b></label>
+      <input type="range" id="td" min="30" max="200" step="1" value="113">
+    </div>
+    <div class="ctl">
+      <label>async_in toggles every <b><span id="ln">3</span> aclk cycles</b></label>
+      <input type="range" id="n" min="1" max="8" value="3">
+    </div>
+    <div class="ctl">
+      <label>setup window <b><span id="ltsu">0.50</span> ns</b></label>
+      <input type="range" id="tsu" min="5" max="100" step="5" value="50">
+    </div>
+    <div class="ctl">
+      <label>hold window <b><span id="lth">0.30</span> ns</b></label>
+      <input type="range" id="th" min="5" max="60" step="5" value="30">
+    </div>
+    <div class="ctl">
+      <label for="seed">Seed</label>
+      <input type="number" id="seed" value="5" min="1" max="9999">
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+      <button id="sync" aria-pressed="false">2-flop synchronizer: off</button>
+    </div>
+    <div class="gcdnote" id="gcdnote"></div>
+
+    <h2 style="margin-top:16px">Predict the next capture, then step</h2>
+    <p class="prose" style="font-size:.85rem;margin-bottom:8px">Read the drawing: the dashed
+    line is the next <code>dclk</code> edge, the shaded band its setup/hold window. What will
+    the flop feeding <b><span id="whatname">dclk logic (raw wire)</span></b> hold after that edge?</p>
+    <div class="presets">
+      <button data-pr="0" class="go">0 — step</button>
+      <button data-pr="1" class="go">1 — step</button>
+      <button data-pr="e">either · can't be known</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      <button id="runviol">Run to next violation</button>
+      <button id="reset">Reset t=0</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>The crossing in continuous time</h2>
+    <canvas id="waves" width="940" height="312" aria-label="Waveforms: aclk, dclk with setup/hold windows, async_in, and the destination captures"></canvas>
+    <div class="stats">
+      <div class="stat"><div class="k">Edges stepped</div><div class="v" id="sedges">0</div></div>
+      <div class="stat"><div class="k">Window hits</div><div class="v" id="sviol">0</div></div>
+      <div class="stat"><div class="k">Flagged by zero-delay sim</div><div class="v" id="ssim">0</div></div>
+      <div class="stat"><div class="k" id="kdis">Instances disagreeing</div><div class="v" id="sdis">0</div></div>
+    </div>
+    <div class="verdict" id="verdict">Step the destination clock. Nothing interesting happens until a toggle lands inside a shaded band — the drawing shows you when that is coming.</div>
+    <div id="log" role="log" aria-live="polite"></div>
+
+    <h2 style="margin-top:16px">Where the toggles land · offset from the nearest dclk edge</h2>
+    <canvas id="strip" width="940" height="116" aria-label="Each async toggle plotted by its time offset from the nearest destination clock edge; the setup/hold window is shaded"></canvas>
+    <p class="prose" style="font-size:.82rem;margin-top:6px">Relatively prime periods sweep the
+    phase: each toggle lands at a new offset, and the sequence walks through the window
+    (shaded) rather than around it. Filled dots have already happened; hollow ones are coming.</p>
+  </div>
+</div>
+
+<footer>
+  <p><b>What this models.</b> A capture violates iff a data toggle lands inside
+  [edge&nbsp;&minus;&nbsp;setup, edge&nbsp;+&nbsp;hold] — that is the whole physics, kept at the
+  abstraction where it is honest. A violating capture goes metastable and settles to the old or
+  the new value by a seeded draw, independently <em>per flop instance</em> — which is why the raw
+  wire feeds two instances here, A and B: on a violating edge they can disagree, and downstream
+  logic reads an impossible state. The windows are model-sized (tenths of a nanosecond); on a
+  production cell they are picoseconds, which changes the rate, not the mechanism.</p>
+  <p style="margin-top:8px"><b>What the synchronizer buys.</b> With the toggle on, the raw wire
+  feeds <code>s1</code>, and logic reads <code>s2</code>. <code>s1</code> may still go metastable —
+  that is allowed. It gets a full destination cycle to settle before <code>s2</code> samples it, so
+  logic always sees a clean, consistent level; only the arrival cycle (old value vs new) stays
+  uncertain. The model assumes <code>s1</code> settles within one cycle — each added stage
+  multiplies the mean time between failures (MTBF). One synchronizer, then fan out: two separate
+  synchronizers on one signal recreate the disagreement. A multi-bit bus needs more than per-bit
+  synchronizers — bits settle on different cycles; gray-code the value or use a handshake.</p>
+  <p style="margin-top:8px"><b>Why simulation is silent.</b> Zero-delay RTL simulation orders every
+  event on clock edges; setup and hold windows do not exist in its event model, so the
+  mid-transition sample cannot be represented — no stimulus, seed count, or run length changes
+  that. Correctness here is structural, which is why CDC signoff is a structural-analysis tool
+  that reads the netlist for unsynchronized crossings and never runs your testbench.
+  Same seed, same resolutions: the randomness is mulberry32, keyed by seed and edge index.</p>
+</footer>
+</div>
+
+<script>
+/*==CORE==*/
+/* DOM-free model. The node self-test evaluates exactly this block.
+   All times are integers in units of 0.01 ns. */
+var CDC = (function(){
+  function mulberry32(seed){
+    var a = seed >>> 0;
+    return function(){
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ var t=a%b; a=b; b=t; } return a; }
+  /* Ta,Td,phi,tsu,th in units; N = aclk cycles per async toggle */
+  function cfgOf(Ta,Td,N,phi,tsu,th,seed){
+    return {Ta:Ta, Td:Td, N:N, TI:N*Ta, phi:phi, tsu:tsu, th:th, seed:(seed>>>0)||1};
+  }
+  function edgeT(cfg,k){ return cfg.phi + k*cfg.Td; }          /* dclk rising edges, k>=1 */
+  /* async_in value just before time t: parity of toggles strictly before t.
+     Toggles at j*TI, j>=1; async_in starts at 0. */
+  function parityBefore(cfg,t){
+    if (t <= cfg.TI) return 0;
+    return Math.floor((t-1)/cfg.TI) & 1;
+  }
+  /* Violation iff a toggle lands inside [e-tsu, e+th], inclusive both ends.
+     TI > tsu+th is enforced by the caller, so at most one candidate toggle. */
+  function violAt(cfg,k){
+    var e = edgeT(cfg,k), lo = e - cfg.tsu, hi = e + cfg.th;
+    var j = Math.ceil(lo/cfg.TI); if (j < 1) j = 1;
+    var tog = j*cfg.TI;
+    if (tog >= lo && tog <= hi) return {viol:true, tog:tog, delta:tog-e};
+    return {viol:false, tog:null, delta:null};
+  }
+  /* margin: distance from edge k to the nearest toggle (for the step log) */
+  function marginAt(cfg,k){
+    var e = edgeT(cfg,k), j = Math.max(1, Math.round(e/cfg.TI)), m = Infinity, x;
+    for (x = j-1; x <= j+1; x++) if (x >= 1) m = Math.min(m, Math.abs(x*cfg.TI - e));
+    return m;
+  }
+  /* Seeded draws for edge k, a pure function of (seed,k): stepping order,
+     re-queries, and the sync toggle never reshuffle them. */
+  function drawsAt(cfg,k){
+    var h = (cfg.seed ^ Math.imul(k, 0x9E3779B1)) >>> 0;
+    var r = mulberry32(h || 1);
+    return {ra:r(), rb:r(), rs:r(), fa:r(), fb:r(), fs:r()};
+  }
+  /* One destination edge: ideal (zero-delay sim) capture, and the modeled
+     captures of raw instances A/B and synchronizer stage s1. */
+  function captureAt(cfg,k){
+    var e = edgeT(cfg,k), v = violAt(cfg,k), ideal = parityBefore(cfg,e);
+    var c = {k:k, e:e, viol:false, tog:null, delta:null, ideal:ideal,
+             a:ideal, b:ideal, s1:ideal, vOld:ideal, vNew:ideal,
+             settA:0, settB:0, settS:0};
+    if (v.viol){
+      var old = parityBefore(cfg, v.tog), nw = old ^ 1, d = drawsAt(cfg,k);
+      c.viol = true; c.tog = v.tog; c.delta = v.delta; c.vOld = old; c.vNew = nw;
+      c.a  = d.ra < 0.5 ? old : nw;
+      c.b  = d.rb < 0.5 ? old : nw;
+      c.s1 = d.rs < 0.5 ? old : nw;
+      c.settA = .18 + .5*d.fa; c.settB = .18 + .5*d.fb; c.settS = .18 + .5*d.fs;
+    }
+    return c;
+  }
+  /* s2 samples s1's settled value one edge later; reset value 0. Never metastable. */
+  function s2At(cfg,k){ return k >= 2 ? captureAt(cfg,k-1).s1 : 0; }
+  function nextViol(cfg,fromK,maxK){
+    for (var k = fromK+1; k <= maxK; k++) if (violAt(cfg,k).viol) return k;
+    return -1;
+  }
+  /* Offset of toggles j=1..M from the nearest dclk edge (for the strip). */
+  function phasePoints(cfg,M){
+    var pts = [];
+    for (var j = 1; j <= M; j++){
+      var tog = j*cfg.TI;
+      var x = ((tog - cfg.phi) % cfg.Td + cfg.Td) % cfg.Td;   /* offset past edge below */
+      var delta = (x <= cfg.Td - x) ? x : x - cfg.Td;
+      pts.push({j:j, tog:tog, delta:delta,
+                viol:(x <= cfg.th) || (cfg.Td - x <= cfg.tsu)});
+    }
+    return pts;
+  }
+  /* Phase-pattern analysis: toggle offsets repeat with period Td/gcd(TI,Td).
+     reachable=false means no toggle ever lands in the window. */
+  function analyze(cfg){
+    var g = gcd(cfg.TI, cfg.Td), phases = cfg.Td/g, reach = false;
+    var pts = phasePoints(cfg, Math.min(phases, 20000));
+    for (var i = 0; i < pts.length; i++) if (pts[i].viol){ reach = true; break; }
+    return {g:g, phases:phases, reachable:reach};
+  }
+  return {mulberry32:mulberry32, gcd:gcd, cfgOf:cfgOf, edgeT:edgeT,
+          parityBefore:parityBefore, violAt:violAt, marginAt:marginAt,
+          drawsAt:drawsAt, captureAt:captureAt, s2At:s2At, nextViol:nextViol,
+          phasePoints:phasePoints, analyze:analyze};
+})();
+/*==ENDCORE==*/
+(function(){
+"use strict";
+if (new URLSearchParams(location.search).get("present") === "1") document.body.classList.add("present");
+var el = function(id){ return document.getElementById(id); };
+var $$ = function(sel){ return document.querySelectorAll(sel); };
+
+var P = {ta:700, td:1130, n:3, tsu:50, th:30, seed:5};
+var cur = 0, syncOn = false;
+var nViol = 0, nDis = 0;
+function cfg(){ return CDC.cfgOf(P.ta, P.td, P.n, 0, P.tsu, P.th, P.seed); }
+function ns(u){ return (u/100).toFixed(2); }
+function ns1(u){ return (u/100).toFixed(1); }
+
+/* ---------- drawing ---------- */
+var XL = 74;
+function css(name){ return getComputedStyle(document.body).getPropertyValue(name).trim(); }
+
+function drawWaves(){
+  var c = cfg(), cv = el("waves"), ctx = cv.getContext("2d");
+  var W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  var eNext = CDC.edgeT(c, cur+1);
+  var viewMin = 2*c.TI + c.Td;
+  var t1 = Math.max(eNext + Math.round(.45*c.Td), viewMin);
+  var span = Math.max(10*c.Td, viewMin);
+  var t0 = Math.max(0, t1 - span);
+  var X = function(t){ return XL + (W-XL-8) * (t-t0) / (t1-t0); };
+  var tNow = cur > 0 ? CDC.edgeT(c,cur) : 0;
+
+  var rows = ["aclk","dclk","async_in", syncOn?"s1":"capt A", syncOn?"s2 → logic":"capt B"];
+  var RH = 58, top = function(i){ return 12 + i*RH; };
+  var hi = function(i){ return top(i)+6; }, lo = function(i){ return top(i)+42; };
+
+  /* setup/hold bands, full height so the geometric overlap with async_in is visible */
+  var k0 = Math.max(1, Math.floor((t0 - c.phi)/c.Td));
+  for (var k = k0; CDC.edgeT(c,k) - c.tsu <= t1; k++){
+    var e = CDC.edgeT(c,k);
+    if (e + c.th < t0) continue;
+    var v = CDC.violAt(c,k).viol;
+    ctx.fillStyle = v ? css("--bandhit") : css("--band");
+    ctx.fillRect(X(e-c.tsu), 6, Math.max(2, X(e+c.th)-X(e-c.tsu)), 5*RH);
+  }
+
+  /* time axis */
+  ctx.strokeStyle = css("--rule"); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(XL, 10+5*RH); ctx.lineTo(W-8, 10+5*RH); ctx.stroke();
+  ctx.fillStyle = css("--ink3"); ctx.font = "11px ui-monospace,monospace";
+  var step = 2*c.Td;
+  for (var tt = Math.ceil(t0/step)*step; tt <= t1; tt += step)
+    ctx.fillText(ns1(tt)+"ns", X(tt)-14, 22+5*RH);
+
+  /* row labels */
+  ctx.font = "12px ui-monospace,monospace";
+  for (var i = 0; i < 5; i++){
+    ctx.fillStyle = css("--ink2");
+    ctx.fillText(rows[i], 6, (hi(i)+lo(i))/2 + 4);
+  }
+
+  function sq(row, period, phase){       /* 50%-duty clock */
+    ctx.strokeStyle = css("--ink3"); ctx.lineWidth = 1.4; ctx.beginPath();
+    var kk = Math.floor((t0 - phase)/period) - 1;
+    for (; ; kk++){
+      var r0 = phase + kk*period, r1 = r0 + period/2;
+      if (r0 > t1) break;
+      var a = Math.max(t0, r0), b = Math.min(t1, r1);
+      if (b > a){
+        ctx.moveTo(X(a), lo(row)); ctx.lineTo(X(a), hi(row)); ctx.lineTo(X(b), hi(row));
+        ctx.lineTo(X(b), lo(row));
+      }
+      var ls = Math.max(t0, r1), c2 = Math.min(t1, r0+period);
+      if (c2 > ls){ ctx.moveTo(X(ls), lo(row)); ctx.lineTo(X(c2), lo(row)); }
+    }
+    ctx.stroke();
+  }
+  sq(0, c.Ta, 0);
+  sq(1, c.Td, c.phi);
+
+  /* async_in — stimulus, known into the future */
+  ctx.strokeStyle = css("--blue"); ctx.lineWidth = 1.8; ctx.beginPath();
+  var jj = Math.max(0, Math.floor(t0/c.TI));
+  var vNow = jj & 1;                                /* parity after jj toggles */
+  var tA = t0, yA = vNow ? hi(2) : lo(2);
+  ctx.moveTo(X(tA), yA);
+  for (var j = jj+1; ; j++){
+    var tg = j*c.TI;
+    if (tg > t1){ ctx.lineTo(X(t1), yA); break; }
+    ctx.lineTo(X(tg), yA);
+    yA = (yA === hi(2)) ? lo(2) : hi(2);
+    ctx.lineTo(X(tg), yA);
+  }
+  ctx.stroke();
+
+  /* captures, only up to tNow */
+  function zig(x0,x1,ymid){
+    ctx.strokeStyle = css("--red"); ctx.lineWidth = 1.6; ctx.beginPath();
+    var up = true;
+    ctx.moveTo(x0, ymid);
+    for (var x = x0+3; x < x1; x += 3){ ctx.lineTo(x, ymid + (up?-9:9)); up = !up; }
+    ctx.lineTo(x1, ymid); ctx.stroke();
+  }
+  function capRow(row, valAt, metaAt, settleAt){
+    if (cur < 1) return;
+    ctx.strokeStyle = css("--gold"); ctx.lineWidth = 1.8;
+    var vPrev = 0, kk2, e2;
+    /* value before first visible edge */
+    for (kk2 = 1; kk2 <= cur; kk2++){ if (CDC.edgeT(c,kk2) >= t0) break; vPrev = valAt(kk2); }
+    var xPen = X(Math.max(t0, 0)), yPen = vPrev ? hi(row) : lo(row);
+    ctx.beginPath(); ctx.moveTo(xPen, yPen);
+    for (var k2 = kk2; k2 <= cur; k2++){
+      e2 = CDC.edgeT(c,k2);
+      if (e2 > t1) break;
+      var val = valAt(k2), y2 = val ? hi(row) : lo(row);
+      ctx.lineTo(X(e2), yPen);
+      if (metaAt(k2)){
+        ctx.stroke();
+        var xs = X(e2), xe = X(Math.min(t1, e2 + Math.round(settleAt(k2)*c.Td)));
+        zig(xs, xe, (hi(row)+lo(row))/2);
+        ctx.strokeStyle = css("--gold"); ctx.beginPath(); ctx.moveTo(xe, y2);
+        xPen = xe;
+      } else {
+        ctx.lineTo(X(e2), y2);
+        xPen = X(e2);
+      }
+      yPen = y2;
+    }
+    var xEnd = X(Math.min(t1, tNow));
+    if (xEnd > xPen) ctx.lineTo(xEnd, yPen);
+    ctx.stroke();
+  }
+  if (syncOn){
+    capRow(3, function(k){ return CDC.captureAt(c,k).s1; },
+              function(k){ return CDC.captureAt(c,k).viol; },
+              function(k){ return CDC.captureAt(c,k).settS; });
+    capRow(4, function(k){ return CDC.s2At(c,k); },
+              function(){ return false; }, function(){ return 0; });
+  } else {
+    capRow(3, function(k){ return CDC.captureAt(c,k).a; },
+              function(k){ return CDC.captureAt(c,k).viol; },
+              function(k){ return CDC.captureAt(c,k).settA; });
+    capRow(4, function(k){ return CDC.captureAt(c,k).b; },
+              function(k){ return CDC.captureAt(c,k).viol; },
+              function(k){ return CDC.captureAt(c,k).settB; });
+  }
+
+  /* now + next-edge markers */
+  if (cur > 0 && tNow >= t0){
+    ctx.strokeStyle = css("--ink"); ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(X(tNow), 6); ctx.lineTo(X(tNow), 10+5*RH); ctx.stroke();
+    ctx.fillStyle = css("--ink"); ctx.fillText("now", X(tNow)-12, 14);
+  }
+  ctx.strokeStyle = css("--purple"); ctx.setLineDash([5,4]); ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(X(eNext), 6); ctx.lineTo(X(eNext), 10+5*RH); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = css("--purple"); ctx.fillText("next", X(eNext)+3, 14);
+}
+
+function drawStrip(){
+  var c = cfg(), cv = el("strip"), ctx = cv.getContext("2d");
+  var W = cv.width, H = cv.height, M = 64;
+  ctx.clearRect(0,0,W,H);
+  var pts = CDC.phasePoints(c, M);
+  var half = c.Td/2;
+  var Y = function(d){ return H/2 - (H/2-12) * d / half; };
+  var Xs = function(j){ return 46 + (W-58) * (j-1) / (M-1); };
+  var tNow = cur > 0 ? CDC.edgeT(c,cur) : 0;
+  /* window band: delta in [-tsu, +th] */
+  ctx.fillStyle = css("--band");
+  ctx.fillRect(40, Y(c.th), W-48, Y(-c.tsu)-Y(c.th));
+  ctx.strokeStyle = css("--rule"); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(40, H/2); ctx.lineTo(W-8, H/2); ctx.stroke();
+  ctx.fillStyle = css("--ink3"); ctx.font = "11px ui-monospace,monospace";
+  ctx.fillText("edge", 6, H/2+4);
+  ctx.fillText("+" + ns1(half) + "ns", 2, 14);
+  ctx.fillText("-" + ns1(half) + "ns", 2, H-4);
+  for (var i = 0; i < pts.length; i++){
+    var p = pts[i], happened = p.tog <= tNow;
+    ctx.beginPath();
+    ctx.arc(Xs(p.j), Y(p.delta), 3.4, 0, 2*Math.PI);
+    var col = p.viol ? css("--red") : css("--blue");
+    if (happened){ ctx.fillStyle = col; ctx.fill(); }
+    else { ctx.strokeStyle = col; ctx.lineWidth = 1.4; ctx.stroke(); }
+  }
+}
+
+/* ---------- verdict / stats / log ---------- */
+function recount(){
+  var c = cfg(); nViol = 0; nDis = 0;
+  for (var k = 1; k <= cur; k++){
+    var cp = CDC.captureAt(c,k);
+    if (cp.viol){ nViol++; if (!syncOn && cp.a !== cp.b) nDis++; }
+  }
+  el("sedges").textContent = cur;
+  el("sviol").textContent = nViol;
+  el("sviol").className = "v " + (nViol ? "bad" : "");
+  el("ssim").textContent = 0;
+  el("ssim").className = "v " + (nViol ? "bad" : "ok");
+  el("kdis").textContent = syncOn ? "Instances disagreeing (read s2)" : "Instances disagreeing";
+  el("sdis").textContent = syncOn ? 0 : nDis;
+  el("sdis").className = "v " + ((syncOn ? 0 : nDis) ? "bad" : "");
+}
+
+function logLine(html, cls){
+  var d = document.createElement("div");
+  if (cls) d.className = cls;
+  d.innerHTML = html;
+  el("log").insertBefore(d, el("log").firstChild);
+  while (el("log").childNodes.length > 40) el("log").removeChild(el("log").lastChild);
+}
+
+function setVerdict(cls, html){ var v = el("verdict"); v.className = "verdict " + cls; v.innerHTML = html; }
+
+function gcdNote(){
+  var a = CDC.analyze(cfg()), n = el("gcdnote");
+  if (a.reachable){
+    n.className = "gcdnote";
+    n.textContent = "Phase pattern: " + a.phases +
+      " distinct toggle offsets before it repeats; some land inside the window.";
+  } else {
+    n.className = "gcdnote bad";
+    n.textContent = "Locked: the toggle interval and dclk period share a factor (gcd " +
+      ns(a.g) + " ns), leaving only " + a.phases + " distinct offsets — none inside the " +
+      "window, so no violation will ever occur. Hardware clocks are never this exact; " +
+      "nudge a period by 0.1 ns.";
+  }
+}
+
+/* ---------- stepping ---------- */
+function truthFor(k){
+  /* what the flop feeding logic holds after edge k, and whether it was knowable */
+  var c = cfg();
+  if (syncOn){
+    if (k >= 2 && CDC.captureAt(c,k-1).viol) return {ans:"e", val:CDC.s2At(c,k)};
+    return {ans:String(CDC.s2At(c,k)), val:CDC.s2At(c,k)};
+  }
+  var cp = CDC.captureAt(c,k);
+  if (cp.viol) return {ans:"e", val:cp.a};
+  return {ans:String(cp.a), val:cp.a};
+}
+
+function describeStep(k, guess){
+  var c = cfg(), cp = CDC.captureAt(c,k), t = truthFor(k);
+  var right = guess === null ? null : (guess === t.ans);
+  var mark = right === null ? "" : (right ? ' <span class="okc">✓</span>' : ' <span class="hit">✗</span>');
+  var said = guess === null ? "" : ' · you said ' + (guess === "e" ? '"either"' : guess);
+  var line, verd;
+  if (cp.viol){
+    var side = cp.delta >= 0 ? ns(cp.delta) + " ns after the edge (hold)" :
+                               ns(-cp.delta) + " ns before the edge (setup)";
+    if (syncOn){
+      line = "e" + k + " · t=" + ns(cp.e) + " · toggle " + side + " — s1 metastable, resolved " + cp.s1;
+      verd = "<b>s1 went metastable at t=" + ns(cp.e) + " ns and resolved to " + cp.s1 +
+        " by a seeded draw.</b> It gets the full cycle to settle; s2 hands logic a clean level " +
+        "next edge. What stays uncertain is only <em>which</em> cycle the new value arrives — " +
+        "never the level, never two branches disagreeing. That is all a synchronizer promises, " +
+        "and it is enough.";
+      setVerdict("ok", verd);
+    } else {
+      var dis = cp.a !== cp.b;
+      line = "e" + k + " · t=" + ns(cp.e) + " · toggle " + side +
+             " — VIOLATION · A→" + cp.a + " B→" + cp.b + (dis ? " (disagree)" : "");
+      verd = "<b>The toggle landed " + side + " — inside the window.</b> Both flop instances " +
+        "went metastable and resolved by seeded draw: A=" + cp.a + ", B=" + cp.b + "." +
+        (dis ? " <b>They disagree</b> — downstream logic is now reading a state that neither " +
+        "value of async_in produces." : " They happen to agree this time; rerun with another " +
+        "seed and they need not.") +
+        " A zero-delay simulation of this same run samples cleanly here — its event model has " +
+        "no timing, so the mid-transition sample it would need to show does not exist in it.";
+      setVerdict("bad", verd);
+    }
+  } else {
+    var m = CDC.marginAt(c,k), holds = t.val;
+    var afterViol = syncOn && t.ans === "e";   /* edge clean, but s1 resolved by draw last edge */
+    line = "e" + k + " · t=" + ns(cp.e) + " · " +
+           (afterViol ? "s2 took s1's draw-resolved value = " + holds
+                      : "nearest toggle " + ns(m) + " ns clear · " +
+                        (syncOn ? "s2" : "capture") + " = " + holds);
+    if (afterViol && guess !== null){
+      if (right){
+        setVerdict("ok", "<b>Right — unknowable in advance.</b> Last edge's violation left s1's " +
+          "level to the seeded draw; it came up " + holds + ", and s2 hands that to logic as a " +
+          "clean, consistent value. Arrival cycle uncertain, level never — the residual a " +
+          "synchronizer is allowed to leave.");
+      } else {
+        setVerdict("warn", "<b>You had no way to know.</b> s1 went metastable last edge, so its " +
+          "settled level — and this s2 value, " + holds + " — was decided by the draw" +
+          (guess === String(holds) ? "; the number matching is luck, not prediction." : "."));
+      }
+    } else if (guess !== null && right === false && guess === "e"){
+      setVerdict("warn", "<b>This one was knowable.</b> No toggle inside the window" +
+        (syncOn ? " last edge, and s1 had settled — s2 was determined" : ", so the capture is the value async_in already held") +
+        ": " + holds + ". “Either” is the honest answer only when the drawing shows a toggle in the band" +
+        (syncOn ? " one edge back." : "."));
+    } else if (guess !== null && right === false){
+      setVerdict("warn", "<b>Not this time — it " + (syncOn ? "delivered" : "captured") + " " + holds + ".</b> " +
+        (syncOn ? "s2 repeats what s1 held at the previous edge — read the s1 row one edge back."
+                : "Read the async_in row at the dashed line: the value standing there is what a clean sample takes."));
+    }
+  }
+  logLine(line + said + mark, cp.viol ? "hit" : "");
+}
+
+function stepTo(k, guess){
+  cur = k;
+  describeStep(k, guess);
+  recount(); drawWaves(); drawStrip();
+}
+
+function runToViol(){
+  var c = cfg(), k = CDC.nextViol(c, cur, cur + 20000);
+  if (k < 0){
+    var a = CDC.analyze(c);
+    setVerdict("warn", "<b>No violation in the next 20000 edges.</b> gcd(toggle interval, dclk period) = " +
+      ns(a.g) + " ns locks the pattern to " + a.phases + " offsets, none inside the window. " +
+      "Widen the window or nudge a period by 0.1 ns.");
+    return;
+  }
+  var skipped = k - cur - 1;
+  if (skipped > 0) logLine("… " + skipped + " clean edge" + (skipped === 1 ? "" : "s") + " skipped …");
+  stepTo(k, null);
+}
+
+function resetTime(){
+  cur = 0; el("log").innerHTML = "";
+  recount(); drawWaves(); drawStrip();
+  setVerdict("", "Step the destination clock. Nothing interesting happens until a toggle lands inside a shaded band — the drawing shows you when that is coming.");
+}
+
+/* ---------- wiring ---------- */
+function readCtl(){
+  P.ta = +el("ta").value * 10; P.td = +el("td").value * 10;
+  P.n = +el("n").value; P.tsu = +el("tsu").value; P.th = +el("th").value;
+  P.seed = +el("seed").value || 1;
+  el("lta").textContent = ns1(P.ta); el("ltd").textContent = ns1(P.td);
+  el("ln").textContent = P.n;
+  el("ltsu").textContent = ns(P.tsu); el("lth").textContent = ns(P.th);
+}
+["ta","td","n","tsu","th"].forEach(function(id){
+  el(id).addEventListener("input", function(){ readCtl(); gcdNote(); resetTime(); });
+});
+el("seed").addEventListener("change", function(){ readCtl(); resetTime(); });
+
+el("sync").addEventListener("click", function(){
+  syncOn = !syncOn;
+  this.setAttribute("aria-pressed", String(syncOn));
+  this.textContent = "2-flop synchronizer: " + (syncOn ? "on" : "off");
+  el("whatname").textContent = syncOn ? "dclk logic (s2)" : "dclk logic (raw wire)";
+  logLine(syncOn ? "— synchronizer added: logic now reads s2 (same edges, same seed)"
+                 : "— synchronizer removed: logic reads the raw wire again");
+  recount(); drawWaves(); drawStrip();
+});
+
+$$("[data-pr]").forEach(function(b){
+  b.addEventListener("click", function(){ stepTo(cur+1, b.dataset.pr); });
+});
+el("runviol").addEventListener("click", runToViol);
+el("reset").addEventListener("click", resetTime);
+
+/* predict-then-reveal gate */
+el("controls").classList.add("locked");
+$$("[data-g]").forEach(function(b){
+  b.addEventListener("click", function(){
+    var right = b.dataset.g === "n";
+    el("pverdict").innerHTML = (right ? "<b>Right.</b> " : "<b>Not quite.</b> ") +
+      "Zero-delay RTL simulation orders every event on clock edges; setup and hold windows do not " +
+      "exist in its event model, so the capture looks clean — no X, no warning, whatever the " +
+      "stimulus. The model below puts continuous time back. Step it, watch the tile pair " +
+      "<em>window hits</em> vs <em>flagged by zero-delay sim</em>, then add the synchronizer.";
+    el("controls").classList.remove("locked");
+    $$("[data-g]").forEach(function(x){ x.classList.remove("on"); });
+    b.classList.add("on");
+  });
+});
+
+if (window.matchMedia) window.matchMedia("(prefers-color-scheme:dark)")
+  .addEventListener("change", function(){ drawWaves(); drawStrip(); });
+
+readCtl(); gcdNote(); recount(); drawWaves(); drawStrip();
+})();
+</script>
+</body>
+</html>

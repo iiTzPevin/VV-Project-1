@@ -1,0 +1,26 @@
+# Step 1 -- the same properties against a planted bug: BMC hands back a trace.
+# The Makefile first runs plant_bug.py, which copies dut/fifo.sv to
+# ~/.vvtemp/craft-wk08-s1/fifo_bug.sv with one released mutant applied, and
+# writes step1_planted_bmc.gen.sby -- this file with the last line repointed
+# there. The Makefile runs the .gen.sby; edit THIS file, not that one.
+# (default: full_offbyone -- `full` asserts one entry too early).
+#   make STEP=1                        # plant + run
+#   make STEP=1 MUT=count_wr_dec       # a different released mutant
+# `expect fail` means the FAIL verdict is the correct outcome (rc=0): the
+# properties caught the bug. Counterexample: step1_planted_bmc/engine_0/trace.vcd
+
+[options]
+mode bmc
+depth 20
+expect fail
+
+[engines]
+smtbmc z3
+
+[script]
+read_verilog -sv -formal -DFORMAL fifo_formal.sv fifo_bug.sv
+prep -top fifo_formal
+
+[files]
+../../formal/fifo/fifo_formal.sv
+fifo_bug.sv

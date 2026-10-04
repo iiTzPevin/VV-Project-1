@@ -1,0 +1,11 @@
+[step2_assume_env_bmc] summary: engine_0 (smtbmc z3) returned pass
+[step2_assume_env_bmc] summary: engine_0 did not produce any traces
+[step2_assume_env_bmc] DONE (PASS, rc=0)
+[step2_assume_env_prove] engine_0.induction: Trying induction in step 12..
+[step2_assume_env_prove] engine_0.induction: Trying induction in step 11..
+[step2_assume_env_prove] engine_0.induction: Temporal induction successful.
+[step2_assume_env_prove] summary: engine_0 (smtbmc z3) returned pass for basecase
+[step2_assume_env_prove] summary: engine_0 (smtbmc z3) returned pass for induction
+[step2_assume_env_prove] summary: engine_0 did not produce any traces
+[step2_assume_env_prove] summary: successful proof by k-induction.
+[step2_assume_env_prove] DONE (PASS, rc=0)

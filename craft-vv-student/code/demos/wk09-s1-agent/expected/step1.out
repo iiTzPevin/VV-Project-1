@@ -1,0 +1,30 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787517324
+Found test step1_phases.test_phases
+running test_phases (1/1)
+build_phase    uvm_test_top   -> creating env
+build_phase    uvm_test_top.env   -> creating agent
+build_phase    uvm_test_top.env.agent   -> creating driver, monitor
+build_phase    uvm_test_top.env.agent.driver
+build_phase    uvm_test_top.env.agent.monitor
+connect_phase  uvm_test_top.env.agent.driver
+connect_phase  uvm_test_top.env.agent.monitor
+connect_phase  uvm_test_top.env.agent   (driver/monitor already connected)
+connect_phase  uvm_test_top.env
+connect_phase  uvm_test_top
+run_phase      uvm_test_top.env.agent.driver   (would drive the bus here)
+run_phase      uvm_test_top.env.agent.monitor   (would watch the bus here)
+run_phase      uvm_test_top   (sim time can pass only here)
+report_phase   uvm_test_top   (after run: tally and verdict)
+test_phases passed
+**************************************************************************************
+                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        **************************************************************************************
+                                                        ** step1_phases.test_phases       PASS          20.00           0.00       5161.84  **
+                                                        **************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                 20.00           0.10        190.62  **
+                                                        **************************************************************************************
+

@@ -1,0 +1,36 @@
+# SymbiYosys proof for the round-robin arbiter.
+#   sby -f arbiter.sby            # runs BOTH tasks
+#   sby -f arbiter.sby good       # honest arbiter  -> PASS (k-induction proof)
+#   sby -f arbiter.sby trojan     # backdoored core -> FAIL with a counterexample
+#
+# `good`   proves the safety contract (grant subset of req, one-hot-or-zero,
+#          progress) on dut/arbiter.sv and is EXPECTED to pass.
+# `trojan` runs the same contract on dut/arbiter_trojan.sv and is EXPECTED to
+#          fail: the proof returns the magic input req==4'b1010 -> grant==4'b0100,
+#          a granted line that never requested. `expect fail` keeps the overall
+#          run CI-clean (exit 0) precisely because the backdoor was caught.
+
+[tasks]
+good
+trojan
+
+[options]
+good:   mode prove
+good:   depth 12
+good:   expect pass
+trojan: mode bmc
+trojan: depth 8
+trojan: expect fail
+
+[engines]
+smtbmc z3
+
+[script]
+good:   read_verilog -sv -formal -DFORMAL arbiter.sv
+good:   prep -top arbiter
+trojan: read_verilog -sv -formal -DFORMAL arbiter_trojan.sv
+trojan: prep -top arbiter_trojan
+
+[files]
+../../dut/arbiter.sv
+../../dut/arbiter_trojan.sv

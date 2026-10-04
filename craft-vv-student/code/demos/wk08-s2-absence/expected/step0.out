@@ -1,0 +1,8 @@
+[step0_good] engine_0.induction: Trying induction in step 12..
+[step0_good] engine_0.induction: Trying induction in step 11..
+[step0_good] engine_0.induction: Temporal induction successful.
+[step0_good] summary: engine_0 (smtbmc z3) returned pass for basecase
+[step0_good] summary: engine_0 (smtbmc z3) returned pass for induction
+[step0_good] summary: engine_0 did not produce any traces
+[step0_good] summary: successful proof by k-induction.
+[step0_good] DONE (PASS, rc=0)

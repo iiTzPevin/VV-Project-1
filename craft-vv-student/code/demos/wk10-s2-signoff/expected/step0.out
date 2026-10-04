@@ -1,0 +1,5 @@
+lint target: /home/claude/vv-full/code/dut/axil_regfile.sv
+  with verible (the course tool):  verible-verilog-lint axil_regfile.sv
+  stand-in on this machine:        verilator --lint-only -Wall axil_regfile.sv
+
+lint: CLEAN -- 0 findings.  gate: PASS

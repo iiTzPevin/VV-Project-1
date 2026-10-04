@@ -1,0 +1,15 @@
+==========================================================================
+  axil_regfile -- signoff one-pager (every row measured by this run)
+==========================================================================
+  gate             measured                                        verdict
+  ---------------- ----------------------------------------------- -------
+  lint             0 findings (verilator --lint-only -Wall)        PASS
+                   (course tool is verible-verilog-lint; same gate)
+  line coverage    97% -- 34/35 lines hit (reference suite)        PASS*
+                   *uncovered: default: ; // unmapped: writes ignored
+  mutation score   reference 8/8 (100%) on the released pool       PASS
+                   starter tb 1/8 (12.5%) -- the gap is the week
+  security         policy mutant secure_writable_locked FOUND      PASS
+  checks           15 assert statements across 5 tests (ref suite) --
+  ------------------------------------------------------------------------
+  signoff: GO -- no single number decides; the dashboard does

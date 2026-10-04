@@ -1,0 +1,14 @@
+$ STEP=2 python3 -m craft_mutate.mutate --tb demos/wk03-s2-waves-mutants --pool tb/alu/mutants_released.yaml --sim icarus
+[baseline] running clean alu.sv through wk03-s2-waves-mutants ...
+  clean RTL: 1 tests passed.
+
+  [found  ] add2sub              (test-failed)  -- ADD computes a - b instead of a + b
+  [found  ] and2or               (test-failed)  -- AND behaves like OR
+  [found  ] xor2and              (test-failed)  -- XOR behaves like AND
+  [found  ] slt_unsigned         (test-failed)  -- SLT uses an unsigned comparison
+  [found  ] drop_add_carry       (test-failed)  -- ADD never reports carry-out
+  [found  ] zero_inverted        (test-failed)  -- zero flag is inverted
+  [found  ] sll2srl              (test-failed)  -- shift-left behaves like shift-right
+  [found  ] drop_add_overflow    (test-failed)  -- ADD never reports signed overflow
+
+==== found/total = 8/8  =  100.0%  (threshold 90%) ====

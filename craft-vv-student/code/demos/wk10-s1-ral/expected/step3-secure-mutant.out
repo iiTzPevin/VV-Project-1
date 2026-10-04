@@ -1,0 +1,23 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787518510
+Found test step3_secure.test_secure_lock
+running test_secure_lock (1/1)
+                                                          SECURE writable only while unlocked; a locked write raises INTR[0].
+demo seed = 5
+test_secure_lock failed
+                                                        Traceback (most recent call last):
+                                                          File "/home/claude/vv-full/code/demos/wk10-s1-ral/step3_secure.py", line 44, in test_secure_lock
+                                                            assert got == 0xA5A5A5A5 == model.read(A["SECURE"]), \
+                                                        AssertionError: SECURITY: locked SECURE accepted a write (now 0x5a5a5a5a)
+                                                        assert 1515870810 == 2779096485
+***************************************************************************************
+                                                        ** TEST                           STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ***************************************************************************************
+                                                        ** step3_secure.test_secure_lock   FAIL         155.00           0.00      65642.30  **
+                                                        ***************************************************************************************
+                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                 155.00           0.08       1861.73  **
+                                                        ***************************************************************************************
+

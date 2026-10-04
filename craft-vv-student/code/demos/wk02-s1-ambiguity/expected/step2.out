@@ -1,0 +1,36 @@
+/home/claude/vv-full/code/demos/wk02-s1-ambiguity/../../dut/alu.sv:32: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s1-ambiguity/../../dut/alu.sv:32: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s1-ambiguity/../../dut/alu.sv:32: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s1-ambiguity/../../dut/alu.sv:32: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s1-ambiguity/../../dut/alu.sv:32: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s1-ambiguity/../../dut/alu.sv:32: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s1-ambiguity/../../dut/alu.sv:32: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s1-ambiguity/../../dut/alu.sv:32: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s1-ambiguity/../../dut/alu.sv:38: vvp.tgt sorry: Case unique/unique0 qualities are ignored.
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787510389
+Found test step2_sharpened.test_sharpened_requirement
+running test_sharpened_requirement (1/1)
+demo seed = 5
+
+                                                              a      b   result  overflow  carry
+                                                           ----   ----   ------  --------  -----
+                                                           0x7f   0x01     0x80         1      0
+                                                           0x7e   0x01     0x7f         0      0
+                                                           0xff   0x01     0x00         0      1
+                                                           0x80   0xff     0x7f         1      1
+                                                           0x80   0x80     0x00         1      1
+                                                           0x03   0x04     0x07         0      0
+                                                           6/6 definite expected values met -- dut/alu.sv implements the signed reading
+test_sharpened_requirement passed
+****************************************************************************************************
+                                                        ** TEST                                        STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ****************************************************************************************************
+                                                        ** step2_sharpened.test_sharpened_requirement   PASS           6.00           0.00       4330.70  **
+                                                        ****************************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                                6.00           0.09         69.90  **
+                                                        ****************************************************************************************************
+

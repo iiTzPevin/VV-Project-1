@@ -1,0 +1,27 @@
+# Step 0 -- the shipped FIFO safety proof, run from the demo dir.
+# Same properties, same DUT, same engine as formal/fifo/fifo.sby; the only
+# difference is that the work directories land here instead of in formal/fifo.
+#   sby -f step0_proof.sby          # both tasks: bmc + prove
+# Properties live in formal/fifo/fifo_formal.sv -- one source of truth.
+
+[tasks]
+bmc
+prove
+
+[options]
+bmc:   mode bmc
+bmc:   depth 20
+prove: mode prove
+prove: depth 15
+expect pass
+
+[engines]
+smtbmc z3
+
+[script]
+read_verilog -sv -formal -DFORMAL fifo_formal.sv fifo.sv
+prep -top fifo_formal
+
+[files]
+../../formal/fifo/fifo_formal.sv
+../../dut/fifo.sv

@@ -1,0 +1,15 @@
+$ STEP=2 python3 -m craft_mutate.mutate --tb demos/wk02-s1-ambiguity --dut dut/alu.sv --pool tb/alu/mutants_released.yaml --sim icarus
+[baseline] running clean alu.sv through wk02-s1-ambiguity ...
+  clean RTL: 1 tests passed.
+
+  [found  ] add2sub              (test-failed)  -- ADD computes a - b instead of a + b
+  [SURVIVED] and2or               (passed)  -- AND behaves like OR
+  [SURVIVED] xor2and              (passed)  -- XOR behaves like AND
+  [SURVIVED] slt_unsigned         (passed)  -- SLT uses an unsigned comparison
+  [found  ] drop_add_carry       (test-failed)  -- ADD never reports carry-out
+  [SURVIVED] zero_inverted        (passed)  -- zero flag is inverted
+  [SURVIVED] sll2srl              (passed)  -- shift-left behaves like shift-right
+  [found  ] drop_add_overflow    (test-failed)  -- ADD never reports signed overflow
+
+==== found/total = 3/8  =  37.5%  (threshold 90%) ====
+surviving mutants: and2or, xor2and, slt_unsigned, zero_inverted, sll2srl

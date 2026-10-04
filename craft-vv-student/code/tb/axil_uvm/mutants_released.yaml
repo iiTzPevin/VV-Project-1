@@ -1,0 +1,37 @@
+# axil_regfile mutation pool -- RELEASED (practice).  Score = found / total.
+# Week 9 pyuvm environment (scoreboard vs RegfileModel).  A representative subset students can
+# practice against; the full grading set lives in mutants_hidden.yaml.
+dut: axil_regfile.sv
+mutants:
+  - id: ro_writable
+    desc: "RO: STATUS accepts writes (should be ignored)"
+    find: "ADDR_STATUS:  status  <= status;"
+    replace: "ADDR_STATUS:  status  <= wdata;"
+  - id: secure_writable_locked
+    desc: "SECURITY: SECURE is writable even while LOCK=1"
+    find: "if (!lock[0]) secure <= wdata;"
+    replace: "secure <= wdata;"
+  - id: w1c_as_rw
+    desc: "INTR behaves as plain RW instead of write-1-to-clear"
+    find: "intr    <= intr & ~wdata;"
+    replace: "intr    <= wdata;"
+  - id: ctrl_reset_nonzero
+    desc: "CTRL resets to all-ones instead of 0"
+    find: "ctrl    <= 32'h0000_0000;"
+    replace: "ctrl    <= 32'hFFFF_FFFF;"
+  - id: addr_secure_off1
+    desc: "address decode off-by-one: SECURE at 0x6 instead of 0x5"
+    find: "ADDR_SECURE  = 4'h5;"
+    replace: "ADDR_SECURE  = 4'h6;"
+  - id: scratch_read_ctrl
+    desc: "read mux bug: reading SCRATCH returns CTRL"
+    find: "ADDR_SCRATCH: rd_mux = scratch;"
+    replace: "ADDR_SCRATCH: rd_mux = ctrl;"
+  - id: rvalid_stuck0
+    desc: "rvalid never asserts (read data never marked valid)"
+    find: "rvalid <= req & ~we;"
+    replace: "rvalid <= 1'b0;"
+  - id: scratch_lsb_stuck
+    desc: "SCRATCH drops its least-significant bit on write"
+    find: "ADDR_SCRATCH: scratch <= wdata;"
+    replace: "ADDR_SCRATCH: scratch <= wdata & 32'hFFFF_FFFE;"

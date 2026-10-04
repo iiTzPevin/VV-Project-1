@@ -1,0 +1,25 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787510213
+Found test step2_observation.test_observation_points
+running test_observation_points (1/1)
+demo seed = 5
+
+                                                          input pairs driven          : 65536  (exhaustive: 8+8 input bits)
+                                                          pairs where the DUT is wrong: 128   (128 of 128 on the a == b diagonal; first at a=0x80 b=0x80)
+                                                          observed at sum             : 0
+                                                          observed at carry_out       : 128
+
+                                                          controllability: 1 pair in 512 activates the bug -- a uniform random test needs ~355 vectors for a coin-flip chance of reaching it once
+                                                          observability:  the bug was activated 128 times; a checker watching only sum saw 0 of them
+test_observation_points passed
+***************************************************************************************************
+                                                        ** TEST                                       STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ***************************************************************************************************
+                                                        ** step2_observation.test_observation_points   PASS       65536.00           2.61      25149.96  **
+                                                        ***************************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                           65536.00           2.68      24421.28  **
+                                                        ***************************************************************************************************
+

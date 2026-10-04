@@ -1,0 +1,24 @@
+# Step 1 -- swap the DUT for dut/arbiter_trojan.sv; the contract is unchanged
+# (the same three asserts live in its `ifdef FORMAL` block). Same task as
+# formal/arbiter/arbiter.sby `trojan`, run from the demo dir.
+#   sby -f step1_trojan.sby        # then: python3 show_trigger.py
+# BMC returns the exact triggering input as a counterexample:
+# req == 4'b1010 -> grant == 4'b0100, a granted line that never requested.
+# `expect fail` makes the FAIL verdict the designed outcome (rc=0): the
+# proof CAUGHT the backdoor. show_trigger.py reads the trace and verifies
+# the magic pattern.
+
+[options]
+mode bmc
+depth 8
+expect fail
+
+[engines]
+smtbmc z3
+
+[script]
+read_verilog -sv -formal -DFORMAL arbiter_trojan.sv
+prep -top arbiter_trojan
+
+[files]
+../../dut/arbiter_trojan.sv

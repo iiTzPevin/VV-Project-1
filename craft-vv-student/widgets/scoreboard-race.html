@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scoreboard Race · CRAFT V&amp;V Week 4</title>
+<style>
+:root{
+  --navy:#1B2A4A; --gold:#D4A843; --green:#27AE60; --blue:#2E86AB;
+  --red:#E74C3C; --purple:#9B59B6;
+  --ground:#F4F6F9; --surface:#fff; --surface2:#EDF0F5;
+  --ink:#16223B; --ink2:#3E4C68; --ink3:#6B7791; --rule:#D9DEE7;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#0D1524; --surface:#141E33; --surface2:#1B273F;
+    --ink:#E7ECF5; --ink2:#B6C1D6; --ink3:#8592AC; --rule:#2A3752;
+    --gold:#E9BE58; --green:#5FD48C; --blue:#5AA9C9; --red:#FF8776; --purple:#BE85D6;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font:16px/1.55 "Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 18px 60px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:1.5rem;margin:0;letter-spacing:-.01em}
+h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin:0 0 8px}
+p{margin:0;max-width:72ch;color:var(--ink2)}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+header{border-bottom:2px solid var(--ink);padding-bottom:12px;display:flex;flex-direction:column;gap:6px}
+.kicker{font:600 .7rem/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px 18px}
+.grid{display:grid;grid-template-columns:minmax(260px,1fr) minmax(340px,1.6fr);gap:16px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+
+button{font:inherit;cursor:pointer;border-radius:4px;border:1px solid var(--rule);
+  background:var(--surface2);color:var(--ink);padding:7px 12px}
+button:hover{border-color:var(--ink3)}
+button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+@media (prefers-color-scheme:dark){button.on{background:var(--gold);color:#12203a;border-color:var(--gold)}}
+button.go{background:var(--green);color:#fff;border-color:var(--green);font-weight:600;padding:9px 14px}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button:disabled{opacity:.45;cursor:default}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.ctl{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:.9rem;color:var(--ink2)}
+.ctl input[type=number]{width:74px;font:inherit;padding:4px 6px;border:1px solid var(--rule);
+  border-radius:4px;background:var(--surface2);color:var(--ink);font-family:ui-monospace,monospace}
+.ctl input[type=checkbox]{width:17px;height:17px;accent-color:var(--red)}
+.armrow input[type=checkbox]{accent-color:var(--blue)}
+.bugbox{border:1px solid var(--rule);border-left:4px solid var(--red);border-radius:0 5px 5px 0;
+  padding:9px 12px;margin:2px 0 12px;background:var(--surface2)}
+.bugbox label{display:flex;gap:10px;align-items:center;cursor:pointer;font-weight:600}
+.bugbox .sub{font-size:.8rem;color:var(--ink3);margin-top:3px}
+
+#predict{border-left:4px solid var(--purple);background:var(--surface2);padding:12px 16px;border-radius:0 5px 5px 0}
+#predict .q{font-weight:600;margin-bottom:9px;max-width:none}
+#predict .btnrow{margin-bottom:8px}
+.locked{opacity:.45;pointer-events:none}
+
+.fifo{display:flex;gap:4px;align-items:flex-end;flex-wrap:nowrap;overflow-x:auto;padding:4px 0 2px}
+.cell{width:52px;min-width:52px;height:52px;border:1px solid var(--rule);border-radius:4px;
+  background:var(--surface2);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-family:ui-monospace,monospace;font-size:.82rem;position:relative}
+.cell.fill{background:var(--surface);border-color:var(--blue);color:var(--ink);font-weight:700}
+.cell .idx{position:absolute;top:2px;left:4px;font-size:.58rem;color:var(--ink3);font-weight:400}
+.cell .tag{font-size:.6rem;color:var(--ink3);font-weight:400}
+.cell.ghost{border-style:dashed;border-color:var(--red);color:var(--red);background:transparent}
+.cell.ghost .tag{color:var(--red)}
+.ptr{display:flex;gap:4px;margin:2px 0}
+.ptr span{width:52px;min-width:52px;text-align:center;font:600 .62rem/1.3 ui-monospace,monospace;color:var(--ink3)}
+.ptr .wp{color:var(--gold)} .ptr .rp{color:var(--green)}
+.qlabel{font-size:.72rem;color:var(--ink3);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.08em}
+
+.lamps{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px;margin-top:12px}
+.lamp{background:var(--surface2);border-radius:5px;padding:7px 10px}
+.lamp .k{font-size:.64rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)}
+.lamp .v{font:700 1.05rem/1.3 ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.lamp .v small{font-weight:400;font-size:.7rem;color:var(--ink3)}
+.v.bad{color:var(--red)} .v.ok{color:var(--green)}
+
+canvas{width:100%;height:96px;display:block;background:var(--surface2);border-radius:5px;margin-top:6px}
+
+table.race{border-collapse:collapse;width:100%;font-family:ui-monospace,monospace;font-size:.8rem;margin-top:8px}
+table.race th,table.race td{padding:5px 8px;text-align:left;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums}
+table.race th{color:var(--ink3);font-weight:600;font-size:.66rem;text-transform:uppercase;letter-spacing:.06em}
+td.hit{color:var(--red);font-weight:700} td.quiet{color:var(--ink3)}
+
+.verdict{margin-top:12px;border-left:4px solid var(--rule);padding:10px 14px;background:var(--surface2);
+  border-radius:0 5px 5px 0;font-size:.92rem}
+.verdict.ok{border-left-color:var(--green)} .verdict.bad{border-left-color:var(--red)}
+.verdict.warn{border-left-color:var(--gold)} .verdict b{color:var(--ink)}
+
+.log{font-family:ui-monospace,monospace;font-size:.74rem;line-height:1.5;margin-top:12px;
+  background:var(--surface2);border-radius:5px;padding:8px 11px;min-height:5.5em;max-height:12em;
+  overflow-y:auto;color:var(--ink2);white-space:pre-wrap}
+.log .drop{color:var(--red);font-weight:700} .log .refu{color:var(--gold)} .log .obs{color:var(--red);font-weight:700}
+footer{font-size:.8rem;color:var(--ink3);border-top:1px solid var(--rule);padding-top:12px}
+footer p{color:var(--ink3);max-width:none}
+
+body.present{font-size:20px}
+body.present .prose,body.present footer{display:none}
+body.present h1{font-size:2rem}
+body.present .cell{width:64px;min-width:64px;height:60px;font-size:1rem}
+body.present .ptr span{width:64px;min-width:64px}
+body.present .lamp .v{font-size:1.4rem}
+body.present .log{font-size:.95rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="kicker">CRAFT V&amp;V · Week 4 · self-checking testbenches</span>
+  <h1>Scoreboard Race</h1>
+  <p class="prose">The Week 4 FIFO with the scoreboard's <b>reference queue</b> drawn beside it.
+  Plant the drop-when-full bug and measure the gap between the cycle the damage happens and the
+  cycle a checker can first see it. The instinct says a bug fails a test the moment it fires.
+  This one sits in a green testbench while correct data keeps flowing past the checker.</p>
+</header>
+
+<div id="predict" class="panel">
+  <div class="q">The scripted race: 8 writes fill the FIFO, a 9th write arrives while
+  <code>full</code> is high with the drop bug armed, then one read per cycle drains it.
+  The scoreboard compares every word that leaves against its reference queue.
+  When does it first flag anything?</div>
+  <div class="btnrow">
+    <button data-p="same">The cycle of the drop</button>
+    <button data-p="next">The first read after it</button>
+    <button data-p="turn">Not until the missing word's turn to leave</button>
+    <button data-p="never">Never</button>
+  </div>
+  <div id="pverdict" style="font-size:.9rem;color:var(--ink3)">Commit to an answer — the controls unlock once you do.</div>
+</div>
+
+<div class="grid">
+
+  <div class="panel" id="controls">
+    <h2>Drive the FIFO</h2>
+    <div class="bugbox">
+      <label><input type="checkbox" id="bug"> silent drop when full</label>
+      <div class="sub">The write interface stops consulting <code>full</code>: a word offered
+      to a full queue is acknowledged, then discarded. No flag, no error.</div>
+    </div>
+    <div class="btnrow">
+      <button id="bwr">write <small>(w)</small></button>
+      <button id="brd">read <small>(r)</small></button>
+      <button id="bboth">wr+rd <small>(b)</small></button>
+      <button id="btick">idle cycle <small>(t)</small></button>
+    </div>
+    <h2>Scripted bursts</h2>
+    <div class="btnrow">
+      <button id="bfill">fill to full</button>
+      <button id="bhammer">write at full ×1</button>
+      <button id="bdrain">drain</button>
+      <button class="go" id="brace">run the scripted race</button>
+    </div>
+    <h2>Checkers to race</h2>
+    <div class="ctl armrow"><input type="checkbox" id="armc"><label for="armc">compare <code>count</code> vs reference occupancy, every cycle</label></div>
+    <div class="ctl armrow"><input type="checkbox" id="armf"><label for="armf">compare <code>full</code>/<code>empty</code> vs reference, every cycle</label></div>
+    <div class="ctl"><span style="color:var(--ink3)">data at drain — always on; it is the scoreboard</span></div>
+    <div class="ctl">
+      <label for="seed">Seed</label><input type="number" id="seed" value="5" min="1" max="9999">
+      <button id="breset">reset</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>DUT · fifo.sv, depth 8, first-word fall-through</h2>
+    <div class="fifo" id="dutq" aria-label="DUT storage slots"></div>
+    <div class="ptr" id="ptrs" aria-hidden="true"></div>
+    <div class="qlabel">Reference queue · every word the interface acknowledged, oldest first</div>
+    <div class="fifo" id="refq" aria-label="Reference queue"></div>
+    <div class="lamps">
+      <div class="lamp"><div class="k">count · DUT / ref</div><div class="v" id="lcnt">0 / 0</div></div>
+      <div class="lamp"><div class="k">full · DUT / ref</div><div class="v" id="lfull">0 / 0</div></div>
+      <div class="lamp"><div class="k">empty · DUT / ref</div><div class="v" id="lempty">1 / 1</div></div>
+      <div class="lamp"><div class="k">rd_data (head)</div><div class="v" id="lhead">—</div></div>
+      <div class="lamp"><div class="k">cycle</div><div class="v" id="lcyc">0</div></div>
+    </div>
+    <h2 style="margin-top:14px">Activation → observation</h2>
+    <canvas id="tl" width="960" height="96" aria-label="Timeline: fault activation and first observation markers"></canvas>
+    <table class="race" aria-label="Checker race results">
+      <tr><th>checker</th><th>armed</th><th>convicted</th><th>downstream of the damage</th></tr>
+      <tr><td>count vs ref</td><td id="ac">no</td><td id="cc">—</td><td id="dc">—</td></tr>
+      <tr><td>full/empty vs ref</td><td id="af">no</td><td id="cf">—</td><td id="df">—</td></tr>
+      <tr><td>data at drain</td><td>always</td><td id="cd">—</td><td id="dd">—</td></tr>
+    </table>
+    <div class="verdict" id="verdict">Arm the bug, fill the queue, and keep writing.</div>
+    <div class="log" id="log" role="log" aria-live="polite"></div>
+  </div>
+</div>
+
+<footer>
+  <p><b>What this models.</b> The gating in <code>code/dut/fifo.sv</code>, depth 8, FWFT:
+  a write is stored only when not full, a read pops only when not empty, simultaneous read+write
+  leaves the count unchanged, and <code>rd_data</code> shows the head whenever the queue is not
+  empty. The monitor records a word when the interface acknowledges it; the reference queue is
+  that record, in order. With the bug off, a write while full is refused with <code>full</code>
+  high — the monitor sees the refusal and records nothing, so the two queues cannot diverge.
+  With the bug on, the acknowledge no longer consults <code>full</code>: the word enters the
+  reference queue and never enters the hardware. The reference predicts <code>full</code> as
+  occupancy&nbsp;≥&nbsp;8 and <code>empty</code> as occupancy&nbsp;=&nbsp;0.</p>
+  <p style="margin-top:8px"><b>Why the latency is a law, not an accident.</b> A drain checker
+  convicts on the read that reaches the damage, so its latency is the damage's place in line.
+  This bug files the phantom at the tail — place 9, the worst case. The Session 2 demo plants
+  <code>ignore_full</code>, which lands the damage on the head slot instead: same law, distance
+  collapsed to the next read, and the count compare names it the same cycle either way
+  (<code>just demo 04 s2 1</code>).</p>
+  <p style="margin-top:8px">Deterministic: word values come from the seed (mulberry32), and the
+  same drive sequence reproduces the same cycles exactly.</p>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var DEPTH = 8;
+
+/* deterministic PRNG (mulberry32) — a seed reproduces the word stream exactly */
+function rng(seed){
+  var a = seed >>> 0;
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* ---------------- model (headless; the node self-test drives these) ---------------- */
+
+function newState(seed, bug){
+  var base = Math.floor(rng(seed >>> 0 || 1)() * 251);
+  return {
+    mem: new Array(DEPTH).fill(null), wp: 0, rp: 0, cnt: 0,
+    ref: [], cyc: 0, nWord: 0, base: base, bug: !!bug,
+    arm: {count: false, flags: false},
+    activation: null, obs: null, pops: 0,
+    conv: {count: null, flags: null, drain: null},
+    hist: [], log: []
+  };
+}
+
+/* distinct byte values: base + n*37 mod 251 — no collisions inside a session */
+function nextWord(st){
+  st.nWord++;
+  return { v: (st.base + st.nWord * 37) % 251, n: st.nWord };
+}
+
+function hx(v){ return "0x" + v.toString(16).toUpperCase().padStart(2, "0"); }
+
+/* one clock cycle; wr/rd are the pin values this cycle */
+function step(st, wr, rd){
+  st.cyc++;
+  var ev = {c: st.cyc, drop: false, refuse: false, pop: false, obsNow: false, lines: []};
+  var fullB = st.cnt === DEPTH, emptyB = st.cnt === 0;
+
+  /* read side first: FWFT — the head leaves this cycle */
+  if (rd){
+    if (!emptyB){
+      var got = st.mem[st.rp];
+      st.mem[st.rp] = null;
+      st.rp = (st.rp + 1) % DEPTH;
+      st.pops++; ev.pop = true;
+      var exp = st.ref.length ? st.ref.shift() : null;
+      if (exp === null){
+        registerObs(st, ev, "read returned " + hx(got.v) + " with an empty reference — model broken");
+      } else if (exp.v !== got.v){
+        registerObs(st, ev, "read #" + st.pops + ": reference expected " + hx(exp.v) +
+          (exp.phantom ? " (the phantom)" : "") + ", DUT delivered " + hx(got.v));
+      } else {
+        ev.lines.push(["", "cycle " + st.cyc + ": read " + hx(got.v) + " — matches reference"]);
+      }
+    } else if (st.ref.length){
+      /* DUT empty, reference still expects data: a mismatching read attempt */
+      registerObs(st, ev, "read attempt #" + (st.pops + 1) + ": reference expected " +
+        hx(st.ref[0].v) + (st.ref[0].phantom ? " (the phantom)" : "") + ", DUT is empty");
+    } else {
+      ev.lines.push(["", "cycle " + st.cyc + ": read while empty — ignored, both agree"]);
+    }
+  }
+
+  /* write side */
+  if (wr){
+    var w = nextWord(st);
+    if (!fullB){
+      st.mem[st.wp] = w;
+      st.wp = (st.wp + 1) % DEPTH;
+      st.ref.push(w);
+      ev.wrote = true;
+      ev.lines.push(["", "cycle " + st.cyc + ": write " + hx(w.v) + " accepted (#" + w.n + ")"]);
+    } else if (!st.bug){
+      st.nWord--; /* refused: the producer still holds the word */
+      ev.refuse = true;
+      ev.lines.push(["refu", "cycle " + st.cyc + ": write refused — full high, nothing entered, nothing recorded"]);
+    } else {
+      st.ref.push({v: w.v, n: w.n, phantom: true});
+      ev.drop = true;
+      if (!st.activation){
+        st.activation = { cyc: st.cyc, word: w, place: st.ref.length, popsAt: st.pops };
+      }
+      ev.lines.push(["drop", "cycle " + st.cyc + ": write " + hx(w.v) + " ACK'd — and dropped. ACTIVATION. " +
+        (st.ref.length - 1) + " words sit ahead of the gap"]);
+    }
+  }
+
+  /* clock edge: count */
+  if (ev.wrote && !ev.pop) st.cnt++;
+  else if (ev.pop && !ev.wrote) st.cnt--;
+
+  /* post-edge checkers */
+  var fullA = st.cnt === DEPTH, emptyA = st.cnt === 0;
+  var refFull = st.ref.length >= DEPTH, refEmpty = st.ref.length === 0;
+  if (st.arm.count && !st.conv.count && st.cnt !== st.ref.length){
+    st.conv.count = { cyc: st.cyc };
+    ev.lines.push(["obs", "cycle " + st.cyc + ": COUNT CHECKER convicts — DUT count " + st.cnt +
+      ", reference " + st.ref.length]);
+  }
+  if (st.arm.flags && !st.conv.flags && (fullA !== refFull || emptyA !== refEmpty)){
+    st.conv.flags = { cyc: st.cyc };
+    ev.lines.push(["obs", "cycle " + st.cyc + ": FLAG CHECKER convicts — full " + (fullA?1:0) + " vs " +
+      (refFull?1:0) + ", empty " + (emptyA?1:0) + " vs " + (refEmpty?1:0)]);
+  }
+
+  ev.act = st.activation && st.activation.cyc === st.cyc;
+  st.hist.push({c: st.cyc, act: !!ev.act, obs: ev.obsNow, pop: ev.pop, drop: ev.drop, cnt: st.cnt});
+  Array.prototype.push.apply(st.log, ev.lines);
+  return ev;
+}
+
+function registerObs(st, ev, text){
+  ev.lines.push(["obs", "cycle " + st.cyc + ": " + text + " — OBSERVATION"]);
+  if (!st.obs && st.activation){
+    var reads = (st.pops - st.activation.popsAt) + (ev.pop ? 0 : 1);
+    st.obs = { cyc: st.cyc, reads: reads, latency: st.cyc - st.activation.cyc,
+               clean: reads - 1 };
+    ev.obsNow = true;
+  }
+  if (!st.conv.drain) st.conv.drain = { cyc: st.cyc };
+}
+
+/* the scripted race: fill 8 · one write at full (bug armed) · one read per cycle to the verdict */
+function runRace(seed, arm){
+  var st = newState(seed, true);
+  if (arm){ st.arm.count = !!arm.count; st.arm.flags = !!arm.flags; }
+  var i;
+  for (i = 0; i < DEPTH; i++) step(st, 1, 0);
+  step(st, 1, 0);                       /* the drop */
+  for (i = 0; i < DEPTH + 1 && !st.obs; i++) step(st, 0, 1);
+  return st;
+}
+
+var MODEL = { DEPTH: DEPTH, rng: rng, newState: newState, step: step, runRace: runRace, hx: hx };
+if (typeof window === "undefined"){
+  if (typeof module !== "undefined") module.exports = MODEL;
+  return;
+}
+
+/* ---------------- UI ---------------- */
+
+if (new URLSearchParams(location.search).get("present") === "1") document.body.classList.add("present");
+var el = function(id){ return document.getElementById(id); };
+var st = null, unlocked = false, timer = null;
+
+function reset(){
+  if (timer){ clearInterval(timer); timer = null; }
+  st = newState(+el("seed").value || 5, el("bug").checked);
+  st.arm.count = el("armc").checked;
+  st.arm.flags = el("armf").checked;
+  st.log.push(["", "reset — seed " + (+el("seed").value || 5) +
+    (st.bug ? ", drop bug armed" : ", bug off")]);
+  draw();
+}
+
+function cellHTML(slot, w, idx, ghost){
+  return '<div class="cell' + (w ? " fill" : "") + (ghost ? " ghost" : "") + '">' +
+    (idx !== null ? '<span class="idx">' + idx + "</span>" : "") +
+    (w ? hx(w.v) + '<span class="tag">' + (ghost ? "phantom" : "#" + w.n) + "</span>" : "·") +
+    "</div>";
+}
+
+function draw(){
+  var i, html = "";
+  for (i = 0; i < DEPTH; i++) html += cellHTML(i, st.mem[i], i, false);
+  el("dutq").innerHTML = html;
+  html = "";
+  for (i = 0; i < DEPTH; i++){
+    var t = "";
+    if (i === st.wp && st.cnt < DEPTH) t += '<i class="wp" style="font-style:normal">▲wr</i>';
+    if (i === st.rp && st.cnt > 0) t += (t ? " " : "") + '<i class="rp" style="font-style:normal">▲rd</i>';
+    html += "<span>" + (t || "&nbsp;") + "</span>";
+  }
+  el("ptrs").innerHTML = html;
+  html = "";
+  if (!st.ref.length) html = '<div class="cell">·</div>';
+  for (i = 0; i < st.ref.length; i++) html += cellHTML(i, st.ref[i], i === 0 ? "head" : null, !!st.ref[i].phantom);
+  el("refq").innerHTML = html;
+
+  var refFull = st.ref.length >= DEPTH ? 1 : 0, refEmpty = st.ref.length === 0 ? 1 : 0;
+  var dFull = st.cnt === DEPTH ? 1 : 0, dEmpty = st.cnt === 0 ? 1 : 0;
+  setLamp("lcnt", st.cnt + " / " + st.ref.length, st.cnt !== st.ref.length);
+  setLamp("lfull", dFull + " / " + refFull, dFull !== refFull);
+  setLamp("lempty", dEmpty + " / " + refEmpty, dEmpty !== refEmpty);
+  el("lhead").textContent = st.cnt ? hx(st.mem[st.rp].v) : "—";
+  el("lhead").className = "v";
+  el("lcyc").textContent = st.cyc;
+
+  el("ac").textContent = st.arm.count ? "yes" : "no";
+  el("af").textContent = st.arm.flags ? "yes" : "no";
+  raceCell("cc", "dc", st.conv.count, st.arm.count);
+  raceCell("cf", "df", st.conv.flags, st.arm.flags);
+  raceCell("cd", "dd", st.conv.drain, true);
+
+  drawTL();
+  var lines = st.log.slice(-9).map(function(l){
+    return l[0] ? '<span class="' + l[0] + '">' + l[1] + "</span>" : l[1];
+  });
+  el("log").innerHTML = lines.join("\n");
+  el("log").scrollTop = 1e6;
+  verdict();
+}
+
+function setLamp(id, text, bad){
+  el(id).textContent = text;
+  el(id).className = "v" + (bad ? " bad" : "");
+}
+
+function raceCell(cid, did, conv, armed){
+  if (conv){
+    el(cid).textContent = "cycle " + conv.cyc;
+    el(cid).className = "hit";
+    if (st.activation && conv.cyc >= st.activation.cyc){
+      var d = conv.cyc - st.activation.cyc;
+      el(did).textContent = "+" + d + " cycle" + (d === 1 ? "" : "s");
+    } else el(did).textContent = "—";
+    el(did).className = "";
+  } else {
+    el(cid).textContent = armed ? "quiet" : "—";
+    el(cid).className = "quiet";
+    el(did).textContent = "—";
+    el(did).className = "quiet";
+  }
+}
+
+function drawTL(){
+  var cv = el("tl"), ctx = cv.getContext("2d");
+  var W = cv.width, H = cv.height;
+  var css = getComputedStyle(document.body);
+  var C = function(n){ return css.getPropertyValue(n).trim(); };
+  ctx.clearRect(0, 0, W, H);
+  var x0 = 8, x1 = W - 8, lo = Math.max(1, st.cyc - 59);
+  var X = function(c){ return x0 + (x1 - x0) * (c - lo) / Math.max(19, st.cyc - lo); };
+  var yBase = H - 24;
+  if (st.activation && st.obs){
+    ctx.fillStyle = C("--red");
+    ctx.globalAlpha = 0.14;
+    ctx.fillRect(X(st.activation.cyc), 14, X(st.obs.cyc) - X(st.activation.cyc), yBase - 14);
+    ctx.globalAlpha = 1;
+  }
+  ctx.strokeStyle = C("--rule"); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x0, yBase); ctx.lineTo(x1, yBase); ctx.stroke();
+  var i;
+  for (i = 0; i < st.hist.length; i++){
+    var h = st.hist[i];
+    if (h.c < lo) continue;
+    var x = X(h.c);
+    ctx.strokeStyle = C(h.pop ? "--green" : "--rule");
+    ctx.beginPath(); ctx.moveTo(x, yBase); ctx.lineTo(x, yBase - (h.pop ? 9 : 5)); ctx.stroke();
+  }
+  ctx.font = "600 11px ui-monospace,monospace";
+  ctx.textAlign = "center";
+  if (st.activation && st.activation.cyc >= lo){
+    mark(ctx, X(st.activation.cyc), yBase, C("--red"), "ACTIVATION · cyc " + st.activation.cyc, 12);
+  }
+  if (st.obs && st.obs.cyc >= lo){
+    mark(ctx, X(st.obs.cyc), yBase, C("--red"), "OBSERVATION · cyc " + st.obs.cyc, 26);
+    if (st.activation){
+      ctx.fillStyle = C("--ink");
+      ctx.fillText(st.obs.latency + " cycles · " + st.obs.reads + " reads",
+        (X(st.activation.cyc) + X(st.obs.cyc)) / 2, H - 6);
+    }
+  } else if (st.activation){
+    ctx.fillStyle = C("--ink3");
+    ctx.textAlign = "left";
+    ctx.fillText("…observation pending: nothing armed has disagreed yet", x0, H - 6);
+    ctx.textAlign = "center";
+  }
+}
+
+function mark(ctx, x, yBase, color, label, ty){
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x, yBase - 12); ctx.lineTo(x - 5, yBase - 20); ctx.lineTo(x + 5, yBase - 20);
+  ctx.closePath(); ctx.fill();
+  ctx.fillText(label, Math.min(Math.max(x, 70), 890), ty);
+}
+
+function verdict(){
+  var v = el("verdict");
+  if (!st.activation){
+    v.className = "verdict";
+    v.innerHTML = st.bug
+      ? "Bug armed. Fill to full, then write once more — watch which queue gains a word."
+      : "Bug off: a write at full bounces off visibly and neither queue records it. Arm the bug to make the same write lie.";
+    return;
+  }
+  if (!st.obs){
+    v.className = "verdict warn";
+    v.innerHTML = "<b>The damage is in.</b> Reference holds " + st.ref.length +
+      " words, the DUT holds " + st.cnt + " — and every armed checker is still quiet. Count and " +
+      "flag compares are " + ((st.arm.count || st.arm.flags) ? "watching" : "not armed") +
+      "; the drain compare cannot speak until the gap's turn to leave. Keep reading.";
+    return;
+  }
+  var a = st.activation, o = st.obs;
+  v.className = "verdict bad";
+  v.innerHTML = "<b>Activation cycle " + a.cyc + ", observation cycle " + o.cyc + ": " +
+    o.latency + " cycles, " + o.reads + " reads.</b> The phantom sat " + ordinal(a.place) +
+    " in line, so " + o.clean + " read" + (o.clean === 1 ? "" : "s") + " of correct data crossed the " +
+    "checker after the drop. The bug fired once and stayed latent; the symptom is a property of " +
+    "the <em>queue distance</em>, not of the bug." +
+    (st.arm.count ? "" : " Arm the count compare and run the race again — it convicts the cycle of the drop.");
+}
+
+function ordinal(n){
+  var s = ["th","st","nd","rd"], v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+function manual(wr, rd){
+  if (!unlocked || timer) return;
+  step(st, wr, rd);
+  draw();
+}
+
+function playScript(steps, done){
+  if (timer) return;
+  var i = 0;
+  timer = setInterval(function(){
+    if (i >= steps.length){
+      clearInterval(timer); timer = null;
+      if (done) done();
+      return;
+    }
+    var s = steps[i++];
+    step(st, s[0], s[1]);
+    draw();
+  }, 150);
+}
+
+function raceScript(){
+  el("bug").checked = true;
+  reset();
+  st.log.push(["", "scripted race: fill 8 · write at full · read per cycle"]);
+  var steps = [], i;
+  for (i = 0; i < DEPTH; i++) steps.push([1, 0]);
+  steps.push([1, 0]);
+  for (i = 0; i < DEPTH + 1; i++) steps.push([0, 1]);
+  playScript(steps);
+}
+
+el("bwr").addEventListener("click", function(){ manual(1, 0); });
+el("brd").addEventListener("click", function(){ manual(0, 1); });
+el("bboth").addEventListener("click", function(){ manual(1, 1); });
+el("btick").addEventListener("click", function(){ manual(0, 0); });
+el("bfill").addEventListener("click", function(){
+  if (!unlocked || timer) return;
+  var steps = [], need = DEPTH - st.cnt, i;
+  for (i = 0; i < need; i++) steps.push([1, 0]);
+  playScript(steps);
+});
+el("bhammer").addEventListener("click", function(){
+  if (!unlocked || timer) return;
+  var steps = [], i;
+  for (i = st.cnt; i < DEPTH; i++) steps.push([1, 0]);   /* reach full first if needed */
+  steps.push([1, 0]);
+  playScript(steps);
+});
+el("bdrain").addEventListener("click", function(){
+  if (!unlocked || timer) return;
+  var steps = [], n = Math.max(st.cnt, st.ref.length), i;
+  for (i = 0; i < n; i++) steps.push([0, 1]);
+  playScript(steps);
+});
+el("brace").addEventListener("click", function(){ if (unlocked && !timer) raceScript(); });
+el("breset").addEventListener("click", function(){ if (unlocked) reset(); });
+el("seed").addEventListener("change", function(){ if (unlocked) reset(); });
+el("bug").addEventListener("change", function(){
+  if (!unlocked) return;
+  st.bug = el("bug").checked;
+  st.log.push(["", st.bug ? "drop bug armed — the next write at full will lie"
+                          : "bug disarmed — writes at full are refused visibly"]);
+  draw();
+});
+el("armc").addEventListener("change", function(){
+  if (!unlocked) return;
+  st.arm.count = el("armc").checked;
+  st.log.push(["", "count compare " + (st.arm.count ? "armed" : "off") + " from cycle " + (st.cyc + 1)]);
+  draw();
+});
+el("armf").addEventListener("change", function(){
+  if (!unlocked) return;
+  st.arm.flags = el("armf").checked;
+  st.log.push(["", "flag compare " + (st.arm.flags ? "armed" : "off") + " from cycle " + (st.cyc + 1)]);
+  draw();
+});
+
+document.addEventListener("keydown", function(e){
+  if (!unlocked || timer) return;
+  if (/input|textarea|select/i.test(e.target.tagName)) return;
+  if (e.key === "w") manual(1, 0);
+  else if (e.key === "r") manual(0, 1);
+  else if (e.key === "b") manual(1, 1);
+  else if (e.key === "t") manual(0, 0);
+});
+
+/* predict-then-reveal: the controls stay locked until the student commits */
+el("controls").classList.add("locked");
+document.querySelectorAll("[data-p]").forEach(function(b){
+  b.addEventListener("click", function(){
+    if (unlocked) return;
+    var m = runRace(+el("seed").value || 5, null);
+    var actual = !m.obs ? "never" :
+                 m.obs.latency === 0 ? "same" :
+                 m.obs.reads === 1 ? "next" : "turn";
+    var right = b.dataset.p === actual;
+    el("pverdict").innerHTML = (right ? "<b>Right.</b> " : "<b>Not quite.</b> ") +
+      "Measured: activation at cycle " + m.activation.cyc + ", first mismatching read at cycle " +
+      m.obs.cyc + " — <b>" + m.obs.latency + " cycles, " + m.obs.reads + " reads</b>, with " +
+      m.obs.clean + " correct reads in between. The drop files a phantom " +
+      ordinal(m.activation.place) + " in line, and a drain checker cannot speak before its turn. " +
+      "Watch it happen below, then race the count and flag compares against it.";
+    document.querySelectorAll("[data-p]").forEach(function(x){ x.classList.remove("on"); });
+    b.classList.add("on");
+    el("controls").classList.remove("locked");
+    unlocked = true;
+    raceScript();
+  });
+});
+
+reset();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Verilator version 5.020 2024-01-01
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787515919
+Found test step0_starter.test_starter
+running test_starter (1/1)
+demo seed = 5
+one byte sent, tx_ready high again -- and that is all this run checked
+test_starter passed
+**************************************************************************************
+                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        **************************************************************************************
+                                                        ** step0_starter.test_starter     PASS         990.00           0.01     161866.65  **
+                                                        **************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                990.00           0.09      11534.44  **
+                                                        **************************************************************************************
+
+- :0: Verilog $finish

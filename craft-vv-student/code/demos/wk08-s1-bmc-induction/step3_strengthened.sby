@@ -1,0 +1,23 @@
+# Step 3 -- the strengthened invariant set converges.
+#   sby -f step3_strengthened.sby
+# Same wrapper as step 2 plus ONE added assertion (count <= DEPTH). The
+# induction hypothesis now excludes the spurious count==DEPTH+1 pre-state,
+# and the whole set -- including the loose bound that failed alone --
+# proves by k-induction. Depth is unchanged from step 2 on purpose: the
+# depth was never the problem.
+
+[options]
+mode prove
+depth 15
+expect pass
+
+[engines]
+smtbmc z3
+
+[script]
+read_verilog -sv -formal -DFORMAL step3_strengthened.sv fifo.sv
+prep -top fifo_bound
+
+[files]
+step3_strengthened.sv
+../../dut/fifo.sv

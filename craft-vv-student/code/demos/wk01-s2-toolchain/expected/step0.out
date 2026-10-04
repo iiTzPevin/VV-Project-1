@@ -1,0 +1,22 @@
+=== CRAFT V&V toolchain ===
+OK   verilator: Verilator 5.020 2024-01-01 rev (Debian 5.020-1)
+OK   iverilog: iverilog: invalid option -- '-'
+OK   yosys: Yosys 0.33 (git sha1 2584903a060)
+OK   z3: Z3 version 4.8.12 - 64 bit
+OK   sby: SBY v0.68
+opt  gtkwave (waveform viewing)
+
+=== Python stack ===
+python: Python 3.11.15;  venv: <none active>
+OK   cocotb: 1.9.2
+OK   cocotb_coverage: 2.0
+OK   vsc:
+OK   pyuvm:
+OK   yaml: 6.0.3
+
+=== lecture-demo premises ===
+OK   wk5-dist-guard: dist ignores implies (P=0.84 with guard false) -- demo premise holds
+
+=== end-to-end smoke (ALU under icarus) ===
+OK   smoke: ALU reference testbench passes
+=== done ===

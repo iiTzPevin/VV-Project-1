@@ -1,0 +1,35 @@
+# UART mutation pool -- RELEASED (practice).  Score = found / total.
+dut: uart.sv
+mutants:
+  - id: tx_start_high
+    desc: "the start bit is transmitted high -- no frame ever begins on the wire"
+    find: "txd     <= 1'b0;   // start bit begins immediately"
+    replace: "txd     <= 1'b1;   // start bit begins immediately"
+  - id: tx_stop_low
+    desc: "the stop bit is transmitted low -- every frame ends in a framing violation"
+    find: "txd     <= 1'b1;            // stop bit"
+    replace: "txd     <= 1'b0;            // stop bit"
+  - id: tx_msb_first
+    desc: "the first data bit sent is the MSB instead of the LSB"
+    find: "txd     <= t_shift[0];          // first data bit, LSB"
+    replace: "txd     <= t_shift[WIDTH-1];          // first data bit, LSB"
+  - id: tx_ready_always
+    desc: "tx_ready stuck high -- words are accepted mid-frame"
+    find: "assign tx_ready = (t_state == T_IDLE);"
+    replace: "assign tx_ready = 1'b1;"
+  - id: tx_data_corrupt
+    desc: "the transmitted word is corrupted (+1) at accept"
+    find: "t_shift <= tx_data;"
+    replace: "t_shift <= tx_data + 1'b1;"
+  - id: rx_bit_order
+    desc: "the receiver assembles bits MSB-first instead of LSB-first"
+    find: "r_shift <= {rxd, r_shift[WIDTH-1:1]}; // sample mid-bit, LSB first"
+    replace: "r_shift <= {r_shift[WIDTH-2:0], rxd}; // sample mid-bit, LSB first"
+  - id: rx_err_silent
+    desc: "a bad stop bit is swallowed -- frame_err never pulses"
+    find: "frame_err <= 1'b1;                // stop bit low"
+    replace: "frame_err <= 1'b0;                // stop bit low"
+  - id: tx_bits_short
+    desc: "only 7 data bits are transmitted before the stop bit"
+    find: "if (t_bit == WIDTH-1) begin"
+    replace: "if (t_bit == WIDTH-2) begin"

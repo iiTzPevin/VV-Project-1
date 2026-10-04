@@ -1,0 +1,35 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787500856
+pytest not found, install it to enable better AssertionError messages
+Found test step4_shaped.test_shaped
+running test_shaped (1/1)
+demo seed = 5
+--- phase FILL: same instrument, new constraints ---
+induced rates over 400 draws: wr_en=0.73  rd_en=0.21   net drift = +0.51 entries/cycle
+--- phase DRAIN: same instrument, new constraints ---
+induced rates over 400 draws: wr_en=0.23  rd_en=0.75   net drift = -0.52 entries/cycle
+
+                                                          occupancy   cycles
+                                                          ---------   ------
+                                                                  0       35  #################### <- EMPTY
+                                                                  1       33  ###################
+                                                                  2       14  ########
+                                                                  3       11  ######
+                                                                  4       27  ###############
+                                                                  5       17  ##########
+                                                                  6       14  ########
+                                                                  7       21  ############
+                                                                  8       28  ################ <- FULL
+                                                          boundaries reached: 2/2   (empty=35 cycles, full=28 cycles)
+test_shaped passed
+**************************************************************************************
+                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        **************************************************************************************
+                                                        ** step4_shaped.test_shaped       PASS        2025.00           4.15        487.88  **
+                                                        **************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0               2025.00           4.34        467.08  **
+                                                        **************************************************************************************
+

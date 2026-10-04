@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assertion &amp; Vacuity Scrubber · CRAFT V&amp;V Week 7</title>
+<style>
+:root{
+  --navy:#1B2A4A; --gold:#D4A843; --green:#27AE60; --blue:#2E86AB;
+  --red:#E74C3C; --purple:#9B59B6;
+  --ground:#F4F6F9; --surface:#fff; --surface2:#EDF0F5;
+  --ink:#16223B; --ink2:#3E4C68; --ink3:#6B7791; --rule:#D9DEE7;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#0D1524; --surface:#141E33; --surface2:#1B273F;
+    --ink:#E7ECF5; --ink2:#B6C1D6; --ink3:#8592AC; --rule:#2A3752;
+    --gold:#E9BE58; --green:#5FD48C; --blue:#5AA9C9; --red:#FF8776; --purple:#BE85D6;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font:16px/1.55 "Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 18px 60px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:1.5rem;margin:0;letter-spacing:-.01em}
+h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin:0 0 8px}
+p{margin:0;max-width:72ch;color:var(--ink2)}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+header{border-bottom:2px solid var(--ink);padding-bottom:12px;display:flex;flex-direction:column;gap:6px}
+.kicker{font:600 .7rem/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px 18px}
+.grid{display:grid;grid-template-columns:minmax(280px,1fr) minmax(340px,1.7fr);gap:16px;align-items:start}
+@media(max-width:880px){.grid{grid-template-columns:1fr}}
+
+.presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+button{font:inherit;cursor:pointer;border-radius:4px;border:1px solid var(--rule);
+  background:var(--surface2);color:var(--ink);padding:7px 12px;transition:none}
+button:hover{border-color:var(--ink3)}
+button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+@media (prefers-color-scheme:dark){button.on{background:var(--gold);color:#12203a;border-color:var(--gold)}}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+.ctl{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.ctl label{font-size:.85rem;color:var(--ink2)}
+select{font:inherit;font-family:ui-monospace,monospace;font-size:.85rem;padding:6px 8px;
+  border:1px solid var(--rule);border-radius:4px;background:var(--surface2);color:var(--ink);width:100%}
+input[type=number]{width:88px;font:inherit;padding:4px 6px;border:1px solid var(--rule);
+  border-radius:4px;background:var(--surface2);color:var(--ink);font-family:ui-monospace,monospace}
+input[type=range]{width:100%;accent-color:var(--blue)}
+.check{display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--ink2);margin-top:4px}
+.check input{width:17px;height:17px;accent-color:var(--gold)}
+
+.propline{font-family:ui-monospace,monospace;font-size:.83rem;background:var(--surface2);
+  border-radius:5px;padding:9px 12px;margin:2px 0 12px;overflow-x:auto;white-space:nowrap;color:var(--ink)}
+.propline b{color:var(--blue)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-top:14px}
+.stat{background:var(--surface2);border-radius:5px;padding:9px 11px}
+.stat .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)}
+.stat .v{font:700 1.25rem/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;margin-top:3px}
+.v.ok{color:var(--green)} .v.bad{color:var(--red)} .v.warn{color:var(--gold)} .v.dim{color:var(--ink3)}
+
+.verdict{margin-top:14px;border-left:4px solid var(--rule);padding:10px 14px;background:var(--surface2);border-radius:0 5px 5px 0;font-size:.92rem}
+.verdict.ok{border-left-color:var(--green)}
+.verdict.bad{border-left-color:var(--red)}
+.verdict.warn{border-left-color:var(--gold)}
+.verdict b{color:var(--ink)}
+
+pre.log{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.8rem;line-height:1.5;
+  background:var(--surface2);border-radius:5px;padding:10px 12px;margin:12px 0 0;overflow-x:auto}
+pre.log .g{color:var(--green);font-weight:700} pre.log .r{color:var(--red);font-weight:700}
+pre.log .y{color:var(--gold);font-weight:700} pre.log .d{color:var(--ink3)}
+
+#predict{border-left:4px solid var(--purple);background:var(--surface2);padding:12px 16px;border-radius:0 5px 5px 0}
+#predict .q{font-weight:600;margin-bottom:9px}
+.locked{opacity:.45;pointer-events:none}
+
+.cvwrap{overflow-x:auto}
+canvas{display:block;background:var(--surface2);border-radius:5px;min-width:680px;width:100%}
+.scrubrow{margin-top:10px}
+#scrubinfo{font-family:ui-monospace,monospace;font-size:.78rem;color:var(--ink2);margin-top:4px;min-height:2.4em}
+
+footer{font-size:.8rem;color:var(--ink3);border-top:1px solid var(--rule);padding-top:12px}
+footer p{color:var(--ink3)}
+
+/* projector mode: ?present=1 */
+body.present{font-size:21px}
+body.present .prose,body.present footer{display:none}
+body.present h1{font-size:2rem}
+body.present .stat .v{font-size:1.7rem}
+body.present pre.log{font-size:1rem}
+body.present .propline{font-size:1.05rem}
+body.present #scrubinfo{font-size:1rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="kicker">CRAFT V&amp;V · Week 7 · SystemVerilog Assertions</span>
+  <h1>Assertion &amp; Vacuity Scrubber</h1>
+  <p class="prose">A green assertion is a claim about every cycle its antecedent fired.
+  Fired zero times, it claimed nothing. Assemble a property over a trace of the course
+  FIFO (depth 8, the gating from <code>dut/fifo.sv</code>), predict the verdict, then make
+  the log prove the check did any work.</p>
+</header>
+
+<div id="predict" class="panel">
+  <div class="q">The waveform below is the Week 7 smoke test. The property under it is
+    <code>a_prop: assert property (@(posedge clk) full |-&gt; !do_wr);</code> —
+    what does the simulator report at the end of the run?</div>
+  <div class="presets">
+    <button data-p="PASS">PASS — checked and held</button>
+    <button data-p="FAIL">FAIL</button>
+    <button data-p="VACUOUS">PASS — but it never checked anything</button>
+  </div>
+  <div id="pverdict" style="font-size:.9rem;color:var(--ink3)">Commit to an answer — the property builder unlocks once you do.</div>
+</div>
+
+<div class="grid">
+
+  <div class="panel" id="controls">
+    <h2>Trace</h2>
+    <div class="presets">
+      <button data-trace="smoke" class="on">Week 7 smoke test</button>
+      <button data-trace="filldrain">Fill · collide · drain</button>
+      <button data-trace="mutant">ignore_full planted</button>
+      <button data-trace="random">Random</button>
+    </div>
+    <div class="ctl">
+      <label for="seed">Seed (random trace)</label>
+      <input type="number" id="seed" value="5" min="1" max="9999">
+    </div>
+
+    <h2 style="margin-top:14px">Property</h2>
+    <div class="propline" id="propline"></div>
+    <div class="ctl">
+      <label for="ant">Antecedent — when this holds, the check fires</label>
+      <select id="ant"></select>
+    </div>
+    <div class="ctl">
+      <label for="impl">Implication — where the obligation lands</label>
+      <select id="impl">
+        <option value="|->">|-&gt;&nbsp; overlapping · same cycle</option>
+        <option value="|=>">|=&gt;&nbsp; non-overlapping · next cycle</option>
+      </select>
+    </div>
+    <div class="ctl">
+      <label for="cons">Consequent — what must then hold</label>
+      <select id="cons"></select>
+    </div>
+    <label class="check"><input type="checkbox" id="cover">
+      <span>Add <code>c_ante: cover property (antecedent);</code></span></label>
+  </div>
+
+  <div class="panel">
+    <h2>Waveform · 18 cycles of dut/fifo.sv</h2>
+    <div class="cvwrap">
+      <canvas id="wave" width="960" height="330" aria-label="FIFO waveform with assertion attempts marked per cycle"></canvas>
+    </div>
+    <div class="scrubrow">
+      <label for="scrub" style="font-size:.8rem;color:var(--ink3)">Scrub — arrow keys walk the cycles</label>
+      <input type="range" id="scrub" min="0" max="17" value="0" step="1">
+      <div id="scrubinfo" aria-live="polite"></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">Antecedent fired</div><div class="v" id="sfired">—</div></div>
+      <div class="stat"><div class="k">Failures</div><div class="v" id="sfail">—</div></div>
+      <div class="stat"><div class="k">cover c_ante</div><div class="v" id="scover">off</div></div>
+    </div>
+    <pre class="log" id="log">— commit to a prediction above to run —</pre>
+    <div class="verdict" id="verdict">The verdict lands here.</div>
+  </div>
+</div>
+
+<footer>
+  <p><b>What this models.</b> Exactly the gating in <code>dut/fifo.sv</code>, depth 8:
+  <code>do_wr = wr_en &amp; ~full</code>, <code>do_rd = rd_en &amp; ~empty</code>,
+  <code>full = (count == 8)</code>, <code>empty = (count == 0)</code>; a simultaneous
+  accepted write and read leaves <code>count</code> unchanged. One sample per rising edge.
+  <code>a |=&gt; b</code> is evaluated as <code>a |-&gt; ##1 b</code>; an attempt whose
+  obligation lands past the last cycle is left unfinished at end of sim — reported, not failed.
+  The <em>ignore_full</em> trace is the released mutant: <code>do_wr = wr_en</code>, so a
+  write while full lands anyway and overwrites in place.</p>
+  <p style="margin-top:8px"><b>Not modeled:</b> multi-cycle sequences, <code>$past</code>,
+  <code>disable iff</code> — the class suite (<code>dut/fifo_sva.sv</code>) uses all three,
+  and the vacuity trap is identical there. For the live version of this trap:
+  <code>just demo 07 s1 2</code> — an all-green suite on RTL that drops writes on the floor,
+  exposed by two covers at zero. HW7's standing rule follows: every <code>assert</code>
+  ships with a passing <code>cover</code>, and a dead antecedent earns nothing.</p>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var DEPTH = 8, CYCLES = 18;
+
+/* deterministic PRNG so a seed reproduces exactly (mulberry32) */
+function rng(seed){
+  var a = seed >>> 0;
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* ---------- model: the FIFO gating, one row per cycle ---------- */
+/* stim: [{w,r}] · mutant=true models the released ignore_full: do_wr = wr_en */
+function simTrace(stim, mutant){
+  var count = 0, rows = [];
+  for (var i = 0; i < stim.length; i++){
+    var full = count === DEPTH, empty = count === 0;
+    var do_wr = mutant ? (stim[i].w ? 1 : 0) : ((stim[i].w && !full) ? 1 : 0);
+    var do_rd = (stim[i].r && !empty) ? 1 : 0;
+    rows.push({wr_en: stim[i].w ? 1 : 0, rd_en: stim[i].r ? 1 : 0,
+               do_wr: do_wr, do_rd: do_rd, full: full ? 1 : 0, empty: empty ? 1 : 0, count: count});
+    var enq = do_wr && !full, deq = do_rd;      /* count saturates under the mutant */
+    if (enq && !deq) count++;
+    else if (deq && !enq) count--;
+  }
+  return rows;
+}
+
+function fromStrings(w, r){
+  var s = [];
+  for (var i = 0; i < w.length; i++) s.push({w: w[i] === "1" ? 1 : 0, r: r[i] === "1" ? 1 : 0});
+  return s;
+}
+var STIM = {
+  /* wr:  cycles 0,1,6,9,10 · rd: 3,4,5(gated: empty),7,12,13 — never near full */
+  smoke:     fromStrings("11....1..11.......", "...111.1....11...."),
+  /* fill to full, hold, read at full, write again — the |=> collision at cycle 9->10 */
+  filldrain: fromStrings("11111111..1.......", ".........1.1111111"),
+  /* write-heavy into the mutant: do_wr stays up while full at cycles 8..11 */
+  mutant:    fromStrings("111111111111......", "............111111")
+};
+function randomStim(seed){
+  var r = rng(seed), s = [];
+  for (var i = 0; i < CYCLES; i++){
+    var w = r() < 0.65 ? 1 : 0, rd = r() < 0.35 ? 1 : 0;
+    s.push({w: w, r: rd});
+  }
+  return s;
+}
+var TRACES = {
+  smoke:     function(){ return simTrace(STIM.smoke, false); },
+  filldrain: function(){ return simTrace(STIM.filldrain, false); },
+  mutant:    function(){ return simTrace(STIM.mutant, true); },
+  random:    function(seed){ return simTrace(randomStim(seed), false); }
+};
+
+/* ---------- model: property evaluation ---------- */
+var EXPRS = {
+  full:        {sv: "full",            fn: function(q){ return !!q.full; }},
+  empty:       {sv: "empty",           fn: function(q){ return !!q.empty; }},
+  do_wr:       {sv: "do_wr",           fn: function(q){ return !!q.do_wr; }},
+  do_rd:       {sv: "do_rd",           fn: function(q){ return !!q.do_rd; }},
+  wr_and_full: {sv: "full && do_wr",   fn: function(q){ return !!(q.full && q.do_wr); }},
+  nempty:      {sv: "!empty",          fn: function(q){ return !q.empty; }},
+  ndo_wr:      {sv: "!do_wr",          fn: function(q){ return !q.do_wr; }},
+  ndo_rd:      {sv: "!do_rd",          fn: function(q){ return !q.do_rd; }},
+  nfull:       {sv: "!full",           fn: function(q){ return !q.full; }}
+};
+var ANTS = ["full", "empty", "do_wr", "do_rd", "wr_and_full", "nempty"];
+var CONS = ["ndo_wr", "ndo_rd", "nfull", "nempty", "full", "empty", "do_wr", "do_rd"];
+
+/* SVA implication over a finite trace. |-> checks the consequent on the firing
+   cycle; |=> on the next. An obligation past the end is pending, not a failure. */
+function evalProp(rows, antKey, impl, consKey){
+  var ant = EXPRS[antKey].fn, cons = EXPRS[consKey].fn;
+  var n = rows.length, attempts = [], passes = 0, fails = 0, pending = 0, firstFail = -1;
+  for (var i = 0; i < n; i++){
+    if (!ant(rows[i])) continue;
+    var j = impl === "|=>" ? i + 1 : i;
+    if (j >= n){ attempts.push({fire: i, obl: j, res: "pending"}); pending++; continue; }
+    var ok = cons(rows[j]);
+    attempts.push({fire: i, obl: j, res: ok ? "pass" : "fail"});
+    if (ok) passes++;
+    else { fails++; if (firstFail < 0) firstFail = j; }
+  }
+  return {attempts: attempts, fired: attempts.length, passes: passes, fails: fails,
+          pending: pending, firstFail: firstFail,
+          verdict: fails ? "FAIL" : (attempts.length === 0 ? "VACUOUS" : "PASS")};
+}
+
+var CORE = {rng: rng, simTrace: simTrace, randomStim: randomStim, evalProp: evalProp,
+            EXPRS: EXPRS, ANTS: ANTS, CONS: CONS, STIM: STIM, TRACES: TRACES,
+            DEPTH: DEPTH, CYCLES: CYCLES, fromStrings: fromStrings};
+if (typeof document === "undefined"){ globalThis.SVA_CORE = CORE; return; }
+
+/* ---------------------------- UI ---------------------------- */
+if (new URLSearchParams(location.search).get("present") === "1") document.body.classList.add("present");
+var el = function(id){ return document.getElementById(id); };
+
+ANTS.forEach(function(k){
+  var o = document.createElement("option"); o.value = k; o.textContent = EXPRS[k].sv; el("ant").appendChild(o);
+});
+CONS.forEach(function(k){
+  var o = document.createElement("option"); o.value = k; o.textContent = EXPRS[k].sv; el("cons").appendChild(o);
+});
+el("ant").value = "full"; el("cons").value = "ndo_wr";
+
+var state = {trace: "smoke", unlocked: false, res: null, rows: null};
+
+function currentRows(){
+  return state.trace === "random" ? TRACES.random(+el("seed").value || 1) : TRACES[state.trace]();
+}
+function propText(){
+  return "a_prop: assert property (@(posedge clk) <b>" + EXPRS[el("ant").value].sv +
+         "</b> " + (el("impl").value === "|=>" ? "|=&gt;" : "|-&gt;") + " <b>" +
+         EXPRS[el("cons").value].sv + "</b>);";
+}
+
+/* ---------- canvas ---------- */
+var cv = el("wave"), ctx = cv.getContext("2d");
+var GUT = 96, W = cv.width, CW = (W - GUT - 8) / CYCLES;
+var LANES = [
+  {key: "wr_en", lab: "wr_en"}, {key: "rd_en", lab: "rd_en"},
+  {key: "do_wr", lab: "do_wr"}, {key: "do_rd", lab: "do_rd"},
+  {key: "full",  lab: "full"},  {key: "empty", lab: "empty"}
+];
+var Y_NUM = 16, Y_ATT = 24, H_ATT = 30, Y_COV = 60, H_COV = 24, Y_SIG = 92, H_LANE = 32, Y_CNT = 318;
+function colX(i){ return GUT + i * CW; }
+function colC(i){ return GUT + (i + 0.5) * CW; }
+
+function css(name){ return getComputedStyle(document.body).getPropertyValue(name).trim(); }
+
+function draw(){
+  var rows = state.rows, res = state.unlocked ? state.res : null;
+  var cInk = css("--ink"), cInk2 = css("--ink2"), cInk3 = css("--ink3"), cRule = css("--rule"),
+      cBlue = css("--blue"), cGold = css("--gold"), cGreen = css("--green"), cRed = css("--red");
+  ctx.clearRect(0, 0, W, cv.height);
+  ctx.font = "12px ui-monospace,Menlo,Consolas,monospace";
+
+  /* fail columns first, so everything draws over them */
+  if (res){
+    ctx.globalAlpha = 0.10; ctx.fillStyle = cRed;
+    res.attempts.forEach(function(a){
+      if (a.res === "fail") ctx.fillRect(colX(a.obl), Y_NUM + 4, CW, Y_CNT - Y_NUM - 14);
+    });
+    ctx.globalAlpha = 1;
+  }
+  /* scrub cursor band */
+  var cur = +el("scrub").value;
+  ctx.globalAlpha = 0.14; ctx.fillStyle = cGold;
+  ctx.fillRect(colX(cur), Y_NUM + 4, CW, Y_CNT - Y_NUM - 14);
+  ctx.globalAlpha = 1;
+
+  /* cycle numbers + column rules */
+  for (var i = 0; i < CYCLES; i++){
+    ctx.fillStyle = i === cur ? cInk : cInk3;
+    ctx.textAlign = "center";
+    ctx.fillText(String(i), colC(i), Y_NUM);
+    ctx.strokeStyle = cRule; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.setLineDash([2, 5]);
+    ctx.moveTo(colX(i), Y_NUM + 4); ctx.lineTo(colX(i), Y_CNT - 10); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  /* attempts lane */
+  ctx.textAlign = "right"; ctx.fillStyle = cInk3;
+  ctx.fillText("attempts", GUT - 8, Y_ATT + H_ATT - 10);
+  if (res){
+    res.attempts.forEach(function(a){
+      /* firing marker */
+      ctx.fillStyle = cGold;
+      var fx = colC(a.fire), ty = Y_ATT + H_ATT - 6;
+      ctx.beginPath(); ctx.moveTo(fx, ty - 8); ctx.lineTo(fx - 5, ty); ctx.lineTo(fx + 5, ty); ctx.closePath(); ctx.fill();
+      /* obligation arrow for |=> */
+      if (a.obl !== a.fire && a.obl < CYCLES){
+        var ox = colC(a.obl);
+        ctx.strokeStyle = cInk3; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(fx + 6, ty - 4); ctx.lineTo(ox - 7, ty - 4); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ox - 7, ty - 4); ctx.lineTo(ox - 12, ty - 7); ctx.moveTo(ox - 7, ty - 4);
+        ctx.lineTo(ox - 12, ty - 1); ctx.stroke();
+      }
+      /* result glyph at the obligation cycle */
+      ctx.textAlign = "center"; ctx.font = "bold 13px ui-monospace,Menlo,monospace";
+      var gx = a.obl < CYCLES ? colC(a.obl) : W - 10;
+      if (a.res === "pass"){ ctx.fillStyle = cGreen; ctx.fillText("✓", gx, Y_ATT + 12); }
+      else if (a.res === "fail"){ ctx.fillStyle = cRed; ctx.fillText("✕", gx, Y_ATT + 12); }
+      else { ctx.fillStyle = cGold; ctx.fillText("⋯", gx, Y_ATT + 12); }
+      ctx.font = "12px ui-monospace,Menlo,monospace";
+    });
+    if (res.fired === 0){
+      ctx.textAlign = "left"; ctx.fillStyle = cInk3;
+      ctx.fillText("(the antecedent never fired)", GUT + 6, Y_ATT + H_ATT - 10);
+    }
+  } else {
+    ctx.textAlign = "left"; ctx.fillStyle = cInk3;
+    ctx.fillText("(locked until you predict)", GUT + 6, Y_ATT + H_ATT - 10);
+  }
+
+  /* cover lane */
+  var coverOn = el("cover").checked && state.unlocked;
+  ctx.textAlign = "right"; ctx.fillStyle = coverOn ? cInk2 : cInk3;
+  ctx.fillText(coverOn ? "c_ante" : "c_ante (off)", GUT - 8, Y_COV + 16);
+  ctx.strokeStyle = cRule; ctx.setLineDash([3, 4]);
+  ctx.beginPath(); ctx.moveTo(GUT, Y_COV + 12); ctx.lineTo(W - 6, Y_COV + 12); ctx.stroke();
+  ctx.setLineDash([]);
+  if (coverOn && res){
+    ctx.fillStyle = cGold;
+    res.attempts.forEach(function(a){
+      ctx.beginPath(); ctx.arc(colC(a.fire), Y_COV + 12, 5, 0, Math.PI * 2); ctx.fill();
+    });
+  }
+
+  /* signal lanes */
+  LANES.forEach(function(l, li){
+    var top = Y_SIG + li * H_LANE, hi = top + 5, lo = top + H_LANE - 9;
+    ctx.textAlign = "right"; ctx.fillStyle = cInk2;
+    ctx.fillText(l.lab, GUT - 8, lo - 2);
+    /* light fill for high stretches */
+    ctx.globalAlpha = 0.13; ctx.fillStyle = cBlue;
+    for (var i = 0; i < CYCLES; i++)
+      if (rows[i][l.key]) ctx.fillRect(colX(i), hi, CW, lo - hi);
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = cBlue; ctx.lineWidth = 1.7;
+    ctx.beginPath();
+    for (var i2 = 0; i2 < CYCLES; i2++){
+      var y = rows[i2][l.key] ? hi : lo;
+      if (i2 === 0) ctx.moveTo(colX(0), y);
+      else { ctx.lineTo(colX(i2), rows[i2 - 1][l.key] ? hi : lo); ctx.lineTo(colX(i2), y); }
+      ctx.lineTo(colX(i2) + CW, y);
+    }
+    ctx.stroke();
+  });
+
+  /* count row */
+  ctx.textAlign = "right"; ctx.fillStyle = cInk2;
+  ctx.fillText("count", GUT - 8, Y_CNT);
+  for (var c = 0; c < CYCLES; c++){
+    var v = rows[c].count;
+    ctx.textAlign = "center";
+    ctx.fillStyle = v === DEPTH ? cGold : (v === 0 ? cInk3 : cInk);
+    ctx.font = (v === DEPTH ? "bold " : "") + "12px ui-monospace,Menlo,monospace";
+    ctx.fillText(String(v), colC(c), Y_CNT);
+  }
+  ctx.font = "12px ui-monospace,Menlo,monospace";
+}
+
+/* ---------- readouts ---------- */
+function scrubInfo(){
+  var i = +el("scrub").value, q = state.rows[i];
+  var s = "cycle " + i + " · wr_en=" + q.wr_en + " rd_en=" + q.rd_en +
+          " do_wr=" + q.do_wr + " do_rd=" + q.do_rd + " full=" + q.full +
+          " empty=" + q.empty + " count=" + q.count;
+  if (state.unlocked && state.res){
+    var fired = null, obl = null;
+    state.res.attempts.forEach(function(a){
+      if (a.fire === i) fired = a;
+      if (a.obl === i) obl = a;
+    });
+    if (fired) s += "\nantecedent FIRES here → obligation lands on cycle " +
+                    (fired.obl < CYCLES ? fired.obl : "(past the end — left unfinished)");
+    if (obl) s += "\nobligation due here: " + EXPRS[el("cons").value].sv + " = " +
+                  (obl.res === "pass" ? "true → attempt holds" : "false → ATTEMPT FAILS");
+    if (!fired && !obl) s += "\nno attempt touches this cycle";
+  }
+  el("scrubinfo").textContent = s;
+}
+
+function runEval(){
+  state.rows = currentRows();
+  state.res = evalProp(state.rows, el("ant").value, el("impl").value, el("cons").value);
+  el("propline").innerHTML = propText();
+  if (state.unlocked) report();
+  draw(); scrubInfo();
+}
+
+function report(){
+  var res = state.res, coverOn = el("cover").checked;
+  el("sfired").textContent = res.fired;
+  el("sfired").className = "v " + (res.fired ? "ok" : "warn");
+  el("sfail").textContent = res.fails;
+  el("sfail").className = "v " + (res.fails ? "bad" : "ok");
+  el("scover").textContent = coverOn ? res.fired + (res.fired === 1 ? " hit" : " hits") : "off";
+  el("scover").className = "v " + (coverOn ? (res.fired ? "ok" : "bad") : "dim");
+
+  var head = "a_prop : assert property (@(posedge clk) " + EXPRS[el("ant").value].sv +
+             " " + el("impl").value + " " + EXPRS[el("cons").value].sv + ");\n";
+  var line = res.fails
+    ? "         <span class='r'>FAIL</span> — first at cycle " + res.firstFail + " (" +
+      res.fails + " of " + res.fired + " attempts broke)"
+    : "         <span class='g'>PASS</span> — 0 failures in " + CYCLES + " cycles";
+  if (!res.fails && res.pending)
+    line += "  <span class='d'>(" + res.pending + " attempt" + (res.pending > 1 ? "s" : "") +
+            " unfinished at trace end)</span>";
+  var covline = coverOn
+    ? "\nc_ante : cover property (@(posedge clk) " + EXPRS[el("ant").value].sv + ");\n" +
+      "         " + (res.fired ? "<span class='g'>" + res.fired + " hit" + (res.fired > 1 ? "s" : "") + "</span>"
+                               : "<span class='y'>0 hits — never fired</span>")
+    : "";
+  el("log").innerHTML = head + line + covline;
+
+  var v = el("verdict"), m;
+  if (res.fails){
+    v.className = "verdict bad";
+    m = "<b>FAIL — and it names the cycle.</b> The antecedent fired on cycle " +
+        res.attempts.filter(function(a){ return a.res === "fail"; })[0].fire +
+        ", the obligation landed on cycle " + res.firstFail + ", and <code>" +
+        EXPRS[el("cons").value].sv + "</code> was false there. This precision is why the " +
+        "assertion beats an end-of-test mismatch: no backtracking from a bad final state.";
+  } else if (res.fired === 0 && coverOn){
+    v.className = "verdict bad";
+    m = "<b>VACUOUS — c_ante: 0 hits.</b> The green PASS above checked nothing: <code>" +
+        EXPRS[el("ant").value].sv + "</code> was never true, so the consequent was never " +
+        "examined. On this evidence the RTL could drop every write. In HW7 a green assert " +
+        "with a zero cover earns nothing — this pair of lines is why.";
+  } else if (res.fired === 0){
+    v.className = "verdict ok";
+    m = "<b>PASS — 0 failures.</b> That is the whole report a bare <code>assert</code> " +
+        "gives you. Before you file it as evidence, check the attempts lane — then switch " +
+        "on the cover row and see what a tool can print about it.";
+  } else if (coverOn){
+    v.className = "verdict ok";
+    m = "<b>PASS, and the cover proves it worked:</b> " + res.fired + " attempt" +
+        (res.fired > 1 ? "s" : "") + ", every one held. A green assert beside a nonzero " +
+        "cover is the pair you want in a report — claim plus proof the claim was tested.";
+  } else {
+    v.className = "verdict warn";
+    m = "<b>PASS — " + res.fired + " attempt" + (res.fired > 1 ? "s" : "") + ", all held.</b> " +
+        "You can see the firings on the canvas; the log alone would not show them. " +
+        "Switch on the cover row to make the evidence part of the report.";
+  }
+  v.innerHTML = m;
+}
+
+/* ---------- wiring ---------- */
+["ant", "impl", "cons"].forEach(function(id){ el(id).addEventListener("change", runEval); });
+el("cover").addEventListener("change", runEval);
+el("seed").addEventListener("change", function(){ if (state.trace === "random") runEval(); });
+document.querySelectorAll("[data-trace]").forEach(function(b){
+  b.addEventListener("click", function(){
+    state.trace = b.dataset.trace;
+    document.querySelectorAll("[data-trace]").forEach(function(x){ x.classList.remove("on"); });
+    b.classList.add("on");
+    runEval();
+  });
+});
+el("scrub").addEventListener("input", function(){ draw(); scrubInfo(); });
+if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+
+/* predict-then-reveal */
+el("controls").classList.add("locked");
+document.querySelectorAll("[data-p]").forEach(function(b){
+  b.addEventListener("click", function(){
+    if (state.unlocked) return;
+    var res = evalProp(currentRows(), el("ant").value, el("impl").value, el("cons").value);
+    var right = b.dataset.p === res.verdict;
+    var msg;
+    if (res.verdict === "VACUOUS"){
+      msg = (right ? "<b>Right — and the log would never tell you.</b> "
+                   : b.dataset.p === "PASS"
+                     ? "<b>The log agrees with you — PASS, 0 failures — and it is telling you less than you think.</b> "
+                     : "<b>No failure — the log prints PASS, 0 failures. Look closer before you trust it.</b> ") +
+        "In 18 cycles <code>full</code> never rose, so the property fired zero times — " +
+        "the attempts lane above is empty. A check that never ran held nothing. " +
+        "Switch on the cover row: that printed zero is the difference between green and evidence. " +
+        "Then load <b>Fill · collide · drain</b> and watch the same property earn its pass.";
+    } else {
+      msg = (right ? "<b>Right.</b> " : "<b>Not quite.</b> ") +
+            "This configuration reports " + res.verdict + " — the attempts lane shows " +
+            "every firing. Now try the other traces and the other implication.";
+    }
+    el("pverdict").innerHTML = msg;
+    document.querySelectorAll("[data-p]").forEach(function(x){ x.classList.remove("on"); });
+    b.classList.add("on");
+    el("controls").classList.remove("locked");
+    state.unlocked = true;
+    runEval();
+  });
+});
+
+runEval();
+})();
+</script>
+</body>
+</html>

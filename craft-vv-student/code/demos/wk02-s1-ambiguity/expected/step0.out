@@ -1,0 +1,31 @@
+/home/claude/vv-full/code/demos/wk02-s1-ambiguity/alu_ovf_signed.sv:26: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s1-ambiguity/alu_ovf_signed.sv:26: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s1-ambiguity/alu_ovf_signed.sv:26: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s1-ambiguity/alu_ovf_signed.sv:26: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s1-ambiguity/alu_ovf_carry.sv:26: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/claude/vv-full/code/demos/wk02-s1-ambiguity/alu_ovf_carry.sv:26: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787510377
+Found test step0_two_readings.test_vague_overflow
+running test_vague_overflow (1/1)
+demo seed = 5
+
+                                                              a      b   ovf(A: signed)  ovf(B: carry)  expected
+                                                           ----   ----   -------------  -------------  --------
+                                                           0x03   0x04               0              0         0
+                                                           0x00   0x00               0              0         0
+                                                           0x80   0x80               1              1         1
+                                                           0x80   0xff               1              1         1
+                                                           two contradictory implementations, one test: BOTH PASS
+test_vague_overflow passed
+************************************************************************************************
+                                                        ** TEST                                    STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ************************************************************************************************
+                                                        ** step0_two_readings.test_vague_overflow   PASS           4.00           0.00       3855.14  **
+                                                        ************************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                            4.00           0.08         51.23  **
+                                                        ************************************************************************************************
+

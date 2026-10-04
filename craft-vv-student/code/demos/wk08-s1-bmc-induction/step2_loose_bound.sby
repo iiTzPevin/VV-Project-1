@@ -1,0 +1,26 @@
+# Step 2 -- k-induction FAILS on a property that is TRUE.
+#   sby -f step2_loose_bound.sby
+# mode prove = base case (BMC to depth) + inductive step. The base case
+# passes -- the property holds on every reachable state. The inductive step
+# fails at EVERY k -- watch the log try step 15 down to step 0, sixteen
+# refusals in about a second: the solver parks in the unreachable
+# count==DEPTH+1 state, which the loose bound allows, idles there as long as
+# the depth asks, then steps out of it. Deepening cannot fix this.
+# `expect unknown`: an unproved (not disproved) property is the designed
+# outcome, so the run exits rc=0.
+
+[options]
+mode prove
+depth 15
+expect unknown
+
+[engines]
+smtbmc z3
+
+[script]
+read_verilog -sv -formal -DFORMAL step2_loose_bound.sv fifo.sv
+prep -top fifo_bound
+
+[files]
+step2_loose_bound.sv
+../../dut/fifo.sv

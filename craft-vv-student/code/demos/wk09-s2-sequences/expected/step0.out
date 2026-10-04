@@ -1,0 +1,22 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787517778
+Found test step0_sequences.test_sequences
+running test_sequences (1/1)
+demo seed = 5
+after SingleWriteSeq   :   1 writes,  0 reads checked, 0 mismatches
+after ReadAfterWriteSeq:   4 writes,  3 reads checked, 0 mismatches
+after RandomBurstSeq   :  50 writes, 37 reads checked, 0 mismatches
+driver in the build: RegDriver
+corrupted writes injected by the driver: 0
+test_sequences passed
+****************************************************************************************
+                                                        ** TEST                            STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ****************************************************************************************
+                                                        ** step0_sequences.test_sequences   PASS        1765.00           0.03      58839.03  **
+                                                        ****************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                 1765.00           0.12      14704.12  **
+                                                        ****************************************************************************************
+

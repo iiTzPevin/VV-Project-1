@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BMC Depth &amp; Induction · CRAFT V&amp;V Week 8</title>
+<style>
+:root{
+  --navy:#1B2A4A; --gold:#D4A843; --green:#27AE60; --blue:#2E86AB;
+  --red:#E74C3C; --purple:#9B59B6;
+  --ground:#F4F6F9; --surface:#fff; --surface2:#EDF0F5;
+  --ink:#16223B; --ink2:#3E4C68; --ink3:#6B7791; --rule:#D9DEE7;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#0D1524; --surface:#141E33; --surface2:#1B273F;
+    --ink:#E7ECF5; --ink2:#B6C1D6; --ink3:#8592AC; --rule:#2A3752;
+    --gold:#E9BE58; --green:#5FD48C; --blue:#5AA9C9; --red:#FF8776; --purple:#BE85D6;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font:16px/1.55 "Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 18px 60px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:1.5rem;margin:0;letter-spacing:-.01em}
+h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin:0 0 8px}
+h3.act{font-size:1.02rem;margin:6px 0 0;border-top:2px solid var(--ink);padding-top:14px}
+p{margin:0;max-width:72ch;color:var(--ink2)}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+header{border-bottom:2px solid var(--ink);padding-bottom:12px;display:flex;flex-direction:column;gap:6px}
+.kicker{font:600 .7rem/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px 18px}
+.grid{display:grid;grid-template-columns:minmax(270px,1fr) minmax(340px,1.8fr);gap:16px;align-items:start}
+@media(max-width:880px){.grid{grid-template-columns:1fr}}
+
+.presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+button{font:inherit;cursor:pointer;border-radius:4px;border:1px solid var(--rule);
+  background:var(--surface2);color:var(--ink);padding:7px 12px;transition:none}
+button:hover{border-color:var(--ink3)}
+button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+@media (prefers-color-scheme:dark){button.on{background:var(--gold);color:#12203a;border-color:var(--gold)}}
+button.go{background:var(--green);color:#fff;border-color:var(--green);font-weight:600;padding:9px 14px}
+button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+.ctl{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.ctl label{font-size:.85rem;color:var(--ink2);display:flex;justify-content:space-between;gap:10px}
+.ctl label b{font-family:ui-monospace,monospace;color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--blue)}
+input[type=number]{width:88px;font:inherit;padding:4px 6px;border:1px solid var(--rule);
+  border-radius:4px;background:var(--surface2);color:var(--ink);font-family:ui-monospace,monospace}
+.check{display:flex;align-items:flex-start;gap:8px;font-size:.9rem;color:var(--ink2);margin-top:4px}
+.check input{width:17px;height:17px;accent-color:var(--gold);margin-top:2px}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:14px}
+.stat{background:var(--surface2);border-radius:5px;padding:9px 11px}
+.stat .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)}
+.stat .v{font:700 1.15rem/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;margin-top:3px}
+.v.ok{color:var(--green)} .v.bad{color:var(--red)} .v.warn{color:var(--gold)} .v.dim{color:var(--ink3)}
+
+.verdict{margin-top:14px;border-left:4px solid var(--rule);padding:10px 14px;background:var(--surface2);border-radius:0 5px 5px 0;font-size:.92rem}
+.verdict.ok{border-left-color:var(--green)}
+.verdict.bad{border-left-color:var(--red)}
+.verdict.warn{border-left-color:var(--gold)}
+.verdict b{color:var(--ink)}
+
+pre.log{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.8rem;line-height:1.5;
+  background:var(--surface2);border-radius:5px;padding:10px 12px;margin:12px 0 0;overflow-x:auto}
+pre.log .g{color:var(--green);font-weight:700} pre.log .r{color:var(--red);font-weight:700}
+pre.log .y{color:var(--gold);font-weight:700} pre.log .d{color:var(--ink3)}
+
+.predict{border-left:4px solid var(--purple);background:var(--surface2);padding:12px 16px;border-radius:0 5px 5px 0}
+.predict .q{font-weight:600;margin-bottom:9px}
+.pv{font-size:.9rem;color:var(--ink3)}
+.locked{opacity:.45;pointer-events:none}
+
+.svgwrap{overflow-x:auto}
+svg{display:block;min-width:700px;width:100%;height:auto}
+svg .nd{fill:var(--surface2);stroke:var(--ink3);stroke-width:1.5}
+svg .nd.vis{fill:var(--blue);fill-opacity:.22;stroke:var(--blue)}
+svg .nd.bad{stroke:var(--red);stroke-width:2;stroke-dasharray:3 3}
+svg .nd.hit{fill:var(--red);fill-opacity:.2;stroke:var(--red);stroke-dasharray:none}
+svg .nd.onpath{stroke:var(--gold);stroke-width:2.6;stroke-dasharray:none}
+svg text{fill:var(--ink2);font:11px ui-monospace,Menlo,Consolas,monospace}
+svg text.big{fill:var(--ink);font-weight:700;font-size:12px}
+svg text.dim{fill:var(--ink3)}
+svg text.goldt{fill:var(--gold);font-weight:700}
+svg text.redt{fill:var(--red);font-weight:700}
+svg text.greent{fill:var(--green);font-weight:700}
+svg .edge{stroke:var(--ink3);stroke-width:1.4;fill:none}
+svg .edge.onpath{stroke:var(--gold);stroke-width:2.6}
+svg .edge.redE{stroke:var(--red);stroke-width:2}
+svg .rail{stroke:var(--rule);stroke-width:1.2;stroke-dasharray:4 4;fill:none}
+svg .front{stroke:var(--gold);stroke-width:2;stroke-dasharray:6 4}
+svg .cell{fill:var(--surface2);stroke:var(--rule);stroke-width:1.2}
+svg .cell.reach{fill:var(--blue);fill-opacity:.2;stroke:var(--blue)}
+svg .cell.ghost{fill:var(--gold);fill-opacity:.25;stroke:var(--gold)}
+svg .cell.viol{fill:var(--red);fill-opacity:.14;stroke:var(--red)}
+svg .cut{stroke:var(--ink3);stroke-width:1.4}
+svg .dimmed{opacity:.35}
+svg .brk{stroke:var(--ink2);stroke-width:1.4;fill:none}
+svg .brk.goldb{stroke:var(--gold)}
+
+table.tr{border-collapse:collapse;width:100%;font-family:ui-monospace,monospace;font-size:.78rem;margin-top:10px}
+table.tr th,table.tr td{padding:4px 8px;text-align:left;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums}
+table.tr th{color:var(--ink3);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em}
+table.tr td.hl{color:var(--gold);font-weight:700}
+table.tr td.rd{color:var(--red);font-weight:700}
+
+footer{font-size:.8rem;color:var(--ink3);border-top:1px solid var(--rule);padding-top:12px}
+footer p{color:var(--ink3)}
+
+/* projector mode: ?present=1 */
+body.present{font-size:21px}
+body.present .prose,body.present footer{display:none}
+body.present h1{font-size:2rem}
+body.present .stat .v{font-size:1.5rem}
+body.present pre.log{font-size:1rem}
+body.present table.tr{font-size:.95rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="kicker">CRAFT V&amp;V · Week 8 · model checking</span>
+  <h1>BMC Depth &amp; Induction</h1>
+  <p class="prose">A million clean cycles is a sample. A proof is a quantifier — and it has
+  fine print. Act 1: bounded model checking (BMC) walks a state graph outward from reset
+  and finds what a seeded regression cannot. Act 2: k-induction fails on a property that
+  is <em>true</em>, until one asserted line hands it the invariant it is missing.</p>
+</header>
+
+<!-- ============================== ACT 1 ============================== -->
+<h3 class="act">Act 1 · hunt — is the bad state reachable?</h3>
+<p class="prose">An arbiter with a sequential backdoor: nine exact bus nibbles in a row
+reach <code>grant_all</code>, the state where every requester is granted at once — and it
+latches. The unlock sequence is printed on the graph below.</p>
+
+<div class="predict panel" id="predict1">
+  <div class="q">A seeded random regression drove 1,000,000 bus cycles into this arbiter
+    and never reached <code>grant_all</code> (seed 5 — the button below reruns it).
+    Next: BMC with <code>depth 8</code>. What is the report line worth?</div>
+  <div class="presets">
+    <button data-p1="absent">PASS — the backdoor is unreachable</button>
+    <button data-p1="bounded">PASS — meaning only: no break-in of length &le; 8</button>
+    <button data-p1="fail">FAIL — formal finds the 9-step break-in</button>
+  </div>
+  <div class="pv" id="p1verdict">Commit to an answer — Act 1 unlocks once you do.</div>
+</div>
+
+<div class="grid">
+  <div class="panel" id="controls1">
+    <h2>Simulation vs search</h2>
+    <div class="ctl">
+      <label for="seed1">Seed</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input type="number" id="seed1" value="5" min="1" max="9999">
+        <button class="go" id="runrand">Run 1,000,000 random cycles</button>
+      </div>
+    </div>
+    <div class="ctl" style="margin-top:14px">
+      <label for="k1">BMC depth k <b><span id="lk1">8</span></b></label>
+      <input type="range" id="k1" min="0" max="12" value="8">
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">Random cycles</div><div class="v" id="s1cyc">—</div></div>
+      <div class="stat"><div class="k">grant_all hits</div><div class="v" id="s1hit">—</div></div>
+      <div class="stat"><div class="k">Deepest progress</div><div class="v" id="s1deep">—</div></div>
+      <div class="stat"><div class="k">BMC verdict</div><div class="v" id="s1bmc">—</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>The state graph, as BMC sees it</h2>
+    <div class="svgwrap"><svg id="svg1" viewBox="0 0 960 195" role="img"
+      aria-label="Chain of ten states from reset to grant_all with the BMC depth horizon marked"></svg></div>
+    <pre class="log" id="log1">— commit above to run —</pre>
+    <div class="verdict" id="verdict1">The verdict lands here.</div>
+    <div id="trace1"></div>
+  </div>
+</div>
+
+<!-- ============================== ACT 2 ============================== -->
+<h3 class="act">Act 2 · prove — true is not the same as inductive</h3>
+<p class="prose">Back to <code>dut/fifo.sv</code>, depth 8. The state kept here is
+<code>(count, wr_ptr, rd_ptr)</code> — <span id="nTot">?</span> states; breadth-first
+search (BFS) from reset visits the <span id="nReach">?</span> the design can occupy, and
+<code>count &lt;= 9</code> holds in every one. The property is true. The demo proves the
+matching claim with <code>mode prove</code>; here you get to watch the induction step
+choose its starting state.</p>
+
+<div class="predict panel" id="predict2">
+  <div class="q">Hand <code>assert property (count &lt;= 9);</code> to k-induction at
+    k&nbsp;=&nbsp;1: base case, then the step. What comes back?</div>
+  <div class="presets">
+    <button data-p2="pass">PASS — true in every reachable state, the step cannot fail</button>
+    <button data-p2="unknown">UNKNOWN — the step starts from a state the design can never occupy</button>
+    <button data-p2="false">FAIL — the property is false after all</button>
+  </div>
+  <div class="pv" id="p2verdict">Commit to an answer — Act 2 unlocks once you do.</div>
+</div>
+
+<div class="grid">
+  <div class="panel" id="controls2">
+    <h2>k-induction</h2>
+    <div class="ctl">
+      <label for="k2">Induction length k <b><span id="lk2">1</span></b></label>
+      <input type="range" id="k2" min="1" max="12" value="1">
+    </div>
+    <label class="check"><input type="checkbox" id="inv">
+      <span>Add the strengthening invariant:<br><code>assert property (count &lt;= 8);</code></span></label>
+    <div class="stats">
+      <div class="stat"><div class="k">States</div><div class="v dim" id="s2tot">—</div></div>
+      <div class="stat"><div class="k">Reachable (BFS)</div><div class="v" id="s2reach">—</div></div>
+      <div class="stat"><div class="k">Satisfy count&le;9</div><div class="v" id="s2p">—</div></div>
+      <div class="stat"><div class="k">Prove verdict</div><div class="v" id="s2verd">—</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>The count register · where the step is allowed to start</h2>
+    <div class="svgwrap"><svg id="svg2" viewBox="0 0 960 235" role="img"
+      aria-label="The sixteen values of the 4-bit count register: reachable band 0 to 8, the unreachable count 9 band the induction step starts from, and the violating band 10 to 15"></svg></div>
+    <pre class="log" id="log2">— commit above to run —</pre>
+    <div class="verdict" id="verdict2">The verdict lands here.</div>
+    <div id="chain2"></div>
+  </div>
+</div>
+
+<footer>
+  <p><b>What Act 1 models.</b> A 10-state trigger FSM: the right nibble advances, the
+  wrong one restarts (or credits state 1 if it matches the first key nibble), and state 9
+  latches. BMC here is exact breadth-first search over those states; a SAT engine asks the
+  same bounded question over the 16<sup>k</sup> input sequences and answers identically.
+  The class trojan (<code>just demo 08 s2 1</code>, <code>dut/arbiter_trojan.sv</code>)
+  triggers on one combinational pattern and falls at step 1 — this one is nine deep, so
+  the depth dial has something to say. Expected-first-hit for the random walk is solved
+  from the chain's linear system, not sampled.</p>
+  <p style="margin-top:8px"><b>What Act 2 models.</b> The registers of
+  <code>dut/fifo.sv</code> that decide <code>count</code> and the flags: the 4-bit
+  <code>count</code> as declared, two 3-bit pointers, the shipped gating
+  (<code>do_wr = wr_en &amp; ~full</code>, <code>full = count==8</code>). The memory array
+  and data are projected away — they cannot affect these three. The induction step is the
+  honest quantifier: search over windows of k pairwise-distinct states satisfying the
+  asserted properties (the simple-path constraint <code>sby</code> uses) for one more
+  transition that violates. At 1,024 states, exhaustive search answers exactly what
+  <code>smtbmc</code> asks z3. This is the demo's Act: <code>just demo 08 s1 2</code>
+  (true bound, induction refuses) and <code>just demo 08 s1 3</code> (one added assert,
+  <code>successful proof by k-induction</code>).</p>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* deterministic PRNG so a seed reproduces exactly (mulberry32) */
+function rng(seed){
+  var a = seed >>> 0;
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* =================== Act 1 model: the trigger FSM =================== */
+var KEY = [0x7, 0x3, 0xA, 0x1, 0xC, 0x6, 0xF, 0x2, 0x9];  /* the unlock sequence */
+var BAD1 = 9;
+function step1(cnt, nib){
+  if (cnt === BAD1) return BAD1;                 /* grant_all latches */
+  if (nib === KEY[cnt]) return cnt + 1;
+  return nib === KEY[0] ? 1 : 0;                 /* restart, with credit for key[0] */
+}
+/* exact BFS to depth k over states 0..9 × nibbles 0..15 */
+function bmc1(k){
+  var depth = new Array(10).fill(-1), par = new Array(10).fill(null);
+  depth[0] = 0;
+  var q = [0];
+  while (q.length){
+    var s = q.shift();
+    if (depth[s] >= k) continue;
+    for (var nib = 0; nib < 16; nib++){
+      var t = step1(s, nib);
+      if (depth[t] < 0){ depth[t] = depth[s] + 1; par[t] = {s: s, nib: nib}; q.push(t); }
+    }
+  }
+  var res = {k: k, depth: depth, visited: depth.filter(function(d){ return d >= 0; }).length,
+             fail: depth[BAD1] >= 0 && depth[BAD1] <= k, trace: null};
+  if (res.fail){
+    var tr = [], cur = BAD1;
+    while (par[cur]){ tr.unshift({nib: par[cur].nib, to: cur}); cur = par[cur].s; }
+    res.trace = tr;                              /* shortest: BFS order */
+  }
+  return res;
+}
+function randomRun1(seed, cycles){
+  var r = rng(seed), cnt = 0, deepest = 0, firstHit = -1;
+  for (var i = 0; i < cycles; i++){
+    cnt = step1(cnt, (r() * 16) | 0);
+    if (cnt > deepest && cnt < BAD1) deepest = cnt;
+    if (cnt === BAD1){ firstHit = i; break; }
+  }
+  return {hits: firstHit >= 0 ? 1 : 0, firstHit: firstHit, deepest: deepest, cycles: cycles};
+}
+/* expected cycles to first hit, solved from the absorbing chain.
+   E_i = 1 + (1/16)E_{i+1} + (1/16)E_1 + (14/16)E_0 for i>=1, E_9 = 0,
+   E_0  = 1 + (1/16)E_1 + (15/16)E_0. Backward substitution writes
+   E_i = a + b*E_0 + c*E_1; every coefficient is an exact dyadic, so this
+   stays exact where a general elimination loses digits to conditioning. */
+function expectedHitTime(){
+  var a = 0, b = 0, c = 0;                       /* E_9 */
+  for (var i = 8; i >= 1; i--){
+    var na = 1 + a / 16, nb = b / 16 + 14 / 16, nc = c / 16 + 1 / 16;
+    a = na; b = nb; c = nc;
+  }
+  var E1 = (a + 16 * b) / (1 - c - b);           /* E_0 = 16 + E_1 */
+  return 16 + E1;
+}
+var SEQ9 = Math.pow(16, 9);                      /* input sequences of length 9 */
+
+/* ============ Act 2 model: (count, wr_ptr, rd_ptr) of fifo.sv ============ */
+var DEPTH2 = 8, NST = 16 * 8 * 8;                /* 4-bit count, 3-bit pointers */
+function pack(c, w, r){ return (c << 6) | (w << 3) | r; }
+function unpack(s){ return {count: s >> 6, wp: (s >> 3) & 7, rp: s & 7}; }
+function next2(s, wr, rd){
+  var c = s >> 6, w = (s >> 3) & 7, r = s & 7;
+  var full = c === DEPTH2, empty = c === 0;
+  var dw = (wr && !full) ? 1 : 0, dr = (rd && !empty) ? 1 : 0;
+  return pack((c + dw - dr + 16) & 15, (w + dw) & 7, (r + dr) & 7);
+}
+function P2(s){ return (s >> 6) <= 9; }          /* the property: count <= DEPTH+1 */
+function I2(s){ return (s >> 6) <= 8; }          /* the strengthening invariant   */
+var INPUTS = [[0,0],[0,1],[1,0],[1,1]];
+function reach2(){
+  var seen = new Uint8Array(NST), q = [0], depth = {0: 0};
+  seen[0] = 1;
+  while (q.length){
+    var s = q.shift();
+    for (var i = 0; i < 4; i++){
+      var t = next2(s, INPUTS[i][0], INPUTS[i][1]);
+      if (!seen[t]){ seen[t] = 1; depth[t] = depth[s] + 1; q.push(t); }
+    }
+  }
+  var list = [];
+  for (var s2 = 0; s2 < NST; s2++) if (seen[s2]) list.push(s2);
+  return {seen: seen, list: list, count: list.length};
+}
+/* base case: BMC from reset for the asserted set */
+function base2(k, inv){
+  var C = function(s){ return P2(s) && (!inv || I2(s)); };
+  var depth = {}, q = [0];
+  depth[0] = 0;
+  if (!C(0)) return {pass: false, at: 0};
+  while (q.length){
+    var s = q.shift();
+    if (depth[s] >= k) continue;
+    for (var i = 0; i < 4; i++){
+      var t = next2(s, INPUTS[i][0], INPUTS[i][1]);
+      if (depth[t] === undefined){
+        depth[t] = depth[s] + 1;
+        if (!C(t)) return {pass: false, at: depth[t]};
+        q.push(t);
+      }
+    }
+  }
+  return {pass: true};
+}
+/* induction step: a window of k pairwise-distinct states satisfying the asserted
+   set, whose one-more transition violates it. Exhaustive backward search. */
+var PREDS = null;
+function buildPreds(){
+  if (PREDS) return PREDS;
+  PREDS = new Array(NST);
+  for (var s = 0; s < NST; s++) PREDS[s] = [];
+  for (var s2 = 0; s2 < NST; s2++)
+    for (var i = 0; i < 4; i++)
+      PREDS[next2(s2, INPUTS[i][0], INPUTS[i][1])].push({s: s2, wr: INPUTS[i][0], rd: INPUTS[i][1]});
+  return PREDS;
+}
+function step2(k, inv){
+  var C = function(s){ return P2(s) && (!inv || I2(s)); };
+  var preds = buildPreds(), found = null;
+  for (var v = 0; v < NST && !found; v++){
+    if (C(v)) continue;
+    var path = [{s: v, wr: -1, rd: -1}], on = {};
+    on[v] = 1;
+    (function dfs(){
+      if (found) return;
+      if (path.length === k + 1){
+        found = path.map(function(e){ return {s: e.s, wr: e.wr, rd: e.rd}; }).reverse();
+        return;
+      }
+      var head = path[path.length - 1], ps = preds[head.s];
+      for (var i = 0; i < ps.length; i++){
+        var p = ps[i];
+        if (!C(p.s) || on[p.s]) continue;
+        head.wr = p.wr; head.rd = p.rd;          /* input on the edge into head */
+        path.push({s: p.s, wr: -1, rd: -1});
+        on[p.s] = 1;
+        dfs();
+        if (found) return;
+        on[p.s] = 0; path.pop();
+      }
+    })();
+  }
+  return {holds: !found, chain: found};          /* chain: start .. violation */
+}
+function induction2(k, inv){
+  var b = base2(k, inv), s = step2(k, inv);
+  return {k: k, inv: inv, base: b, step: s, converged: b.pass && s.holds};
+}
+function countP(){ var n = 0; for (var s = 0; s < NST; s++) if (P2(s)) n++; return n; }
+
+var CORE = {rng: rng, KEY: KEY, step1: step1, bmc1: bmc1, randomRun1: randomRun1,
+            expectedHitTime: expectedHitTime, SEQ9: SEQ9,
+            NST: NST, pack: pack, unpack: unpack, next2: next2, P2: P2, I2: I2,
+            reach2: reach2, base2: base2, step2: step2, induction2: induction2, countP: countP};
+if (typeof document === "undefined"){ globalThis.BMC_CORE = CORE; return; }
+
+/* ============================== UI ============================== */
+if (new URLSearchParams(location.search).get("present") === "1") document.body.classList.add("present");
+var el = function(id){ return document.getElementById(id); };
+var fmt = function(x){ return String(Math.round(x)).replace(/\B(?=(\d{3})+(?!\d))/g, ","); };
+var hex = function(n){ return "0x" + n.toString(16).toUpperCase(); };
+var SVGNS = "http://www.w3.org/2000/svg";
+function S(tag, attrs, parent, text){
+  var e = document.createElementNS(SVGNS, tag);
+  for (var k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  parent.appendChild(e);
+  return e;
+}
+
+var REACH = reach2(), NP = countP(), EHIT = expectedHitTime();
+el("nTot").textContent = fmt(NST); el("nReach").textContent = fmt(REACH.count);
+el("s2tot").textContent = fmt(NST); el("s2reach").textContent = fmt(REACH.count);
+el("s2p").textContent = fmt(NP);
+
+/* ---------------- Act 1 drawing ---------------- */
+function drawAct1(res, rand){
+  var svg = el("svg1");
+  svg.innerHTML = "";
+  var defs = S("defs", {}, svg);
+  var mk = S("marker", {id: "arr1", viewBox: "0 0 8 8", refX: 7, refY: 4,
+                        markerWidth: 7, markerHeight: 7, orient: "auto"}, defs);
+  S("path", {d: "M0,0 L8,4 L0,8 z", fill: "currentColor"}, mk);
+  var X = function(i){ return 52 + i * 94; }, Y = 78, R = 19;
+  var pathSet = {};
+  if (res && res.fail) for (var i = 0; i <= BAD1; i++) pathSet[i] = 1;
+  /* return rail */
+  S("path", {"class": "rail", d: "M" + X(8) + "," + (Y + 34) + " C " + X(6) + "," + (Y + 78) +
+             " " + X(2) + "," + (Y + 78) + " " + (X(0) + 6) + "," + (Y + 32),
+             "marker-end": "url(#arr1)", style: "color:var(--rule)"}, svg);
+  S("text", {x: X(4), y: Y + 78, "text-anchor": "middle", "class": "dim"},
+    svg, "any other nibble → s0 · a stray " + hex(KEY[0]) + " → s1");
+  for (var n = 0; n <= BAD1; n++){
+    var cls = "nd";
+    if (res && res.depth[n] >= 0 && res.depth[n] <= res.k && n !== BAD1) cls += " vis";
+    if (n === BAD1) cls += (res && res.fail) ? " hit" : " bad";
+    if (pathSet[n] && res.fail) cls += " onpath";
+    S("circle", {cx: X(n), cy: Y, r: R, "class": cls}, svg);
+    S("text", {x: X(n), y: Y + 4, "text-anchor": "middle",
+               "class": n === BAD1 ? "big redt" : "big"},
+      svg, n === BAD1 ? "9" : "s" + n);
+    S("text", {x: X(n), y: Y + 36, "text-anchor": "middle", "class": "dim"},
+      svg, "d=" + n);
+    if (n < BAD1){
+      var eCls = "edge" + ((res && res.fail) ? " onpath" : "");
+      S("path", {d: "M" + (X(n) + R) + "," + Y + " L" + (X(n + 1) - R - 2) + "," + Y,
+                 "class": eCls, "marker-end": "url(#arr1)",
+                 style: "color:var(--" + ((res && res.fail) ? "gold" : "ink3") + ")"}, svg);
+      S("text", {x: (X(n) + X(n + 1)) / 2, y: Y - 26, "text-anchor": "middle",
+                 "class": (res && res.fail) ? "goldt" : ""}, svg, hex(KEY[n]));
+    }
+  }
+  S("text", {x: X(BAD1), y: Y - 30, "text-anchor": "middle", "class": "redt"}, svg, "grant_all");
+  S("text", {x: X(BAD1), y: Y - 44, "text-anchor": "middle", "class": "dim"}, svg, "latches");
+  /* the depth horizon */
+  if (res){
+    var hx = res.k >= BAD1 ? X(BAD1) + R + 12 : (res.k >= 0 ? (X(res.k) + X(Math.min(res.k + 1, BAD1))) / 2 : 0);
+    if (res.k < BAD1){
+      S("line", {x1: hx, y1: 16, x2: hx, y2: 138, "class": "front"}, svg);
+      S("text", {x: hx - 6, y: 26, "text-anchor": "end", "class": "goldt"}, svg, "depth " + res.k + " horizon");
+      S("text", {x: hx - 6, y: 40, "text-anchor": "end", "class": "dim"}, svg, "the claim ends here");
+    }
+  }
+  if (rand){
+    S("text", {x: X(0) - 34, y: 150, "text-anchor": "start", "class": "dim"}, svg,
+      "random, " + fmt(rand.cycles) + " cycles (seed " + rand.seed + "): deepest progress s" +
+      rand.deepest + (rand.hits ? " — HIT at cycle " + fmt(rand.firstHit) : " — grant_all never reached"));
+  }
+}
+
+var act1 = {unlocked: false, rand: null, res: null};
+function runAct1(){
+  var k = +el("k1").value;
+  el("lk1").textContent = k;
+  act1.res = bmc1(k);
+  var res = act1.res;
+  drawAct1(res, act1.rand);
+  el("s1bmc").textContent = res.fail ? "FAIL @" + res.depth[BAD1] : "PASS ≤" + k;
+  el("s1bmc").className = "v " + (res.fail ? "bad" : "warn");
+  var log = "[bmc] mode bmc · depth " + k + " · exact BFS over 10 states\n" +
+    "[bmc] reached " + res.visited + " of 10 states within " + k + " step" + (k === 1 ? "" : "s") + "\n";
+  if (res.fail){
+    log += "[bmc] bad state grant_all reached at step " + res.depth[BAD1] + "\n" +
+           "[bmc] counterexample: " + res.trace.map(function(t){ return hex(t.nib); }).join(" ") + "\n" +
+           "[bmc] summary: <span class='r'>FAIL</span> — shortest trace below";
+    var rows = res.trace.map(function(t, i){
+      return "<tr><td>" + (i + 1) + "</td><td class='hl'>" + hex(t.nib) + "</td><td>" +
+             (t.to === BAD1 ? "<span style='color:var(--red);font-weight:700'>grant_all</span>" : "s" + t.to) + "</td></tr>";
+    }).join("");
+    el("trace1").innerHTML = "<table class='tr'><tr><th>cycle</th><th>bus nibble</th><th>state after</th></tr>" + rows + "</table>";
+    el("verdict1").className = "verdict bad";
+    el("verdict1").innerHTML = "<b>FAIL — and the trace is the payoff.</b> One sequence among " +
+      fmt(SEQ9) + " of length 9 reaches <code>grant_all</code>; the search returned exactly " +
+      "that one, shortest first, no seed involved. Your random walk had an expected wait of " +
+      fmt(EHIT) + " cycles for the same event — about " + fmt(EHIT / 1e6) +
+      " runs of the million you watched. A formal FAIL hands you the bug; silence below the " +
+      "bad state's depth hands you nothing.";
+  } else {
+    log += "[bmc] no bad state within " + k + " step" + (k === 1 ? "" : "s") + "\n" +
+           "[bmc] summary: <span class='g'>PASS</span> <span class='d'>(depth " + k + " — silence past it is not proof)</span>";
+    el("trace1").innerHTML = "";
+    el("verdict1").className = "verdict warn";
+    el("verdict1").innerHTML = "<b>PASS, bounded.</b> Exact content: no input sequence of " +
+      "length ≤ " + k + " — all " + fmt(Math.pow(16, Math.min(k, 9))) +
+      (k > 9 ? "+" : "") + " of them — reaches <code>grant_all</code>. Content about step " +
+      (k + 1) + ": none. The gold horizon on the graph is the entire claim" +
+      (k === 8 ? " — one step short of the backdoor. Move the slider to 9." : ".");
+  }
+  el("log1").innerHTML = log;
+}
+el("k1").addEventListener("input", function(){ if (act1.unlocked) runAct1(); else el("lk1").textContent = el("k1").value; });
+el("runrand").addEventListener("click", function(){
+  var seed = +el("seed1").value || 1;
+  var r = randomRun1(seed, 1000000);
+  r.seed = seed;
+  act1.rand = r;
+  el("s1cyc").textContent = fmt(r.cycles);
+  el("s1cyc").className = "v dim";
+  el("s1hit").textContent = r.hits ? "1 @" + fmt(r.firstHit) : "0";
+  el("s1hit").className = "v " + (r.hits ? "bad" : "ok");
+  el("s1deep").textContent = "s" + r.deepest + " / 9";
+  el("s1deep").className = "v warn";
+  drawAct1(act1.res, r);
+});
+el("controls1").classList.add("locked");
+document.querySelectorAll("[data-p1]").forEach(function(b){
+  b.addEventListener("click", function(){
+    if (act1.unlocked) return;
+    var right = b.dataset.p1 === "bounded";
+    var msg;
+    if (b.dataset.p1 === "absent")
+      msg = "<b>It does print PASS — and the word is narrower than you read it.</b> " +
+            "Depth 8 checked every input sequence up to 8 long: " + fmt(Math.pow(16, 8)) +
+            " of them, none reach <code>grant_all</code>. About step 9 it says nothing, " +
+            "and the backdoor is 9 deep. Slide k to 9.";
+    else if (b.dataset.p1 === "fail")
+      msg = "<b>Not at depth 8.</b> BMC answers only the question you bounded: no " +
+            "break-in of length ≤ 8 exists, so it prints PASS — one step short of the " +
+            "trigger. Slide k to 9 and it hands you the exact break-in.";
+    else
+      msg = "<b>Right — that is the entire content of the line.</b> Every input sequence " +
+            "of length ≤ 8 is clean; about step 9, silence. Slide k to 9 and watch the " +
+            "same tool hand you the break-in that a million random cycles never typed.";
+    el("p1verdict").innerHTML = msg;
+    document.querySelectorAll("[data-p1]").forEach(function(x){ x.classList.remove("on"); });
+    b.classList.add("on");
+    el("controls1").classList.remove("locked");
+    act1.unlocked = true;
+    runAct1();
+  });
+});
+
+/* ---------------- Act 2 drawing ---------------- */
+function drawAct2(res){
+  var svg = el("svg2");
+  svg.innerHTML = "";
+  var defs = S("defs", {}, svg);
+  ["arrG", "arrR"].forEach(function(id){
+    var mk = S("marker", {id: id, viewBox: "0 0 8 8", refX: 7, refY: 4,
+                          markerWidth: 7, markerHeight: 7, orient: "auto"}, defs);
+    S("path", {d: "M0,0 L8,4 L0,8 z", fill: id === "arrG" ? "var(--gold)" : "var(--red)"}, mk);
+  });
+  var CW = 55, X0 = 40, Y0 = 66, H = 46;
+  var inv = res && res.inv;
+  for (var c = 0; c < 16; c++){
+    var cls = "cell " + (c <= 8 ? "reach" : c === 9 ? "ghost" : "viol");
+    var g = S("g", {"class": inv && c > 8 ? "dimmed" : ""}, svg);
+    S("rect", {x: X0 + c * CW, y: Y0, width: CW - 5, height: H, rx: 4, "class": cls}, g);
+    S("text", {x: X0 + c * CW + (CW - 5) / 2, y: Y0 + 28, "text-anchor": "middle", "class": "big"},
+      g, String(c));
+    if (inv && c > 8){
+      S("line", {x1: X0 + c * CW + 4, y1: Y0 + H - 4, x2: X0 + c * CW + CW - 9, y2: Y0 + 4,
+                 "class": "cut"}, g);
+    }
+  }
+  /* property bracket: count <= 9 */
+  var bx1 = X0, bx2 = X0 + 10 * CW - 5;
+  S("path", {d: "M" + bx1 + ",40 L" + bx1 + ",32 L" + bx2 + ",32 L" + bx2 + ",40", "class": "brk"}, svg);
+  S("text", {x: (bx1 + bx2) / 2, y: 24, "text-anchor": "middle"}, svg,
+    "assert (count <= 9) — the step may start anywhere under this bracket");
+  /* invariant bracket */
+  if (inv){
+    var ix2 = X0 + 9 * CW - 5;
+    S("path", {d: "M" + bx1 + "," + (Y0 + H + 6) + " L" + bx1 + "," + (Y0 + H + 14) +
+               " L" + ix2 + "," + (Y0 + H + 14) + " L" + ix2 + "," + (Y0 + H + 6),
+               "class": "brk goldb"}, svg);
+    S("text", {x: (bx1 + ix2) / 2, y: Y0 + H + 30, "text-anchor": "middle", "class": "goldt"}, svg,
+      "+ assert (count <= 8) — the invariant cuts the ghost band out of the step");
+  } else {
+    S("text", {x: X0 + 4, y: Y0 + H + 30, "text-anchor": "start", "class": "dim"}, svg,
+      "reachable 0..8 (BFS: " + fmt(REACH.count) + " states)");
+    S("text", {x: X0 + 9 * CW + 20, y: Y0 + H + 30, "text-anchor": "start", "class": "goldt"}, svg,
+      "9: satisfies the assert, unreachable");
+    S("text", {x: X0 + 12 * CW, y: Y0 + H + 30, "text-anchor": "start", "class": "redt"}, svg,
+      "10..15: violation");
+  }
+  /* the spurious chain */
+  if (res && !res.step.holds){
+    var c9x = X0 + 9 * CW + (CW - 5) / 2, c10x = X0 + 10 * CW + 6;
+    if (res.k > 1){
+      S("path", {d: "M" + (c9x - 8) + "," + (Y0 - 2) + " C " + (c9x - 26) + "," + (Y0 - 34) + " " +
+                 (c9x + 26) + "," + (Y0 - 34) + " " + (c9x + 8) + "," + (Y0 - 2),
+                 "class": "edge onpath", "marker-end": "url(#arrG)"}, svg);
+      S("text", {x: c9x + 34, y: Y0 - 26, "text-anchor": "start", "class": "goldt"}, svg,
+        "×" + (res.k - 1) + " wr&&rd — pointers slide, count parks");
+    }
+    S("path", {d: "M" + (c9x + 20) + "," + (Y0 + H / 2) + " L" + (c10x + 8) + "," + (Y0 + H / 2),
+               "class": "edge redE", "marker-end": "url(#arrR)"}, svg);
+    S("text", {x: c9x + 6, y: Y0 + H + 48, "text-anchor": "start", "class": "redt"}, svg,
+      "then one wr → count=10");
+  }
+  if (res && res.converged){
+    S("text", {x: X0 + 4, y: Y0 + H + 48, "text-anchor": "start", "class": "greent"}, svg,
+      "closed: every window under the asserts steps back into the band — no exit exists");
+  }
+}
+
+var act2 = {unlocked: false};
+function runAct2(){
+  var k = +el("k2").value, inv = el("inv").checked;
+  el("lk2").textContent = k;
+  var res = induction2(k, inv);
+  drawAct2(res);
+  el("s2verd").textContent = res.converged ? "PASS @k=" + k : "UNKNOWN";
+  el("s2verd").className = "v " + (res.converged ? "ok" : "warn");
+  var asserted = "count<=9" + (inv ? " && count<=8" : "");
+  var log = "[prove] asserts: " + asserted + " · induction length k=" + k + "\n" +
+    "[prove] base:  " + (res.base.pass ? "<span class='g'>PASS</span> — no violation within " +
+    k + " step" + (k === 1 ? "" : "s") + " of reset" : "<span class='r'>FAIL</span>") + "\n";
+  if (res.step.holds){
+    log += "[prove] step:  <span class='g'>PASS</span> — no " + k +
+           "-window of distinct asserted states can violate\n" +
+           "[prove] summary: <span class='g'>successful proof by k-induction</span>";
+    el("chain2").innerHTML = "";
+  } else {
+    var st = res.step.chain[0], u = unpack(st.s);
+    log += "[prove] step:  <span class='r'>FAIL</span> — window starts at (count=" + u.count +
+           ", wp=" + u.wp + ", rp=" + u.rp + ") — reachable? BFS says no\n" +
+           "[prove] summary: <span class='y'>UNKNOWN</span> <span class='d'>(true, but not inductive at k=" + k + ")</span>";
+    var rows = res.step.chain.map(function(e, i){
+      var q = unpack(e.s), lastBad = !P2(e.s) || (inv && !I2(e.s));
+      return "<tr><td>" + i + "</td><td class='" + (lastBad ? "rd" : (q.count === 9 ? "hl" : "")) +
+        "'>(count=" + q.count + ", wp=" + q.wp + ", rp=" + q.rp + ")</td><td>" +
+        (i === 0 ? "— assumed start" : "wr=" + e.wr + " rd=" + e.rd) + "</td><td>" +
+        (REACH.seen[e.s] ? "yes" : "<span style='color:var(--gold);font-weight:700'>no</span>") + "</td></tr>";
+    }).join("");
+    el("chain2").innerHTML = "<table class='tr'><tr><th>step</th><th>state</th><th>input into it</th><th>reachable?</th></tr>" + rows + "</table>";
+  }
+  el("log2").innerHTML = log;
+
+  var v = el("verdict2");
+  if (!res.step.holds){
+    v.className = "verdict bad";
+    v.innerHTML = "<b>Step FAILs at k=" + k + " — from a state the design can never occupy.</b> " +
+      "The step quantifies over all " + fmt(NP) + " states satisfying the assert, not the " +
+      fmt(REACH.count) + " BFS can reach. It assumed a window parked at count==9 — pointers " +
+      "sliding in lockstep, a value no execution produces — then took one write to count==10. " +
+      "Raising k pushes the start of that chain back, not out. Try it; then try the invariant.";
+  } else if (inv){
+    v.className = "verdict ok";
+    v.innerHTML = "<b>successful proof by k-induction — at k=" + k + ".</b> " +
+      "<code>assert (count &lt;= 8)</code> removed the count==9 band from the step's universe " +
+      "(struck cells): every window it may now assume steps back into the band, so the property " +
+      "holds for all time — no depth limit, no seed, no sample. The stronger claim was the " +
+      "easier proof. <code>just demo 08 s1 3</code> is this line on the class FIFO.";
+  } else {
+    v.className = "verdict warn";
+    v.innerHTML = "<b>Converged at k=" + k + " — by brute depth.</b> The simple-path rule ran " +
+      "the ghost band dry: count==9 offers only 8 distinct pointer-pairs per lap, so no window " +
+      "of " + k + " distinct asserted states ends in a violation. A toy's luxury — the class " +
+      "FIFO carries a memory array, and the same property refused induction at every depth " +
+      "<code>sby</code> tried (15 down to 0, <code>just demo 08 s1 2</code>). One asserted " +
+      "line closes it at k=1. Cheap beats deep.";
+  }
+}
+el("k2").addEventListener("input", function(){ if (act2.unlocked) runAct2(); else el("lk2").textContent = el("k2").value; });
+el("inv").addEventListener("change", function(){ if (act2.unlocked) runAct2(); });
+el("controls2").classList.add("locked");
+document.querySelectorAll("[data-p2]").forEach(function(b){
+  b.addEventListener("click", function(){
+    if (act2.unlocked) return;
+    var res = induction2(1, false);
+    var right = (b.dataset.p2 === "unknown") === !res.step.holds && b.dataset.p2 === "unknown";
+    var st = res.step.chain ? unpack(res.step.chain[0].s) : null;
+    el("p2verdict").innerHTML = (right ? "<b>Right.</b> " : "<b>Not quite.</b> ") +
+      "Base case: PASS. The step: FAIL — it may assume <em>any</em> state satisfying the " +
+      "assert, all " + fmt(NP) + " of them, and it chose (count=" + st.count + ", wp=" + st.wp +
+      ", rp=" + st.rp + "): legal by the property, impossible in the design, and one write " +
+      "away from count==10. <code>sby</code> prints UNKNOWN. True and inductive are " +
+      "different properties of a property — now try deeper k, then the one-line invariant.";
+    document.querySelectorAll("[data-p2]").forEach(function(x){ x.classList.remove("on"); });
+    b.classList.add("on");
+    el("controls2").classList.remove("locked");
+    act2.unlocked = true;
+    runAct2();
+  });
+});
+
+if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){
+  drawAct1(act1.unlocked ? act1.res : null, act1.rand);
+  if (act2.unlocked) runAct2();
+});
+drawAct1(null, null);
+drawAct2(null);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+the fix is one line:
+  -  assign do_wr = wr_en;
+  +  assign do_wr = wr_en & ~full;
+byte-identical to dut/fifo.sv: yes
+
+[1/2] the minimal failing sequence (step 2), on the fixed DUT:
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787513368
+Found test step2_isolate.test_isolate
+running test_isolate (1/1)
+demo seed = 5
+after 8 writes: count=8 full=1 head=0xA0
+after the 9th write (0x5A): count=8 full=1 head=0xA0
+waveform: make STEP=2 WAVES=1, then gtkwave sim_build/fifo.fst (add clk wr_en full do_wr count wr_ptr rd_ptr)
+contract holds: the 9th write was refused
+test_isolate passed
+**************************************************************************************
+                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        **************************************************************************************
+                                                        ** step2_isolate.test_isolate     PASS         111.00           0.00      39022.04  **
+                                                        **************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                111.00           0.09       1234.92  **
+                                                        **************************************************************************************
+
+
+[2/2] the full layered regression (step 1), on the fixed DUT:
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787513373
+Found test step1_reproduce.test_reproduce
+running test_reproduce (1/1)
+demo seed = 5
+sequence clean: first in, first out  (7 txns, 7 judged so far)
+sequence clean: fill to full, knock twice  (10 txns, 17 judged so far)
+sequence clean: drain to empty, knock twice  (10 txns, 27 judged so far)
+sequence clean: both boundaries, simultaneous  (12 txns, 39 judged so far)
+sequence clean: mixed traffic across the wrap  (8 txns, 47 judged so far)
+
+                                                          corner-case checklist -- measured from what was driven
+                                                          [x] full reached              4 cycles at count==8
+                                                          [x] write-while-full refused  3 attempts (1 simultaneous)
+                                                          [x] empty re-reached          5 cycles at count==0
+                                                          [x] read-while-empty ignored  3 attempts (1 simultaneous)
+                                                          [x] simultaneous read+write   3 mid-stream, count unchanged
+                                                          [x] pointer wrap              23 accepted writes, depth 8 (2 wraps)
+                                                          stimulus: 47 cycles, digest ae8971e8   (same digest = same vectors)
+test_reproduce passed
+****************************************************************************************
+                                                        ** TEST                            STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ****************************************************************************************
+                                                        ** step1_reproduce.test_reproduce   PASS         491.00           0.01      62737.08  **
+                                                        ****************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                  491.00           0.08       5962.13  **
+                                                        ****************************************************************************************
+
+
+fix verified: isolation case green, regression green.
+score it (from code/):
+  STEP=1 PYTHONPATH=$PWD/lib python3 -m craft_mutate.mutate \
+      --tb demos/wk04-s2-debug --dut dut/fifo.sv \
+      --pool tb/fifo/mutants_released.yaml --sim icarus

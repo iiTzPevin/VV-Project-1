@@ -1,0 +1,13 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Verilator version 5.020 2024-01-01
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787514976
+Found test step1_planted_bug.test_planted_bug
+running test_planted_bug (1/1)
+demo seed = 5
+[130000] %Error: fifo_sva.sv:40: Assertion failed in fifo.u_sva.a_no_overflow: 'assert' failed.
+%Error: /home/claude/vv-full/code/demos/wk07-s1-sva/../../dut/fifo_sva.sv:40: Verilog $stop
+Aborting...
+make[1]: *** [/usr/local/lib/python3.11/dist-packages/cocotb/share/makefiles/simulators/Makefile.verilator:72: /home/claude/vv-full/code/demos/wk07-s1-sva/sim_build/step1-fifo_ignore_full/results.xml] Aborted
+make: *** [/usr/local/lib/python3.11/dist-packages/cocotb/share/makefiles/Makefile.inc:40: sim] Error 2

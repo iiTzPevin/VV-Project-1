@@ -1,0 +1,12 @@
+[step0_proof_bmc] summary: engine_0 (smtbmc z3) returned pass
+[step0_proof_bmc] summary: engine_0 did not produce any traces
+[step0_proof_bmc] DONE (PASS, rc=0)
+[step0_proof_prove] engine_0.induction: Trying induction in step 15..
+[step0_proof_prove] engine_0.induction: Trying induction in step 14..
+[step0_proof_prove] engine_0.induction: Trying induction in step 13..
+[step0_proof_prove] engine_0.induction: Temporal induction successful.
+[step0_proof_prove] summary: engine_0 (smtbmc z3) returned pass for basecase
+[step0_proof_prove] summary: engine_0 (smtbmc z3) returned pass for induction
+[step0_proof_prove] summary: engine_0 did not produce any traces
+[step0_proof_prove] summary: successful proof by k-induction.
+[step0_proof_prove] DONE (PASS, rc=0)

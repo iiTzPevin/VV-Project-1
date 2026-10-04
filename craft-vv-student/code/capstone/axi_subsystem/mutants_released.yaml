@@ -1,0 +1,41 @@
+# AXI subsystem mutation pool -- RELEASED (practice).  Score = found / total.
+# Small, exact source transformations of axi_subsystem.sv (arbiter + bus +
+# peripherals). fifo.sv is NOT mutated by this pool. A mutant is "found" when
+# your testbench FAILS on it. (We say found, not killed.)
+# Run:  python -m craft_mutate.mutate --tb capstone/axi_subsystem \
+#           --pool capstone/axi_subsystem/mutants_released.yaml \
+#           --dut-dir capstone/axi_subsystem --sim icarus
+dut: axi_subsystem.sv
+mutants:
+  - id: rr_preference_invert
+    desc: "arbiter picks the wrong master first (round-robin order inverted)"
+    find: "if (last == 1'b0) begin"
+    replace: "if (last == 1'b1) begin"
+  - id: arb_last_stuck
+    desc: "granting m0 does not update the round-robin pointer (starves m1)"
+    find: "else if (gnt0) last <= 1'b0;"
+    replace: "else if (gnt0) last <= 1'b1;"
+  - id: decode_reg0_as_reg1
+    desc: "REG0 write-select decodes region 1 (REG0 writes are lost)"
+    find: "assign sel_reg0 = any_gnt & (region == REGION_REG0);"
+    replace: "assign sel_reg0 = any_gnt & (region == REGION_REG1);"
+  - id: fifo_push_on_read
+    desc: "FIFO pushes on reads too (spurious writes / count corruption)"
+    find: "assign fifo_wr = fifo_data_sel & sel_we;"
+    replace: "assign fifo_wr = fifo_data_sel;"
+  - id: fifo_pop_on_write
+    desc: "FIFO pops on writes too (data lost, count never grows)"
+    find: "assign fifo_rd = fifo_data_sel & ~sel_we;"
+    replace: "assign fifo_rd = fifo_data_sel;"
+  - id: fifo_wdata_is_addr
+    desc: "FIFO stores the address instead of the write data"
+    find: ".wr_data (sel_wdata),"
+    replace: ".wr_data (sel_addr),"
+  - id: status_full_empty_swap
+    desc: "FIFO status word swaps the full and empty flag bits"
+    find: "fifo_count[3:0], fifo_full, fifo_empty"
+    replace: "fifo_count[3:0], fifo_empty, fifo_full"
+  - id: sel_addr_master_swap
+    desc: "bus routes the ungranted master's address (wrong target)"
+    find: "assign sel_addr  = gnt0 ? m0_addr  : m1_addr;"
+    replace: "assign sel_addr  = gnt0 ? m1_addr  : m0_addr;"

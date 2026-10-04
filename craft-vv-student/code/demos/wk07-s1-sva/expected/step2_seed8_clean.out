@@ -1,0 +1,35 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Verilator version 5.020 2024-01-01
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787514993
+Found test step2_vacuity.test_vacuous_green
+running test_vacuous_green (1/1)
+demo seed = 8
+
+                                                          occupancy   cycles
+                                                          ---------   ------
+                                                                  0        7  ## <- EMPTY
+                                                                  1       10  ###
+                                                                  2       10  ###
+                                                                  3        7  ##
+                                                                  4       17  #####
+                                                                  5       17  #####
+                                                                  6       27  ########
+                                                                  7       66  ####################
+                                                                  8       39  ############ <- FULL
+                                                          boundaries reached: 2/2   (empty=7 cycles, full=39 cycles)
+antecedent (full && wr_en) held on 15 of 200 cycles -- the [covers] lines below are the tool's own count
+test_vacuous_green passed
+******************************************************************************************
+                                                        ** TEST                              STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ******************************************************************************************
+                                                        ** step2_vacuity.test_vacuous_green   PASS        2025.00           0.12      17518.09  **
+                                                        ******************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                   2025.00           0.39       5221.93  **
+                                                        ******************************************************************************************
+
+- :0: Verilog $finish
+[covers] what each `cover property` counted this run:
+[covers]   c_full             line  26   count 39
+[covers]   c_overwrite_seen   line  27   count 15

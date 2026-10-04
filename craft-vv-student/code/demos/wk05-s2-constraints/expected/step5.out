@@ -1,0 +1,29 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787500864
+pytest not found, install it to enable better AssertionError messages
+Found test step5_seeded.test_seeded_regression
+running test_seeded_regression (1/1)
+
+                                                          seed   empty-cycles   full-cycles   both boundaries?
+                                                          ----   ------------   -----------   ----------------
+                                                             1             35            42   yes
+                                                             2             32            27   yes
+                                                             3             42            36   yes
+                                                             4             25            35   yes
+                                                             5             43            31   yes
+                                                             6             46            23   yes
+                                                             7             26            29   yes
+                                                             8             24            28   yes
+                                                          worst boundary residency across 8 seeds: 23 cycles
+test_seeded_regression passed
+*********************************************************************************************
+                                                        ** TEST                                 STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        *********************************************************************************************
+                                                        ** step5_seeded.test_seeded_regression   PASS       16235.00           6.56       2476.12  **
+                                                        *********************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                     16235.00           6.74       2409.56  **
+                                                        *********************************************************************************************
+

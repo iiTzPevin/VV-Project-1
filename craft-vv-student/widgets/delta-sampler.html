@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delta Sampler · CRAFT V&amp;V Week 3</title>
+<style>
+:root{
+  --navy:#1B2A4A; --gold:#D4A843; --green:#27AE60; --blue:#2E86AB;
+  --red:#E74C3C; --purple:#9B59B6;
+  --ground:#F4F6F9; --surface:#fff; --surface2:#EDF0F5;
+  --ink:#16223B; --ink2:#3E4C68; --ink3:#6B7791; --rule:#D9DEE7;
+  --old:#2E86AB; --new:#27AE60;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#0D1524; --surface:#141E33; --surface2:#1B273F;
+    --ink:#E7ECF5; --ink2:#B6C1D6; --ink3:#8592AC; --rule:#2A3752;
+    --gold:#E9BE58; --green:#5FD48C; --blue:#5AA9C9; --red:#FF8776; --purple:#BE85D6;
+    --old:#5AA9C9; --new:#5FD48C;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font:16px/1.55 "Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 18px 60px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:1.5rem;margin:0;letter-spacing:-.01em}
+h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin:0 0 8px}
+p{margin:0;max-width:70ch;color:var(--ink2)}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+header{border-bottom:2px solid var(--ink);padding-bottom:12px;display:flex;flex-direction:column;gap:6px}
+.kicker{font:600 .7rem/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px 18px}
+.grid{display:grid;grid-template-columns:minmax(300px,1.25fr) minmax(280px,1fr);gap:16px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+button{font:inherit;cursor:pointer;border-radius:4px;border:1px solid var(--rule);
+  background:var(--surface2);color:var(--ink);padding:7px 12px;transition:none}
+button:hover{border-color:var(--ink3)}
+button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+@media (prefers-color-scheme:dark){button.on{background:var(--gold);color:#12203a;border-color:var(--gold)}}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+#predict{border-left:4px solid var(--purple);background:var(--surface2);padding:12px 16px;border-radius:0 5px 5px 0}
+#predict .q{font-weight:600;margin-bottom:9px}
+.locked{opacity:.45;pointer-events:none}
+pre.code{margin:8px 0 10px;padding:10px 12px;background:var(--surface);border:1px solid var(--rule);
+  border-radius:5px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.82rem;
+  line-height:1.5;overflow-x:auto;color:var(--ink)}
+pre.code .c{color:var(--ink3)}
+canvas{width:100%;display:block;background:var(--surface2);border-radius:5px}
+#wave{height:auto;touch-action:none;cursor:ew-resize}
+#wave:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+#strip{height:auto;margin-top:10px}
+.readout{margin-top:10px;font-family:ui-monospace,monospace;font-size:.85rem;color:var(--ink2);
+  background:var(--surface2);border-radius:5px;padding:8px 11px;font-variant-numeric:tabular-nums}
+.readout b{color:var(--ink)}
+.readout .vold{color:var(--old);font-weight:700}
+.readout .vnew{color:var(--new);font-weight:700}
+table.strat{border-collapse:collapse;width:100%;font-size:.82rem;margin-top:4px}
+table.strat th,table.strat td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--rule);vertical-align:top}
+table.strat th{color:var(--ink3);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em}
+table.strat td.v{font-family:ui-monospace,monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.strat td code{font-size:.78rem}
+td.vold{color:var(--old);font-weight:700} td.vnew{color:var(--new);font-weight:700} td.vhot{color:var(--red);font-weight:700}
+.ctl{display:flex;flex-direction:column;gap:4px;margin-top:12px}
+.ctl label{font-size:.85rem;color:var(--ink2);display:flex;justify-content:space-between;gap:10px}
+.ctl label b{font-family:ui-monospace,monospace;color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--blue)}
+.verdict{margin-top:14px;border-left:4px solid var(--rule);padding:10px 14px;background:var(--surface2);border-radius:0 5px 5px 0;font-size:.92rem}
+.verdict.ok{border-left-color:var(--green)}
+.verdict.bad{border-left-color:var(--red)}
+.verdict.warn{border-left-color:var(--gold)}
+.verdict b{color:var(--ink)}
+footer{font-size:.8rem;color:var(--ink3);border-top:1px solid var(--rule);padding-top:12px}
+footer p{color:var(--ink3)}
+/* projector mode: ?present=1 */
+body.present{font-size:21px}
+body.present .prose,body.present footer{display:none}
+body.present h1{font-size:2rem}
+body.present .readout{font-size:1.1rem}
+body.present table.strat{font-size:1rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="kicker">CRAFT V&amp;V · Week 3 · the cocotb execution model</span>
+  <h1>Delta Sampler</h1>
+  <p class="prose">One register — <code>always @(posedge clk) q &lt;= d;</code> — and a probe you
+  drag along the timeline. The waveform draws a clock edge as a single vertical line. It is not:
+  drag the probe onto an edge and the line opens into the settle steps the simulator runs at
+  that instant. Where your <code>await</code> lands among them decides what your read returns.</p>
+</header>
+
+<div id="predict" class="panel">
+  <div class="q">Your test wakes at the t=20&nbsp;ns edge and reads on the next Python line:</div>
+  <pre class="code">await RisingEdge(dut.clk)      <span class="c"># the t=20 ns edge</span>
+got = int(dut.q.value)         <span class="c"># next line — same simulated instant</span></pre>
+  <div class="q" style="margin-bottom:9px"><code>d</code> has been <code>0x3C</code> since
+  t=13&nbsp;ns; <code>q</code> still holds <code>0xA5</code> from the edge before. What does the read return?</div>
+  <div class="presets">
+    <button data-p="old"><code>0xA5</code> — the value before the edge</button>
+    <button data-p="new"><code>0x3C</code> — the value this edge captures</button>
+    <button data-p="race">Either — it is a race</button>
+  </div>
+  <div id="pverdict" style="font-size:.9rem;color:var(--ink3);margin-top:9px">Commit to an answer —
+  the probe readings and the comparison unlock once you do. You can drag the probe first to see
+  where the edge opens up.</div>
+</div>
+
+<div class="panel">
+  <h2>Timeline · drag the probe, or focus it and use the arrow keys</h2>
+  <canvas id="wave" width="940" height="252" tabindex="0"
+    aria-label="Waveform of clk, d and q with a draggable sample probe. Arrow keys move the probe; the readout below reports what a read at the probe returns."></canvas>
+  <canvas id="strip" width="940" height="140" aria-hidden="true"></canvas>
+  <div class="readout" id="readout" aria-live="polite">—</div>
+</div>
+
+<div class="grid">
+  <div class="panel" id="stratpanel">
+    <h2>Three ways to sample the same edge</h2>
+    <table class="strat" id="strat">
+      <tr><th></th><th>test code</th><th>read happens</th><th>q reads</th><th>d reads</th></tr>
+      <tr><td><button data-s="re" title="park the probe at this read">park</button></td>
+          <td><code>await RisingEdge(clk)</code></td><td class="v" id="re_t">—</td><td class="v" id="re_q">—</td><td class="v" id="re_d">—</td></tr>
+      <tr><td><button data-s="ro" title="park the probe at this read">park</button></td>
+          <td><code>await RisingEdge(clk)</code><br><code>await ReadOnly()</code></td><td class="v" id="ro_t">—</td><td class="v" id="ro_q">—</td><td class="v" id="ro_d">—</td></tr>
+      <tr><td><button data-s="tm" title="park the probe at this read">park</button></td>
+          <td><code>await RisingEdge(clk)</code><br><code>await Timer(1, "ns")</code></td><td class="v" id="tm_t">—</td><td class="v" id="tm_q">—</td><td class="v" id="tm_d">—</td></tr>
+    </table>
+    <div class="ctl">
+      <label>Stimulus process redrives <code>d</code> at edge + <b><span id="ldrv">3.0</span> ns</b></label>
+      <input type="range" id="drv" min="0.2" max="8" step="0.2" value="3"
+        aria-label="Delay from clock edge to the driver's next redrive of d, in nanoseconds">
+    </div>
+    <p class="prose" style="font-size:.85rem;margin-top:8px">The registered <code>q</code> forgives
+    a time-anchored read — it only changes at edges. The driven <code>d</code> does not. Drag the
+    redrive under 1&nbsp;ns and watch which strategy survives.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Verdict</h2>
+    <div class="verdict" id="verdict">Waiting for your prediction.</div>
+    <div class="verdict" id="tverdict" style="display:none"></div>
+  </div>
+</div>
+
+<footer>
+  <p><b>What this models.</b> cocotb&nbsp;1.x on the course toolchain (Icarus). Inside one edge
+  instant, in order: the <code>clk</code> value-change callback resumes every coroutine awaiting
+  <code>RisingEdge</code> — the writable phase, where your drives belong; the RTL
+  <code>always</code> block runs and schedules <code>q &lt;= d</code>; nonblocking updates apply
+  and <code>q</code> changes; cocotb deposits (<code>dut.x.value = ...</code>) land in the
+  read-write phase; <code>ReadOnly</code> fires last, when every delta cycle for the step is done.
+  A drive in <code>ReadOnly</code> raises; <code>await NextTimeStep()</code> is the exit. A
+  <code>Timer</code> wake at an instant runs before that instant's deposits land, which is why a
+  read at exactly edge+1&nbsp;ns misses a redrive at exactly edge+1&nbsp;ns.</p>
+  <p style="margin-top:8px"><b>The rule that generalizes:</b> drive in the writable phase, sample
+  in <code>ReadOnly()</code>. The LRM gives no contract for a read in the writable phase — on this
+  toolchain it returns the pre-update value every run, and a habit built on that accident breaks
+  on the next simulator.</p>
+  <p style="margin-top:8px">The combinational cousin of this bug, live in class:
+  <code>just demo 03 s1 1</code> — ten reads wrong, each one the previous vector's answer.</p>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+/* ================= core model — exercised headlessly by the self-test ======
+   Scene: always @(posedge clk) q <= d;  clk period 10 ns, rises at 10/20/30.
+   d driven 0xA5 at t=0, then redriven by the stimulus process at edge+drv:
+   0x3C after edge 10, 0x7E after edge 20, 0x1B after edge 30.
+   Slots inside one edge instant, simulator order (cocotb 1.x + Icarus):
+     wake   - clk 0->1; RisingEdge coroutines resume (writable phase)
+     active - always block evaluates; update to q is scheduled
+     nba    - nonblocking updates applied; q changes
+     rw     - cocotb deposits (dut.x.value = ...) land
+     ro     - ReadOnly: every delta cycle done; reads settled, drives raise
+   A Timer wake at an instant runs before that instant's deposits, so d-reads
+   use strict "<" on drive times. */
+var T_END = 36, EDGES = [10, 20, 30], RESET_Q = 0x00;
+var SLOTS = ["wake", "active", "nba", "rw", "ro"];
+
+function drives(drv){
+  return [[0, 0xA5], [10 + drv, 0x3C], [20 + drv, 0x7E], [30 + drv, 0x1B]];
+}
+function dRead(t, drv){
+  var ds = drives(drv), v = 0x00;
+  for (var i = 0; i < ds.length; i++) if (ds[i][0] < t) v = ds[i][1];
+  return v;
+}
+function captured(edge, drv){ return dRead(edge, drv); }
+function qRead(t, slot, drv){
+  var last = -1;
+  for (var i = 0; i < EDGES.length; i++) if (EDGES[i] <= t) last = i;
+  if (last >= 0 && EDGES[last] === t){
+    var pre = last === 0 ? RESET_Q : captured(EDGES[last - 1], drv);
+    var si = SLOTS.indexOf(slot || "wake");
+    return si <= 1 ? pre : captured(EDGES[last], drv);
+  }
+  return last < 0 ? RESET_Q : captured(EDGES[last], drv);
+}
+function strategies(drv){
+  var e = 20;
+  return [
+    {key: "re", t: e, slot: "wake", q: qRead(e, "wake", drv), d: dRead(e, drv)},
+    {key: "ro", t: e, slot: "ro",   q: qRead(e, "ro", drv),   d: dRead(e, drv)},
+    {key: "tm", t: e + 1, slot: "", q: qRead(e + 1, "", drv), d: dRead(e + 1, drv)}
+  ];
+}
+function positions(){
+  var out = [];
+  for (var k = 0; k <= T_END * 5; k++){
+    var t = Math.round(k * 2) / 10;
+    if (EDGES.indexOf(t) >= 0)
+      for (var s = 0; s < SLOTS.length; s++) out.push({t: t, slot: SLOTS[s]});
+    else out.push({t: t, slot: ""});
+  }
+  return out;
+}
+var CORE = {T_END: T_END, EDGES: EDGES, SLOTS: SLOTS, RESET_Q: RESET_Q,
+            drives: drives, dRead: dRead, captured: captured, qRead: qRead,
+            strategies: strategies, positions: positions};
+if (typeof document === "undefined"){
+  if (typeof globalThis !== "undefined") globalThis.DELTA_CORE = CORE;
+  return;
+}
+/* ============================== end core model ============================ */
+
+if (new URLSearchParams(location.search).get("present") === "1") document.body.classList.add("present");
+var el = function(id){ return document.getElementById(id); };
+var hx = function(v){ return "0x" + v.toString(16).toUpperCase().padStart(2, "0"); };
+
+var POS = positions();
+var drv = 3.0;
+var pos = POS.findIndex(function(p){ return p.t === 16 && !p.slot; });   // probe start, mid-cycle
+var unlocked = false;
+
+/* ---- geometry: piecewise time->x with a widened band per edge instant ---- */
+var W = 940, PADL = 46, PADR = 12, EB = 66;
+var SCALE = (W - PADL - PADR - EDGES.length * EB) / T_END;
+function bandStart(i){ return PADL + EDGES[i] * SCALE + i * EB; }
+function xOf(t){
+  var n = 0;
+  for (var i = 0; i < EDGES.length; i++) if (EDGES[i] < t) n++;
+  return PADL + t * SCALE + n * EB;
+}
+function slotX(ei, si){ return bandStart(ei) + EB * (si + 0.5) / SLOTS.length; }
+function probeX(p){
+  var ei = EDGES.indexOf(p.t);
+  return (ei >= 0 && p.slot) ? slotX(ei, SLOTS.indexOf(p.slot)) : xOf(p.t);
+}
+function posFromX(x){
+  var best = 0, bd = 1e9;
+  for (var i = 0; i < POS.length; i++){
+    var d = Math.abs(probeX(POS[i]) - x);
+    if (d < bd){ bd = d; best = i; }
+  }
+  return best;
+}
+
+var css = function(n){ return getComputedStyle(document.body).getPropertyValue(n).trim(); };
+
+function drawWave(){
+  var cv = el("wave"), ctx = cv.getContext("2d");
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  var inkC = css("--ink"), ink3 = css("--ink3"), ruleC = css("--rule"),
+      goldC = css("--gold"), blueC = css("--blue"), surf = css("--surface");
+  var lanes = {clk: {y: 16, h: 32}, d: {y: 74, h: 44}, q: {y: 142, h: 44}};
+  var i;
+
+  /* edge bands */
+  for (i = 0; i < EDGES.length; i++){
+    var bx = bandStart(i);
+    ctx.fillStyle = surf;
+    ctx.fillRect(bx, 8, EB, 194);
+    ctx.strokeStyle = ruleC; ctx.setLineDash([3, 3]);
+    ctx.strokeRect(bx + 0.5, 8.5, EB - 1, 193);
+    ctx.setLineDash([]);
+    ctx.fillStyle = ink3;
+    ctx.font = "10px ui-monospace,monospace"; ctx.textAlign = "center";
+    ctx.fillText("t=" + EDGES[i] + " ns", bx + EB / 2, 214);
+    ctx.fillText("one instant", bx + EB / 2, 226);
+  }
+  /* axis ticks */
+  ctx.fillStyle = ink3; ctx.font = "10px ui-monospace,monospace"; ctx.textAlign = "center";
+  [0, 5, 15, 25, 35].forEach(function(t){ ctx.fillText(t + "", xOf(t), 214); });
+  /* lane labels */
+  ctx.textAlign = "right"; ctx.font = "12px ui-monospace,monospace"; ctx.fillStyle = inkC;
+  ctx.fillText("clk", PADL - 8, lanes.clk.y + lanes.clk.h / 2 + 4);
+  ctx.fillText("d",   PADL - 8, lanes.d.y + lanes.d.h / 2 + 4);
+  ctx.fillText("q",   PADL - 8, lanes.q.y + lanes.q.h / 2 + 4);
+
+  /* clk: rises at slot 0 of each band, falls at edge+5 */
+  ctx.strokeStyle = inkC; ctx.lineWidth = 1.6; ctx.beginPath();
+  var y0 = lanes.clk.y + lanes.clk.h, y1 = lanes.clk.y, xx;
+  ctx.moveTo(xOf(0), y0);
+  for (i = 0; i < EDGES.length; i++){
+    xx = slotX(i, 0);
+    ctx.lineTo(xx, y0); ctx.lineTo(xx, y1);
+    var xf = xOf(EDGES[i] + 5);
+    ctx.lineTo(xf, y1); ctx.lineTo(xf, y0);
+  }
+  ctx.lineTo(xOf(T_END), y0); ctx.stroke();
+
+  /* bus lanes: d changes at drive times, q changes at the nba slot of each band */
+  function bus(lane, segs, color){
+    var top = lane.y, bot = lane.y + lane.h, mid = lane.y + lane.h / 2, k;
+    ctx.strokeStyle = color; ctx.lineWidth = 1.6;
+    for (k = 0; k < segs.length; k++){
+      var s = segs[k], xa = s.x0 + (k ? 3 : 0), xb = s.x1 - (k < segs.length - 1 ? 3 : 0);
+      ctx.beginPath(); ctx.moveTo(xa, top); ctx.lineTo(xb, top); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xa, bot); ctx.lineTo(xb, bot); ctx.stroke();
+      if (k){          /* X crossing at the transition */
+        ctx.beginPath(); ctx.moveTo(s.x0 - 3, top); ctx.lineTo(s.x0 + 3, bot); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(s.x0 - 3, bot); ctx.lineTo(s.x0 + 3, top); ctx.stroke();
+      }
+      if (xb - xa > 34){
+        ctx.fillStyle = inkC; ctx.font = "12px ui-monospace,monospace"; ctx.textAlign = "center";
+        ctx.fillText(hx(s.v), (xa + xb) / 2, mid + 4);
+      }
+    }
+  }
+  var ds = drives(drv), segs = [], t0 = 0;
+  for (i = 1; i < ds.length; i++){
+    segs.push({x0: xOf(t0), x1: xOf(ds[i][0]), v: ds[i - 1][1]}); t0 = ds[i][0];
+  }
+  segs.push({x0: xOf(t0), x1: xOf(T_END), v: ds[ds.length - 1][1]});
+  segs[0].x0 = xOf(0);
+  bus(lanes.d, segs, blueC);
+
+  var qsegs = [], prevX = xOf(0), prevV = RESET_Q;
+  for (i = 0; i < EDGES.length; i++){
+    xx = slotX(i, 2);                       /* q steps inside the band, at nba */
+    qsegs.push({x0: prevX, x1: xx, v: prevV});
+    prevX = xx; prevV = captured(EDGES[i], drv);
+  }
+  qsegs.push({x0: prevX, x1: xOf(T_END), v: prevV});
+  bus(lanes.q, qsegs, css("--green"));
+
+  /* probe */
+  var p = POS[pos], px = probeX(p);
+  ctx.strokeStyle = goldC; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(px, 6); ctx.lineTo(px, 204); ctx.stroke();
+  ctx.fillStyle = goldC;
+  ctx.beginPath(); ctx.arc(px, 6, 5, 0, 7); ctx.fill();
+  ctx.font = "10px ui-monospace,monospace"; ctx.textAlign = "center";
+  ctx.fillText("read", px, 240);
+}
+
+var SLOTTXT = [
+  ["wake", "clk 0→1 · RisingEdge", "coroutines resume", "writable phase"],
+  ["eval", "always @(posedge clk)", "runs; q ≤ d is", "scheduled, not applied"],
+  ["update", "nonblocking updates", "apply — q changes", "here, mid-instant"],
+  ["deposit", "cocotb writes land", "dut.x.value = ...", "read-write phase"],
+  ["ReadOnly", "every delta done", "reads settled;", "a drive here raises"]
+];
+function drawStrip(){
+  var cv = el("strip"), ctx = cv.getContext("2d");
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  var p = POS[pos], ei = EDGES.indexOf(p.t);
+  var inkC = css("--ink"), ink3 = css("--ink3"), ruleC = css("--rule"),
+      goldC = css("--gold"), surf = css("--surface");
+  if (ei < 0 || !p.slot){
+    ctx.fillStyle = ink3; ctx.font = "13px " + getComputedStyle(document.body).fontFamily;
+    ctx.textAlign = "center";
+    ctx.fillText("Drag the probe onto a clock edge — the instant expands into its settle steps.", cv.width / 2, 74);
+    return;
+  }
+  ctx.fillStyle = inkC; ctx.font = "12px ui-monospace,monospace"; ctx.textAlign = "left";
+  ctx.fillText("inside t=" + p.t + " ns — simulator order, zero simulated time →", 12, 18);
+  var bw = (cv.width - 24 - 4 * 8) / 5;
+  for (var s = 0; s < 5; s++){
+    var x = 12 + s * (bw + 8), cur = SLOTS[s] === p.slot;
+    ctx.fillStyle = surf; ctx.fillRect(x, 28, bw, 92);
+    ctx.strokeStyle = cur ? goldC : ruleC; ctx.lineWidth = cur ? 2 : 1;
+    ctx.strokeRect(x + 0.5, 28.5, bw - 1, 91);
+    ctx.fillStyle = inkC; ctx.font = "700 12px ui-monospace,monospace"; ctx.textAlign = "left";
+    ctx.fillText((s + 1) + " · " + SLOTTXT[s][0], x + 8, 44);
+    ctx.fillStyle = ink3; ctx.font = "10.5px ui-monospace,monospace";
+    ctx.fillText(SLOTTXT[s][1], x + 8, 60);
+    ctx.fillText(SLOTTXT[s][2], x + 8, 72);
+    ctx.fillText(SLOTTXT[s][3], x + 8, 84);
+    ctx.font = "700 11.5px ui-monospace,monospace"; ctx.fillStyle = inkC;
+    var qv = unlocked ? hx(qRead(p.t, SLOTS[s], drv)) : "?",
+        dv = unlocked ? hx(dRead(p.t, drv)) : "?";
+    ctx.fillText("q=" + qv + "  d=" + dv, x + 8, 104);
+    if (s < 4){
+      ctx.strokeStyle = ink3; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(x + bw + 1, 74); ctx.lineTo(x + bw + 7, 74); ctx.stroke();
+    }
+    if (cur){
+      ctx.fillStyle = goldC; ctx.font = "10px ui-monospace,monospace"; ctx.textAlign = "center";
+      ctx.fillText("▲ your read", x + bw / 2, 134);
+    }
+  }
+}
+
+var SLOTLONG = {wake: "slot 1 of 5 — coroutine wake, writable phase",
+                active: "slot 2 of 5 — always block runs",
+                nba: "slot 3 of 5 — nonblocking updates apply",
+                rw: "slot 4 of 5 — cocotb deposits land",
+                ro: "slot 5 of 5 — ReadOnly, settled"};
+function readout(){
+  var p = POS[pos], t = p.t, r = el("readout");
+  var where = p.slot ? "t=" + t + " ns · inside the instant, " + SLOTLONG[p.slot]
+                     : "t=" + t.toFixed(1) + " ns";
+  if (!unlocked){
+    r.innerHTML = "Probe: <b>" + where + "</b> · q → <b>?</b> · d → <b>?</b> — commit a prediction to turn the probe on.";
+    return;
+  }
+  var q = qRead(t, p.slot, drv), d = dRead(t, drv);
+  var qc = q === 0xA5 ? "vold" : (q === 0x3C ? "vnew" : "");
+  r.innerHTML = "Probe: <b>" + where + "</b> · q → <span class='" + qc + "'>" + hx(q) +
+                "</span> · d → <b>" + hx(d) + "</b>";
+}
+
+function fillStrategies(){
+  var st = strategies(drv);
+  st.forEach(function(s){
+    el(s.key + "_t").textContent = s.t === 20 ? (s.slot === "wake" ? "t=20 ns · before the update" : "t=20 ns · settled")
+                                              : "t=21 ns";
+    var qe = el(s.key + "_q"), de = el(s.key + "_d");
+    if (!unlocked){
+      qe.textContent = "?"; de.textContent = "?";
+      qe.className = "v"; de.className = "v";
+      return;
+    }
+    qe.textContent = hx(s.q); de.textContent = hx(s.d);
+    qe.className = "v " + (s.q === 0xA5 ? "vold" : "vnew");
+    de.className = "v " + (s.d === 0x7E ? "vhot" : "");
+  });
+}
+
+function timerVerdict(){
+  var tv = el("tverdict");
+  if (!unlocked){ tv.style.display = "none"; return; }
+  tv.style.display = "";
+  var st = strategies(drv), tm = st[2], ro = st[1];
+  if (tm.d !== ro.d){
+    tv.className = "verdict bad";
+    tv.innerHTML = "<b>Timer(1 ns) now reads d = " + hx(tm.d) + " — the next vector, a value " +
+      "edge 20 never captured.</b> ReadOnly, anchored to the edge, still reads " + hx(ro.d) +
+      ". Your test code did not change; the driver schedule did. A read anchored to wall time " +
+      "inherits every schedule around it.";
+  } else {
+    tv.className = "verdict warn";
+    tv.innerHTML = "<b>With the redrive at +" + drv.toFixed(1) + " ns, Timer(1 ns) reads the same " +
+      "values as ReadOnly — by coincidence, not by contract.</b> It samples at t=21 ns, a " +
+      "statement about time; ReadOnly samples the settled edge, a statement about the design. " +
+      "Drag the redrive under 1 ns.";
+  }
+}
+
+function render(){ drawWave(); drawStrip(); readout(); }
+
+/* ---- probe dragging + keyboard ---- */
+var wave = el("wave"), dragging = false;
+function evX(ev){
+  var r = wave.getBoundingClientRect();
+  var cx = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
+  return cx * (wave.width / r.width);
+}
+function toX(ev){ pos = posFromX(evX(ev)); render(); }
+wave.addEventListener("pointerdown", function(ev){ dragging = true; wave.setPointerCapture(ev.pointerId); toX(ev); });
+wave.addEventListener("pointermove", function(ev){ if (dragging) toX(ev); });
+wave.addEventListener("pointerup", function(){ dragging = false; });
+wave.addEventListener("keydown", function(ev){
+  if (ev.key === "ArrowLeft"){ pos = Math.max(0, pos - 1); render(); ev.preventDefault(); }
+  if (ev.key === "ArrowRight"){ pos = Math.min(POS.length - 1, pos + 1); render(); ev.preventDefault(); }
+  if (ev.key === "Home"){ pos = 0; render(); ev.preventDefault(); }
+  if (ev.key === "End"){ pos = POS.length - 1; render(); ev.preventDefault(); }
+});
+
+/* ---- strategy park buttons + driver slider ---- */
+document.querySelectorAll("[data-s]").forEach(function(b){
+  b.addEventListener("click", function(){
+    var s = strategies(drv).filter(function(x){ return x.key === b.dataset.s; })[0];
+    pos = POS.findIndex(function(p){ return p.t === s.t && p.slot === s.slot; });
+    render();
+  });
+});
+el("drv").addEventListener("input", function(){
+  drv = +el("drv").value;
+  el("ldrv").textContent = drv.toFixed(1);
+  fillStrategies(); timerVerdict(); render();
+});
+
+/* ---- predict-then-reveal ---- */
+el("stratpanel").classList.add("locked");
+var GRADE = {
+  old: "<b>Right.</b> And look at what that means: the drawn trace says q steps to 0x3C at " +
+    "t=20, and your read at t=20 returned <b>0xA5</b>. Both are true. The instant has internal " +
+    "order: cocotb wakes you in the clk callback, before the nonblocking update to q is applied. " +
+    "Step the probe through the five slots in the strip — q flips between slot 2 and slot 3.",
+  "new": "<b>Not quite — the read returns 0xA5, the value from before the edge.</b> That " +
+    "answer treats the waveform's vertical line as a single point. It is not: cocotb wakes you " +
+    "inside t=20, before the nonblocking update to q lands — one settle too early, so the " +
+    "read grades the previous vector. Step the probe through the strip and watch where q flips.",
+  race: "<b>Half right — and the half matters.</b> The LRM gives no contract for a read in " +
+    "the writable phase; that instability is why the rule exists. On this course's toolchain " +
+    "(Icarus + cocotb 1.x) the order is fixed: the wake precedes the update, and the read " +
+    "returns <b>0xA5</b> every run. Do not sample where the answer is an accident — " +
+    "sample in ReadOnly."
+};
+document.querySelectorAll("[data-p]").forEach(function(b){
+  b.addEventListener("click", function(){
+    document.querySelectorAll("[data-p]").forEach(function(x){ x.classList.remove("on"); });
+    b.classList.add("on");
+    unlocked = true;
+    el("stratpanel").classList.remove("locked");
+    el("pverdict").innerHTML = "Committed. The probe is live — it now reports what a read " +
+      "returns at its position.";
+    var v = el("verdict");
+    v.className = "verdict " + (b.dataset.p === "old" ? "ok" : (b.dataset.p === "race" ? "warn" : "bad"));
+    v.innerHTML = GRADE[b.dataset.p] + "<br><br>Same instant, three reads: the table compares " +
+      "them. <b>RisingEdge-then-read and ReadOnly-then-read disagree at t=20</b> — old " +
+      "value against new — with zero simulated time between them.";
+    pos = POS.findIndex(function(p){ return p.t === 20 && p.slot === "wake"; });
+    fillStrategies(); timerVerdict(); render();
+  });
+});
+
+if (window.matchMedia)
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+fillStrategies();
+render();
+})();
+</script>
+</body>
+</html>

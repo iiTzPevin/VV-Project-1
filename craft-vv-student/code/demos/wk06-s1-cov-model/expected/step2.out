@@ -1,0 +1,29 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Verilator version 5.020 2024-01-01
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787514415
+Found test step2_cross.test_cross
+running test_cross (1/1)
+demo seed = 5
+
+                                                          top.occ        3/3  bins hit   100.0%
+                                                          top.op         4/4  bins hit   100.0%
+                                                          top.occ_x_op   8/12 bins hit    66.7%
+
+                                                          occ \ op      idle   write    read   simul
+                                                          empty          63       5       -       -
+                                                          partial        31      35      35      23
+                                                          full           53       -       5       -
+                                                          cross top.occ_x_op: 8/12 bins hit = 66.7%   ('-' = empty bin)
+                                                          empty bins (4): (empty,read)  (empty,simul)  (full,write)  (full,simul)
+test_cross passed
+**************************************************************************************
+                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        **************************************************************************************
+                                                        ** step2_cross.test_cross         PASS        2525.00           0.92       2746.06  **
+                                                        **************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0               2525.00           1.22       2062.71  **
+                                                        **************************************************************************************
+
+- :0: Verilog $finish

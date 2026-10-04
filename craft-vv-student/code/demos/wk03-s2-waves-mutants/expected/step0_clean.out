@@ -1,0 +1,24 @@
+/usr/local/lib/python3.11/dist-packages/cocotb/share/makefiles/Makefile.deprecations:6: VERILATOR_TRACE is deprecated, see the "Simulator Support" section in the documentation.
+/usr/local/lib/python3.11/dist-packages/cocotb/share/makefiles/Makefile.deprecations:6: VERILATOR_TRACE is deprecated, see the "Simulator Support" section in the documentation.
+/usr/local/lib/python3.11/dist-packages/cocotb/share/makefiles/Makefile.deprecations:6: VERILATOR_TRACE is deprecated, see the "Simulator Support" section in the documentation.
+/usr/local/lib/python3.11/dist-packages/cocotb/share/makefiles/Makefile.deprecations:6: VERILATOR_TRACE is deprecated, see the "Simulator Support" section in the documentation.
+Archive ar -rcs Vtop__ALL.a Vtop__ALL.o
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Verilator version 5.020 2024-01-01
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787512036
+Found test step0_first_divergence.test_first_divergence
+running test_first_divergence (1/1)
+demo seed = 5
+clean: DUT and model agree on all 10 vectors
+test_first_divergence passed
+******************************************************************************************************
+                                                        ** TEST                                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ******************************************************************************************************
+                                                        ** step0_first_divergence.test_first_divergence   PASS          20.00           0.00      12519.07  **
+                                                        ******************************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                                 20.00           0.08        250.26  **
+                                                        ******************************************************************************************************
+
+- :0: Verilog $finish

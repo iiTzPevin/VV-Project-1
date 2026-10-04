@@ -1,0 +1,9 @@
+[step3_strengthened] engine_0.induction: Trying induction in step 15..
+[step3_strengthened] engine_0.induction: Trying induction in step 14..
+[step3_strengthened] engine_0.induction: Trying induction in step 13..
+[step3_strengthened] engine_0.induction: Temporal induction successful.
+[step3_strengthened] summary: engine_0 (smtbmc z3) returned pass for basecase
+[step3_strengthened] summary: engine_0 (smtbmc z3) returned pass for induction
+[step3_strengthened] summary: engine_0 did not produce any traces
+[step3_strengthened] summary: successful proof by k-induction.
+[step3_strengthened] DONE (PASS, rc=0)

@@ -1,0 +1,37 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787517783
+Found test step1_factory.test_factory_override
+running test_factory_override (1/1)
+demo seed = 5
+after SingleWriteSeq   :   1 writes,  0 reads checked, 0 mismatches
+INJECT # 1: flipped wdata bit 11 on WR a=0x0
+INJECT # 2: flipped wdata bit  8 on WR a=0x2
+after ReadAfterWriteSeq:   4 writes,  3 reads checked, 0 mismatches
+INJECT # 3: flipped wdata bit 23 on WR a=0x2
+INJECT # 4: flipped wdata bit 29 on WR a=0x4
+INJECT # 5: flipped wdata bit 13 on WR a=0x5
+INJECT # 6: flipped wdata bit 12 on WR a=0x4
+INJECT # 7: flipped wdata bit 10 on WR a=0x2
+INJECT # 8: flipped wdata bit 11 on WR a=0x5
+INJECT # 9: flipped wdata bit  1 on WR a=0x4
+INJECT #10: flipped wdata bit 26 on WR a=0x7
+INJECT #11: flipped wdata bit 27 on WR a=0x1
+INJECT #12: flipped wdata bit  0 on WR a=0x4
+INJECT #13: flipped wdata bit 25 on WR a=0x7
+INJECT #14: flipped wdata bit  3 on WR a=0x4
+INJECT #15: flipped wdata bit 30 on WR a=0x3
+after RandomBurstSeq   :  50 writes, 37 reads checked, 0 mismatches
+driver in the build: ErrInjectDriver
+corrupted writes injected by the driver: 15
+test_factory_override passed
+*********************************************************************************************
+                                                        ** TEST                                 STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        *********************************************************************************************
+                                                        ** step1_factory.test_factory_override   PASS        1765.00           0.03      55153.29  **
+                                                        *********************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                      1765.00           0.12      15023.32  **
+                                                        *********************************************************************************************
+

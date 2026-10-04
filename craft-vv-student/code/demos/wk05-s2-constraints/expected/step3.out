@@ -1,0 +1,41 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787506046
+pytest not found, install it to enable better AssertionError messages
+Found test step3_dist_trap.test_dist_trap
+running test_dist_trap (1/1)
+demo seed = 5
+--- phase FILL: what did the constraints buy us? ---
+induced rates over 400 draws: wr_en=0.53  rd_en=0.54   net drift = -0.01 entries/cycle
+--- phase DRAIN: what did the constraints buy us? ---
+induced rates over 400 draws: wr_en=0.53  rd_en=0.56   net drift = -0.04 entries/cycle
+--- one guarded dist: is the implies honored at all? ---
+induced rates over 800 draws: wr_en=0.84   net drift = +0.84 entries/cycle
+guard TRUE  -> P(wr_en=1) = 0.84
+induced rates over 800 draws: wr_en=0.84   net drift = +0.84 entries/cycle
+guard FALSE -> P(wr_en=1) = 0.84
+Both near 0.85: the dist applies whether or not the guard holds. `implies` does not gate `dist`.
+
+                                                          occupancy   cycles
+                                                          ---------   ------
+                                                                  0       14  ####### <- EMPTY
+                                                                  1       20  ###########
+                                                                  2       15  ########
+                                                                  3       23  ############
+                                                                  4       30  ################
+                                                                  5       23  ############
+                                                                  6       21  ###########
+                                                                  7       38  ####################
+                                                                  8       16  ######## <- FULL
+                                                          boundaries reached: 2/2   (empty=14 cycles, full=16 cycles)
+test_dist_trap passed
+****************************************************************************************
+                                                        ** TEST                            STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ****************************************************************************************
+                                                        ** step3_dist_trap.test_dist_trap   PASS        2025.00           4.68        432.75  **
+                                                        ****************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                 2025.00           4.83        418.94  **
+                                                        ****************************************************************************************
+

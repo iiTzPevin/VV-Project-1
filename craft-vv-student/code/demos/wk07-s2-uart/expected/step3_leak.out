@@ -1,0 +1,13 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Verilator version 5.020 2024-01-01
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787515949
+Found test step3_no_leak.test_no_leak
+running test_no_leak (1/1)
+demo seed = 5
+[30000] %Error: leak_check.sv:51: Assertion failed in leak_check.a_no_secret_leak: 'assert' failed.
+%Error: /home/claude/vv-full/code/demos/wk07-s2-uart/../../dut/leak_check.sv:51: Verilog $stop
+Aborting...
+make[1]: *** [/usr/local/lib/python3.11/dist-packages/cocotb/share/makefiles/simulators/Makefile.verilator:72: /home/claude/vv-full/code/demos/wk07-s2-uart/sim_build/step3-leak_check-leakbug/results.xml] Aborted
+make: *** [/usr/local/lib/python3.11/dist-packages/cocotb/share/makefiles/Makefile.inc:40: sim] Error 2

@@ -1,0 +1,43 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787510422
+Found test step1_traceable.test_vp1_add_flags
+Found test step1_traceable.test_vp2_slt_signed
+Found test step1_traceable.test_vp3_zero_flag
+Found test step2_plan_complete.test_vp4_logical_ops
+Found test step2_plan_complete.test_vp5_shifts
+running test_vp1_add_flags (1/5)
+                                                          traces: vplan.md VP-1 -- ADD result + overflow (signed) + carry (unsigned)
+demo seed = 5
+VP-1 pass: 6 wrap-boundary and equal-operand vectors
+test_vp1_add_flags passed
+running test_vp2_slt_signed (2/5)
+                                                          traces: vplan.md VP-2 -- SLT compares as SIGNED two's-complement
+VP-2 pass: 5 one-negative / sign-corner comparisons
+test_vp2_slt_signed passed
+running test_vp3_zero_flag (3/5)
+                                                          traces: vplan.md VP-3 -- zero iff result all zeros, under every op
+VP-3 pass: zero asserted under 5 ops, deasserted under 2
+test_vp3_zero_flag passed
+running test_vp4_logical_ops (4/5)
+                                                          traces: vplan.md VP-4 -- AND/OR/XOR, bitwise, no flag side effects
+VP-4 pass: 6 truth-table vectors across AND/OR/XOR
+test_vp4_logical_ops passed
+running test_vp5_shifts (5/5)
+                                                          traces: vplan.md VP-5 -- SLL/SRL use only b[2:0]; vacated bits are 0
+VP-5 pass: 6 shift vectors incl. b >= WIDTH
+test_vp5_shifts passed
+**************************************************************************************************
+                                                        ** TEST                                      STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        **************************************************************************************************
+                                                        ** step1_traceable.test_vp1_add_flags         PASS           6.00           0.00       5663.82  **
+                                                        ** step1_traceable.test_vp2_slt_signed        PASS           5.00           0.00      10930.54  **
+                                                        ** step1_traceable.test_vp3_zero_flag         PASS           7.00           0.00      13877.28  **
+                                                        ** step2_plan_complete.test_vp4_logical_ops   PASS           6.00           0.00      15451.21  **
+                                                        ** step2_plan_complete.test_vp5_shifts        PASS           6.00           0.00      15199.29  **
+                                                        **************************************************************************************************
+                                                        ** TESTS=5 PASS=5 FAIL=0 SKIP=0                             30.00           0.08        364.42  **
+                                                        **************************************************************************************************
+

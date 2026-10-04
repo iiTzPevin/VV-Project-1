@@ -1,0 +1,27 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787518100
+Found test step3_secure.test_secure_lock
+running test_secure_lock (1/1)
+                                                          SECURE writable only while unlocked; a locked write raises INTR[0].
+demo seed = 5
+
+                                                          the security interaction, per spec:
+                                                          [1] LOCK=0, SECURE <= 0xa5a5a5a5, read-back ok   (unlocked: writable)
+                                                          [2] LOCK=1, SECURE <= 0x5a5a5a5a   -> dropped, still 0xa5a5a5a5   ok
+                                                          [3] INTR[0] latched by hardware: INTR reads 0x00000001   ok
+                                                          [4] LOCK=0, SECURE <= 0xdeadbeef, read-back ok   (unlocked again)
+                                                          property held: protected state never moved without privilege
+                                                          INTR[0] is still set. Clearing it is the We Do:
+                                                          write the W1C check -- a 1 clears it, a 0 must not.
+test_secure_lock passed
+***************************************************************************************
+                                                        ** TEST                           STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ***************************************************************************************
+                                                        ** step3_secure.test_secure_lock   PASS         235.00           0.00      75651.67  **
+                                                        ***************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                 235.00           0.08       2876.01  **
+                                                        ***************************************************************************************
+

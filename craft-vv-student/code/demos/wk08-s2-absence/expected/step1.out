@@ -1,0 +1,11 @@
+[step1_trojan] summary: engine_0 (smtbmc z3) returned FAIL
+[step1_trojan] summary: counterexample trace: step1_trojan/engine_0/trace.vcd
+[step1_trojan] summary:   failed assertion arbiter_trojan.$assert$arbiter_trojan.sv:53$37 at arbiter_trojan.sv:53.25-54.49 step 1
+[step1_trojan] DONE (FAIL, rc=0)
+counterexample: step1_trojan/engine_0/trace.vcd
+  edge  rst_n   req    grant   grant&~req
+     0    1    1010    0100    0100  <- VIOLATION: line 2 granted, never requested
+     1    1    1010    0100    0100  <- VIOLATION: line 2 granted, never requested
+     2    1    1010    0100    0100  <- VIOLATION: line 2 granted, never requested
+  trigger: req = 4'b1010  ->  grant = 4'b0100
+  matches the backdoor in dut/arbiter_trojan.sv: the solver recovered the magic pattern nobody told it about.

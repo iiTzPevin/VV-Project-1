@@ -1,0 +1,12 @@
+Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+Applies to all PROSE / INSTRUCTIONAL TEXT in this repository (syllabus,
+weekly plans, handouts, projects, capstone, figures).
+
+You are free to share and adapt this material for any purpose, even
+commercially, under the following terms: Attribution and ShareAlike.
+
+Full legal text: https://creativecommons.org/licenses/by-sa/4.0/legalcode
+Human-readable summary: https://creativecommons.org/licenses/by-sa/4.0/
+
+Attribute as: "CRAFT - Verification and Validation of Digital Systems,
+Borowczak & Borowczak, licensed CC BY-SA 4.0."

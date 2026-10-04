@@ -1,0 +1,27 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Icarus Verilog version 12.0 (stable)
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787517713
+Found test step0_raw.test_raw_readwrite
+running test_raw_readwrite (1/1)
+demo seed = 5
+
+                                                          read-after-write, straight down the map (no model):
+                                                          CTRL     <= 0x9f767c45   read -> 0x9f767c45   ok
+                                                          SCRATCH  <= 0x4164d839   read -> 0x4164d839   ok
+                                                          SECURE   <= 0xbde5c099   read -> 0xbde5c099   ok
+                                                          LOCK     <= 0x00000001   read -> 0x00000001   ok   (the lock bit stores a 1 -- tested!)
+                                                          STATUS   read -> 0x5a5a0f0f   nonzero, looks alive (unchecked)
+                                                          4/4 read-after-write pairs match: PASS
+                                                          never checked: reset values, RO, W1C, address decode,
+                                                                         or whether LOCK=1 protects anything
+test_raw_readwrite passed
+**************************************************************************************
+                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        **************************************************************************************
+                                                        ** step0_raw.test_raw_readwrite   PASS         215.00           0.00      71541.42  **
+                                                        **************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                215.00           0.08       2670.97  **
+                                                        **************************************************************************************
+

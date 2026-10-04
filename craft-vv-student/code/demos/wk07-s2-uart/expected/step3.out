@@ -1,0 +1,21 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:79   in set_program_name_in_venv        Did not detect Python virtual environment. Using system-wide Python interpreter
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:101  in gpi_print_registered_impl       VPI registered
+Running on Verilator version 5.020 2024-01-01
+Running tests with cocotb v1.9.2 from /usr/local/lib/python3.11/dist-packages/cocotb
+Seeding Python random module with 1787515940
+Found test step3_no_leak.test_no_leak
+running test_no_leak (1/1)
+demo seed = 5
+secure mode: 300 random secrets, pub_out tracked public_in every cycle
+open mode: 50 draws declassified by policy
+green means: no leak OBSERVED on these traces -- the proof is next week
+test_no_leak passed
+**************************************************************************************
+                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        **************************************************************************************
+                                                        ** step3_no_leak.test_no_leak     PASS        3525.00           0.09      39971.14  **
+                                                        **************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0               3525.00           0.26      13808.56  **
+                                                        **************************************************************************************
+
+- :0: Verilog $finish

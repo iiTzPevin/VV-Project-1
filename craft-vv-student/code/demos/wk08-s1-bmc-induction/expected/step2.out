@@ -1,0 +1,22 @@
+[step2_loose_bound] engine_0.induction: Trying induction in step 15..
+[step2_loose_bound] engine_0.induction: Trying induction in step 14..
+[step2_loose_bound] engine_0.induction: Trying induction in step 13..
+[step2_loose_bound] engine_0.induction: Trying induction in step 12..
+[step2_loose_bound] engine_0.induction: Trying induction in step 11..
+[step2_loose_bound] engine_0.induction: Trying induction in step 10..
+[step2_loose_bound] engine_0.induction: Trying induction in step 9..
+[step2_loose_bound] engine_0.induction: Trying induction in step 8..
+[step2_loose_bound] engine_0.induction: Trying induction in step 7..
+[step2_loose_bound] engine_0.induction: Trying induction in step 6..
+[step2_loose_bound] engine_0.induction: Trying induction in step 5..
+[step2_loose_bound] engine_0.induction: Trying induction in step 4..
+[step2_loose_bound] engine_0.induction: Trying induction in step 3..
+[step2_loose_bound] engine_0.induction: Trying induction in step 2..
+[step2_loose_bound] engine_0.induction: Trying induction in step 1..
+[step2_loose_bound] engine_0.induction: Trying induction in step 0..
+[step2_loose_bound] engine_0.induction: Temporal induction failed!
+[step2_loose_bound] summary: engine_0 (smtbmc z3) returned pass for basecase
+[step2_loose_bound] summary: engine_0 (smtbmc z3) returned FAIL for induction
+[step2_loose_bound] summary: counterexample trace [induction]: step2_loose_bound/engine_0/trace_induct.vcd
+[step2_loose_bound] summary:   failed assertion fifo_bound.$assert$step2_loose_bound.sv:54$15 at step2_loose_bound.sv:54.41-56.40
+[step2_loose_bound] DONE (UNKNOWN, rc=0)

@@ -1,0 +1,32 @@
+# Step 2 -- the same trojaned netlist, one environment assume, and the
+# counterexample is gone.
+#   sby -f step2_assume_env.sby         # both tasks: bmc + prove
+# `bmc` reruns the exact search that caught the backdoor in step 1 -- same
+# depth, same engine -- and returns PASS, because assume(!req[3]) removed
+# the triggering input from the space it may search. `prove` then closes
+# the contract by k-induction. Both verdicts are TRUE and neither means
+# the backdoor is gone: they mean it is unreachable under the environment
+# you described. Absence is only absence of what you specified, within
+# the world your assumes allow.
+
+[tasks]
+bmc
+prove
+
+[options]
+bmc:   mode bmc
+bmc:   depth 8
+prove: mode prove
+prove: depth 12
+expect pass
+
+[engines]
+smtbmc z3
+
+[script]
+read_verilog -sv -formal -DFORMAL step2_assume_env.sv arbiter_trojan.sv
+prep -top arbiter_env
+
+[files]
+step2_assume_env.sv
+../../dut/arbiter_trojan.sv

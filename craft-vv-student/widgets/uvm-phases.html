@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UVM Phases · CRAFT V&amp;V Week 9</title>
+<style>
+:root{
+  --navy:#1B2A4A; --gold:#D4A843; --green:#27AE60; --blue:#2E86AB;
+  --red:#E74C3C; --purple:#9B59B6;
+  --ground:#F4F6F9; --surface:#fff; --surface2:#EDF0F5;
+  --ink:#16223B; --ink2:#3E4C68; --ink3:#6B7791; --rule:#D9DEE7;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#0D1524; --surface:#141E33; --surface2:#1B273F;
+    --ink:#E7ECF5; --ink2:#B6C1D6; --ink3:#8592AC; --rule:#2A3752;
+    --gold:#E9BE58; --green:#5FD48C; --blue:#5AA9C9; --red:#FF8776; --purple:#BE85D6;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font:16px/1.55 "Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 18px 60px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:1.5rem;margin:0;letter-spacing:-.01em}
+h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin:0 0 8px}
+p{margin:0;max-width:74ch;color:var(--ink2)}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+header{border-bottom:2px solid var(--ink);padding-bottom:12px;display:flex;flex-direction:column;gap:6px}
+.kicker{font:600 .7rem/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px 18px}
+.grid{display:grid;grid-template-columns:minmax(280px,1fr) minmax(360px,1.55fr);gap:16px;align-items:start}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+
+button{font:inherit;cursor:pointer;border-radius:4px;border:1px solid var(--rule);
+  background:var(--surface2);color:var(--ink);padding:7px 12px}
+button:hover{border-color:var(--ink3)}
+button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+@media (prefers-color-scheme:dark){button.on{background:var(--gold);color:#12203a;border-color:var(--gold)}}
+button.go{background:var(--green);color:#fff;border-color:var(--green);font-weight:600;padding:9px 16px}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button:disabled{opacity:.45;cursor:default}
+select{font:inherit;padding:5px 7px;border:1px solid var(--rule);border-radius:4px;
+  background:var(--surface2);color:var(--ink);font-family:ui-monospace,monospace;font-size:.85rem}
+.locked{opacity:.45;pointer-events:none}
+
+.tray{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.blk{font-family:ui-monospace,monospace;font-size:.85rem;font-weight:700;
+  border:1px solid var(--blue);background:var(--surface);color:var(--ink);cursor:grab}
+.blk.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.blk.gone{display:none}
+.hint{font-size:.85rem;color:var(--ink3);min-height:2.6em;margin-bottom:6px}
+.hint.badhint{color:var(--red)}
+
+.tree{font-size:.85rem}
+.tnode{border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-top:8px;background:var(--surface2)}
+.tnode>.tname{font:700 .85rem/1.3 ui-monospace,monospace}
+.tnode>.tname small{font-weight:400;color:var(--ink3);font-family:inherit}
+.slot{border:1.5px dashed var(--ink3);border-radius:6px;padding:7px 10px;margin-top:8px;
+  background:var(--surface);color:var(--ink3);cursor:pointer}
+.slot .role{font-size:.78rem;line-height:1.35}
+.slot .want{font:700 .8rem/1.4 ui-monospace,monospace;color:var(--ink2)}
+.slot.filled{border-style:solid;border-color:var(--green);color:var(--ink);cursor:default}
+.slot.filled .want{color:var(--green)}
+.slot.over{border-color:var(--gold);background:var(--surface2)}
+.slot.shake{animation:sh .3s}
+@keyframes sh{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+.ctl{display:flex;flex-direction:column;gap:3px;margin-bottom:11px;font-size:.86rem;color:var(--ink2)}
+.ctl code{color:var(--ink)}
+.ctl label{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl input[type=checkbox]{width:16px;height:16px;accent-color:var(--green)}
+
+#predict{border-left:4px solid var(--purple);background:var(--surface2);padding:12px 14px;border-radius:0 5px 5px 0;margin-top:12px}
+#predict .q{font-weight:600;margin-bottom:8px}
+#predict .btnrow{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+#predict button{text-align:left}
+
+.phases{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.ph{font:600 .72rem/1 ui-monospace,monospace;letter-spacing:.05em;padding:7px 10px;border-radius:4px;
+  background:var(--surface2);color:var(--ink3);border:1px solid var(--rule)}
+.ph.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.ph.done{background:var(--green);color:#fff;border-color:var(--green)}
+.ph.dead{background:var(--red);color:#fff;border-color:var(--red)}
+.ph.skip{opacity:.4}
+
+.pipe{position:relative;display:flex;gap:0;align-items:center;justify-content:space-between;
+  background:var(--surface2);border-radius:6px;padding:16px 10px 30px;margin-bottom:10px;overflow:hidden}
+.stage{font:700 .72rem/1.2 ui-monospace,monospace;background:var(--surface);border:1px solid var(--rule);
+  border-radius:4px;padding:6px 7px;text-align:center;min-width:64px}
+.stage small{display:block;font-weight:400;color:var(--ink3)}
+.arrow{flex:1;text-align:center;color:var(--ink3);font-size:.8rem;position:relative;min-width:20px}
+.arrow .lab{position:absolute;left:50%;transform:translateX(-50%);top:1.25em;
+  font:600 .62rem/1.2 ui-monospace,monospace;white-space:nowrap}
+.arrow.ok{color:var(--green)} .arrow.badw{color:var(--red)}
+#dot{position:absolute;width:13px;height:13px;border-radius:50%;background:var(--gold);
+  top:8px;left:-20px;transition:left .12s linear,opacity .3s;box-shadow:0 0 0 2px var(--surface)}
+#dot.lost{opacity:0;transform:scale(2)}
+.inbox{font-family:ui-monospace,monospace;font-size:.72rem;display:flex;gap:6px;flex-wrap:wrap;min-height:1.8em;margin-bottom:8px}
+.inbox b{color:var(--ink3);font-weight:600}
+.chip{border:1px solid var(--green);color:var(--green);border-radius:3px;padding:1px 6px}
+.chip.ghost{border:1px dashed var(--red);color:var(--red);text-decoration:line-through;opacity:.75}
+
+.banner{font:700 1.05rem/1.4 ui-monospace,monospace;border-radius:5px;padding:10px 14px;margin-bottom:10px;
+  background:var(--surface2);color:var(--ink3)}
+.banner.green{background:var(--green);color:#fff}
+.banner.red{background:var(--red);color:#fff}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:10px}
+.stat{background:var(--surface2);border-radius:5px;padding:8px 11px}
+.stat .k{font-size:.66rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)}
+.stat .v{font:700 1.2rem/1.3 ui-monospace,monospace}
+.v.bad{color:var(--red)} .v.ok{color:var(--green)} .v.zero{color:var(--red)}
+.verdict{border-left:4px solid var(--rule);padding:10px 14px;background:var(--surface2);
+  border-radius:0 5px 5px 0;font-size:.92rem}
+.verdict.ok{border-left-color:var(--green)} .verdict.bad{border-left-color:var(--red)}
+.verdict.warn{border-left-color:var(--gold)} .verdict b{color:var(--ink)}
+
+.log{font-family:ui-monospace,monospace;font-size:.72rem;line-height:1.55;margin-top:10px;
+  background:var(--surface2);border-radius:5px;padding:8px 11px;min-height:6em;max-height:15em;
+  overflow-y:auto;color:var(--ink2);white-space:pre-wrap}
+.log .fatal{color:var(--red);font-weight:700} .log .warn{color:var(--gold)}
+.log .good{color:var(--green)} .log .lost{color:var(--red)}
+footer{font-size:.8rem;color:var(--ink3);border-top:1px solid var(--rule);padding-top:12px}
+footer p{color:var(--ink3);max-width:none}
+
+body.present{font-size:20px}
+body.present .prose,body.present footer{display:none}
+body.present h1{font-size:2rem}
+body.present .tree,body.present .log{font-size:.95rem}
+body.present .stat .v{font-size:1.5rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="kicker">CRAFT V&amp;V · Week 9 · Universal Verification Methodology</span>
+  <h1>UVM Phases</h1>
+  <p class="prose">The instinct says UVM is a huge new framework to learn from scratch. Assemble it
+  and look: the same driver, monitor, and scoreboard you built in Week 4, wearing standardized
+  names. The new machinery is the <b>phase schedule</b> — build top-down, connect bottom-up, then
+  run — and the schedule has two kinds of failure worth meeting on purpose: the loud kind that
+  names your wiring, and one silent kind that hands you a passing test with a checker that never
+  heard a thing.</p>
+</header>
+
+<div class="grid">
+
+  <div class="panel">
+    <h2>1 · Place each part — every slot names a Week 4 job</h2>
+    <p class="prose" style="font-size:.86rem;margin-bottom:8px">Click a block, then its slot in the
+    tree (or drag it there). Wrong slot bounces with the reason.</p>
+    <div class="tray" id="tray"></div>
+    <div class="hint" id="hint">Six blocks, six slots. <button id="auto" style="padding:3px 8px;font-size:.8rem">assemble for me</button></div>
+
+    <div id="wiring" class="locked">
+      <h2 style="margin-top:14px">2 · Pick the phase for each wiring line</h2>
+      <div class="ctl">
+        <span>the agent creates its driver in</span>
+        <select id="wcreate" aria-label="phase that creates the driver">
+          <option value="build">build_phase</option>
+          <option value="connect">connect_phase</option>
+        </select>
+      </div>
+      <div class="ctl">
+        <span><code>driver.seq_item_port.connect(sequencer.seq_item_export)</code> runs in</span>
+        <select id="wseq" aria-label="phase that wires the seq_item_port">
+          <option value="build">build_phase</option>
+          <option value="connect" selected>connect_phase</option>
+          <option value="run">run_phase</option>
+          <option value="none">nowhere — leave it unwired</option>
+        </select>
+      </div>
+      <div class="ctl">
+        <span><code>monitor.ap.connect(scoreboard.analysis_export)</code> runs in</span>
+        <select id="wap" aria-label="phase that wires the analysis port">
+          <option value="build">build_phase</option>
+          <option value="connect" selected>connect_phase</option>
+          <option value="run">run_phase</option>
+          <option value="none">nowhere — leave it unwired</option>
+        </select>
+      </div>
+      <div class="ctl">
+        <label><input type="checkbox" id="probe">
+          <span>report_phase probe: <code>assert sb.received &gt; 0</code> — the one-line CtM-09 check</span></label>
+      </div>
+
+      <div id="predict">
+        <div class="q">3 · Commit before you run: how does this wiring end?</div>
+        <div class="btnrow">
+          <button data-p="red">Red — an error or fatal names the wiring</button>
+          <button data-p="starved">Green — PASSED, and the scoreboard never heard a thing</button>
+          <button data-p="checking">Green — PASSED, scoreboard fed and checking</button>
+        </div>
+        <div id="pverdict" style="font-size:.88rem;color:var(--ink3)">The run stays locked until you commit. Every wiring change asks again.</div>
+      </div>
+      <div style="margin-top:10px"><button class="go" id="run" disabled>run_test()</button></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>The component tree</h2>
+    <div class="tree" id="tree"></div>
+    <h2 style="margin-top:14px">The schedule</h2>
+    <div class="phases" id="phstrip"></div>
+    <div class="pipe" id="pipe" aria-label="transaction path from sequencer to scoreboard">
+      <div id="dot" aria-hidden="true"></div>
+      <div class="stage" data-s="0">seqr<small>next item</small></div>
+      <div class="arrow" id="arr-seq">→<span class="lab" id="lab-seq"></span></div>
+      <div class="stage" data-s="1">driver<small>pin wiggles</small></div>
+      <div class="arrow">→</div>
+      <div class="stage" data-s="2">DUT<small>regfile</small></div>
+      <div class="arrow">→</div>
+      <div class="stage" data-s="3">monitor<small>observes</small></div>
+      <div class="arrow" id="arr-ap">→<span class="lab" id="lab-ap"></span></div>
+      <div class="stage" data-s="4">scoreboard<small>judges</small></div>
+    </div>
+    <div class="inbox" id="inbox"><b>scoreboard inbox:</b></div>
+    <div class="banner" id="banner">no run yet</div>
+    <div class="stats">
+      <div class="stat"><div class="k">items driven</div><div class="v" id="sdrv">—</div></div>
+      <div class="stat"><div class="k">monitor published</div><div class="v" id="spub">—</div></div>
+      <div class="stat"><div class="k">ap subscribers</div><div class="v" id="ssub">—</div></div>
+      <div class="stat"><div class="k">scoreboard received</div><div class="v" id="srcv">—</div></div>
+      <div class="stat"><div class="k">mismatches</div><div class="v" id="smis">—</div></div>
+    </div>
+    <div class="verdict" id="verdict">Assemble the tree, wire it, commit, run.</div>
+    <div class="log" id="log" role="log" aria-live="polite"></div>
+  </div>
+</div>
+
+<footer>
+  <p><b>What this models.</b> The pyuvm schedule from <code>code/demos/wk09-s1-agent</code>:
+  <code>build_phase</code> creates children parent-first (top-down), <code>connect_phase</code>
+  wires ports child-first (bottom-up, after everything exists), port bindings are resolved once at
+  <code>end_of_elaboration</code>, and simulated time passes only in <code>run_phase</code>.
+  The failure modes are the standard ones. Wiring in <code>build</code> reaches for
+  <code>agent.monitor</code> before <code>agent.build_phase</code> has run — a null handle,
+  loud. Creating a component after build violates the schedule contract — loud.
+  A <code>seq_item_port</code> requires one binding at elaboration, so forgetting it is loud.
+  An analysis port requires zero — <code>ap.write</code> broadcasts to whoever subscribed, and
+  zero subscribers is legal — so forgetting <em>that</em> one is silent, and the test passes with
+  the scoreboard starved. A <code>connect()</code> issued during run lands after resolution: a
+  warning, and no binding. Marker messages follow SystemVerilog UVM's checks (ILLCRT, the
+  minimum-connection resolution error); in <code>pyuvm</code> the same wirings die too, with
+  Python's own errors — and the unconnected analysis port stays exactly as silent. Five items per
+  run; payloads come from a seeded PRNG (mulberry32, seed 5) so every run replays exactly.</p>
+  <p style="margin-top:8px">The live version with the same shape: <code>just demo 09 s1 1</code>
+  (the schedule executing) and <code>just demo 09 s1 2</code> (the subscriber hearing 5 of 5).
+  The one-line probe is the first of the three checks CtM-09 asks you to run on machine-written
+  wiring.</p>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* deterministic PRNG (mulberry32) — payloads replay exactly */
+function rng(seed){
+  var a = seed >>> 0;
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* ---------------- phase state machine (headless; the node self-test drives this) -------------
+   plan = { createDriver: 'build'|'connect',
+            seqWire:      'build'|'connect'|'run'|'none',
+            apWire:       'build'|'connect'|'run'|'none',
+            probe:        boolean }                                                            */
+var N_ITEMS = 5;
+
+function schedule(plan){
+  var out = { events: [], buildOrder: [], connectOrder: [], phasesRun: [],
+              published: 0, received: 0, subscribers: 0, mismatches: 0,
+              status: null, fail: null, warnings: [], probeFired: false };
+  var ev = function(ph, who, text, kind){
+    out.events.push({ph: ph, who: who, text: text, kind: kind || ""});
+  };
+  var bound = {seq: false, ap: false};
+
+  /* ---- build_phase: top-down, parents create children ---- */
+  out.phasesRun.push("build");
+  ev("build", "uvm_test_top", "-> creating env");
+  out.buildOrder.push("uvm_test_top");
+  ev("build", "uvm_test_top.env", "-> creating agent, scoreboard");
+  out.buildOrder.push("uvm_test_top.env");
+  if (plan.apWire === "build"){
+    ev("build", "uvm_test_top.env",
+       "monitor.ap.connect(scoreboard.analysis_export)  ** UVM_FATAL: null handle -- " +
+       "uvm_test_top.env.agent.monitor does not exist; build walks top-down and " +
+       "agent.build_phase has not run yet", "fatal");
+    out.status = "FAIL"; out.fail = "null_handle";
+    return out;
+  }
+  var driverBuilt = plan.createDriver === "build";
+  ev("build", "uvm_test_top.env.agent",
+     driverBuilt ? "-> creating driver, monitor, sequencer"
+                 : "-> creating monitor, sequencer   (driver creation deferred to connect_phase)");
+  out.buildOrder.push("uvm_test_top.env.agent");
+  if (plan.seqWire === "build"){
+    if (driverBuilt){
+      ev("build", "uvm_test_top.env.agent",
+         "driver.seq_item_port -> sequencer.seq_item_export   (binds -- both endpoints were " +
+         "created two lines up; one refactor away from your neighbor's null handle)", "warn");
+      bound.seq = true;
+      out.warnings.push("build_wire_fragile");
+    } else {
+      ev("build", "uvm_test_top.env.agent",
+         "driver.seq_item_port.connect(...)  ** UVM_FATAL: null handle -- the driver has not " +
+         "been created; its creation was deferred to connect_phase", "fatal");
+      out.status = "FAIL"; out.fail = "null_handle";
+      return out;
+    }
+  }
+  var leaves = driverBuilt ? ["driver", "monitor", "sequencer"] : ["monitor", "sequencer"];
+  leaves.forEach(function(c){
+    ev("build", "uvm_test_top.env.agent." + c, "");
+    out.buildOrder.push("uvm_test_top.env.agent." + c);
+  });
+  ev("build", "uvm_test_top.env.scoreboard", "");
+  out.buildOrder.push("uvm_test_top.env.scoreboard");
+
+  /* ---- connect_phase: bottom-up, wire ports after everything exists ---- */
+  out.phasesRun.push("connect");
+  leaves.forEach(function(c){
+    ev("connect", "uvm_test_top.env.agent." + c, "");
+    out.connectOrder.push("uvm_test_top.env.agent." + c);
+  });
+  if (plan.createDriver === "connect"){
+    ev("connect", "uvm_test_top.env.agent",
+       "-> creating driver  ** UVM_FATAL [ILLCRT]: a component cannot be created after " +
+       "build_phase has ended -- this driver has already missed its own build and connect slots",
+       "fatal");
+    out.status = "FAIL"; out.fail = "illcrt";
+    return out;
+  }
+  if (plan.seqWire === "connect"){
+    ev("connect", "uvm_test_top.env.agent", "driver.seq_item_port -> sequencer.seq_item_export");
+    bound.seq = true;
+  }
+  ev("connect", "uvm_test_top.env.agent", "");
+  out.connectOrder.push("uvm_test_top.env.agent");
+  ev("connect", "uvm_test_top.env.scoreboard", "");
+  out.connectOrder.push("uvm_test_top.env.scoreboard");
+  if (plan.apWire === "connect"){
+    ev("connect", "uvm_test_top.env", "monitor.ap -> scoreboard.analysis_export");
+    bound.ap = true;
+  }
+  ev("connect", "uvm_test_top.env", "");
+  out.connectOrder.push("uvm_test_top.env");
+  ev("connect", "uvm_test_top", "");
+  out.connectOrder.push("uvm_test_top");
+
+  /* ---- end_of_elaboration: bindings resolve exactly once ---- */
+  out.phasesRun.push("elab");
+  if (!bound.seq){
+    ev("elab", "uvm_test_top.env.agent.driver",
+       "seq_item_port: 0 connections -- required minimum is 1  ** UVM_FATAL" +
+       (plan.seqWire === "run" ? "   (the connect scheduled for run_phase never got its chance)" : ""),
+       "fatal");
+    out.status = "FAIL"; out.fail = "min_size";
+    return out;
+  }
+  out.subscribers = bound.ap ? 1 : 0;
+  ev("elab", "uvm_test_top",
+     "port bindings resolved: seq_item_port 1/1 · analysis subscribers " + out.subscribers +
+     (bound.ap ? "" : "   (zero is legal -- ap.write broadcasts to whoever subscribed)"),
+     bound.ap ? "" : "warn");
+
+  /* ---- run_phase: the only phase where simulated time passes ---- */
+  out.phasesRun.push("run");
+  ev("run", "uvm_test_top", "raise_objection -- sim time may pass");
+  if (plan.apWire === "run"){
+    ev("run", "uvm_test_top.env",
+       "monitor.ap.connect(...)  ** UVM_WARNING: late connect -- bindings were resolved at " +
+       "end_of_elaboration; the call changes nothing", "warn");
+    out.warnings.push("late_connect");
+  }
+  var r = rng(5), i;
+  for (i = 1; i <= N_ITEMS; i++){
+    var wr = r() < 0.6, addr = Math.floor(r() * 16), data = Math.floor(r() * 256);
+    var pay = (wr ? "WR" : "RD") + " a=0x" + addr.toString(16).toUpperCase() +
+              " d=0x" + data.toString(16).toUpperCase().padStart(2, "0");
+    out.published++;
+    if (bound.ap){
+      out.received++;
+      ev("run", "item #" + i, pay + "   seq -> driver -> DUT -> monitor -> ap -> scoreboard", "item-ok");
+    } else {
+      ev("run", "item #" + i, pay + "   seq -> driver -> DUT -> monitor -> ap -> (0 subscribers: vanished)", "item-lost");
+    }
+  }
+  ev("run", "uvm_test_top", "drop_objection -- run_phase ends");
+
+  /* ---- report_phase: tally and verdict ---- */
+  out.phasesRun.push("report");
+  if (plan.probe && out.received === 0){
+    out.probeFired = true;
+    ev("report", "uvm_test_top",
+       "PROBE assert sb.received > 0: FAILED -- received 0. Green wiring, starved checker.  " +
+       "** TEST FAILED", "fatal");
+    out.status = "FAIL"; out.fail = "probe";
+    return out;
+  }
+  ev("report", "uvm_test_top",
+     "scoreboard: received " + out.received + ", mismatches " + out.mismatches +
+     " -> TEST PASSED", out.received ? "good" : "silently-good");
+  out.status = out.received > 0 ? "PASS_CHECKING" : "PASS_STARVED";
+  return out;
+}
+
+function bucket(out){
+  return out.status === "FAIL" ? "red" :
+         out.status === "PASS_STARVED" ? "starved" : "checking";
+}
+
+var MODEL = { schedule: schedule, bucket: bucket, rng: rng, N_ITEMS: N_ITEMS };
+if (typeof window === "undefined"){
+  if (typeof module !== "undefined") module.exports = MODEL;
+  return;
+}
+
+/* ---------------- UI ---------------- */
+
+if (new URLSearchParams(location.search).get("present") === "1") document.body.classList.add("present");
+var el = function(id){ return document.getElementById(id); };
+
+var PARTS = {
+  env:       {name: "uvm_env",       role: "the container the test builds; everything else lives inside it"},
+  agent:     {name: "uvm_agent",     role: "groups one interface's trio behind standard seams"},
+  sequencer: {name: "uvm_sequencer", role: "decides which transaction goes next; the driver pulls, it never invents"},
+  driver:    {name: "uvm_driver",    role: "turns transactions into pin wiggles"},
+  monitor:   {name: "uvm_monitor",   role: "turns pin wiggles back into observed transactions, publishes them"},
+  scoreboard:{name: "scoreboard (uvm_subscriber)", role: "decides correctness against a reference; subscribes to the monitor"}
+};
+var TRAY_ORDER = ["monitor", "env", "scoreboard", "driver", "agent", "sequencer"];
+var placed = {}, picked = null, committed = null, playing = false;
+
+function trayHTML(){
+  el("tray").innerHTML = TRAY_ORDER.map(function(k){
+    return '<button class="blk" draggable="true" data-blk="' + k + '">' + PARTS[k].name + "</button>";
+  }).join("");
+}
+
+function slotHTML(k){
+  var p = PARTS[k];
+  if (placed[k]) return '<div class="slot filled" data-slot="' + k + '"><span class="want">' +
+    p.name + '</span><div class="role">wk4 job: ' + p.role + "</div></div>";
+  return '<div class="slot" data-slot="' + k + '" tabindex="0" role="button" ' +
+    'aria-label="slot: ' + p.role + '"><span class="want">?</span><div class="role">' +
+    p.role + "</div></div>";
+}
+
+function treeHTML(){
+  return '<div class="tnode"><div class="tname">uvm_test_top <small>· fixed — the test picks parts, the factory builds them</small></div>' +
+    '<div class="tnode" style="background:var(--surface)">' + slotHTML("env") +
+      (placed.env ?
+        '<div class="tnode">' + slotHTML("agent") +
+          (placed.agent ?
+            '<div class="tnode" style="background:var(--surface)">' +
+              slotHTML("sequencer") + slotHTML("driver") + slotHTML("monitor") + "</div>" : "") +
+        "</div>" +
+        '<div class="tnode">' + slotHTML("scoreboard") + "</div>" : "") +
+    "</div></div>";
+}
+
+function drawTree(){
+  el("tree").innerHTML = treeHTML();
+  document.querySelectorAll("[data-slot]").forEach(function(s){
+    var k = s.dataset.slot;
+    if (placed[k]) return;
+    s.addEventListener("click", function(){ tryPlace(k, s); });
+    s.addEventListener("keydown", function(e){ if (e.key === "Enter" || e.key === " "){ e.preventDefault(); tryPlace(k, s); } });
+    s.addEventListener("dragover", function(e){ e.preventDefault(); s.classList.add("over"); });
+    s.addEventListener("dragleave", function(){ s.classList.remove("over"); });
+    s.addEventListener("drop", function(e){
+      e.preventDefault(); s.classList.remove("over");
+      var b = e.dataTransfer.getData("text/plain");
+      if (b){ picked = b; tryPlace(k, s); }
+    });
+  });
+}
+
+function tryPlace(slotK, slotEl){
+  if (!picked){
+    el("hint").textContent = "Pick a block from the tray first.";
+    el("hint").className = "hint";
+    return;
+  }
+  if (picked === slotK){
+    placed[slotK] = true;
+    var blk = document.querySelector('[data-blk="' + slotK + '"]');
+    if (blk) blk.classList.add("gone");
+    picked = null;
+    el("hint").innerHTML = "<b>" + PARTS[slotK].name + "</b> placed — its Week 4 job: " + PARTS[slotK].role + ".";
+    el("hint").className = "hint";
+    drawTree();
+    checkAssembled();
+  } else {
+    slotEl.classList.add("shake");
+    setTimeout(function(){ slotEl.classList.remove("shake"); }, 350);
+    el("hint").innerHTML = "<b>" + PARTS[picked].name + "</b> is not it — this slot wants the part that " +
+      PARTS[slotK].role + ".";
+    el("hint").className = "hint badhint";
+  }
+}
+
+function checkAssembled(){
+  var all = Object.keys(PARTS).every(function(k){ return placed[k]; });
+  if (all){
+    el("wiring").classList.remove("locked");
+    el("hint").innerHTML = "<b>That is your Week 4 testbench with industrial names.</b> " +
+      "Nothing here is new but the labels — and the schedule below.";
+    el("hint").className = "hint";
+  }
+}
+
+function assembleAll(){
+  Object.keys(PARTS).forEach(function(k){
+    placed[k] = true;
+    var blk = document.querySelector('[data-blk="' + k + '"]');
+    if (blk) blk.classList.add("gone");
+  });
+  picked = null;
+  drawTree(); checkAssembled();
+}
+
+/* ---- phase strip ---- */
+var PH = [["build","build_phase"],["connect","connect_phase"],["elab","end_of_elaboration"],
+          ["run","run_phase"],["report","report_phase"]];
+function phaseStrip(states){
+  el("phstrip").innerHTML = PH.map(function(p){
+    return '<span class="ph ' + (states[p[0]] || "") + '">' + p[1] + "</span>";
+  }).join("");
+}
+
+/* ---- run playback ---- */
+var phLabel = {build:"build_phase", connect:"connect_phase", elab:"end_of_elaboration",
+               run:"run_phase", report:"report_phase"};
+function pad(s, n){ while (s.length < n) s += " "; return s; }
+
+function play(res){
+  playing = true;
+  el("run").disabled = true;
+  el("log").innerHTML = "";
+  el("inbox").innerHTML = "<b>scoreboard inbox:</b>";
+  el("banner").className = "banner"; el("banner").textContent = "running…";
+  ["sdrv","spub","ssub","srcv","smis"].forEach(function(id){ el(id).textContent = "—"; el(id).className = "v"; });
+  el("verdict").className = "verdict"; el("verdict").textContent = "…";
+  var states = {}, ops = [], lastPh = null;
+  res.events.forEach(function(e){
+    if (e.ph !== lastPh){ ops.push({t: "phase", ph: e.ph}); lastPh = e.ph; }
+    if (e.kind === "item-ok" || e.kind === "item-lost"){
+      ops.push({t: "log", e: e});
+      for (var s = 0; s <= 4; s++) ops.push({t: "dot", s: s});
+      ops.push({t: "dotend", ok: e.kind === "item-ok", e: e});
+    } else {
+      ops.push({t: "log", e: e});
+      if (e.kind === "fatal") ops.push({t: "dead", ph: e.ph});
+    }
+  });
+  ops.push({t: "end"});
+  var i = 0, timer = setInterval(function(){
+    if (i >= ops.length){ clearInterval(timer); playing = false; return; }
+    var op = ops[i++];
+    if (op.t === "phase"){
+      PH.forEach(function(p){ if (states[p[0]] === "active") states[p[0]] = "done"; });
+      states[op.ph] = "active";
+      phaseStrip(states);
+    } else if (op.t === "dead"){
+      states[op.ph] = "dead";
+      PH.forEach(function(p){ if (!states[p[0]]) states[p[0]] = "skip"; });
+      phaseStrip(states);
+    } else if (op.t === "log"){
+      logLine(op.e);
+    } else if (op.t === "dot"){
+      moveDot(op.s);
+    } else if (op.t === "dotend"){
+      endDot(op.ok, op.e);
+    } else if (op.t === "end"){
+      PH.forEach(function(p){ if (states[p[0]] === "active") states[p[0]] = res.status === "FAIL" ? "dead" : "done"; });
+      phaseStrip(states);
+      finish(res);
+      clearInterval(timer);
+      playing = false;
+    }
+  }, 105);
+}
+
+function logLine(e){
+  var cls = e.kind === "fatal" ? "fatal" : e.kind === "warn" ? "warn" :
+            e.kind === "good" ? "good" : e.kind === "item-lost" ? "lost" :
+            e.kind === "silently-good" ? "good" : "";
+  var line = pad(phLabel[e.ph], 19) + e.who + (e.text ? "   " + e.text : "");
+  var span = document.createElement("span");
+  if (cls) span.className = cls;
+  span.textContent = line + "\n";
+  el("log").appendChild(span);
+  el("log").scrollTop = 1e6;
+}
+
+var stagePos = [];
+function measureStages(){
+  var pipe = el("pipe");
+  stagePos = [];
+  pipe.querySelectorAll(".stage").forEach(function(s){
+    stagePos.push(s.offsetLeft + s.offsetWidth / 2 - 6);
+  });
+}
+function moveDot(s){
+  if (!stagePos.length) measureStages();
+  var d = el("dot");
+  d.classList.remove("lost");
+  d.style.opacity = "1";
+  d.style.left = stagePos[s] + "px";
+}
+function endDot(ok, e){
+  var d = el("dot");
+  var chip = document.createElement("span");
+  chip.className = "chip" + (ok ? "" : " ghost");
+  chip.textContent = e.who.replace("item ", "") + " " + e.text.split("   ")[0];
+  el("inbox").appendChild(chip);
+  if (!ok){ d.classList.add("lost"); }
+  else d.style.opacity = "0";
+}
+
+function finish(res){
+  var b = el("banner");
+  if (res.status === "FAIL"){
+    b.className = "banner red";
+    b.textContent = res.fail === "probe" ? "TEST FAILED — the probe caught the starved checker"
+      : res.fail === "min_size" ? "UVM_FATAL at end_of_elaboration — seq_item_port unbound"
+      : res.fail === "illcrt" ? "UVM_FATAL in connect_phase — component created after build"
+      : "UVM_FATAL in build_phase — null handle";
+  } else {
+    b.className = "banner green";
+    b.textContent = "TEST PASSED — received " + res.received + ", mismatches 0";
+  }
+  stat("sdrv", res.published, res.published ? "" : "zero");
+  stat("spub", res.published, res.published ? "" : "zero");
+  stat("ssub", res.subscribers, res.status !== "FAIL" && res.subscribers === 0 ? "zero" : "");
+  stat("srcv", res.status === "FAIL" && !res.probeFired ? "—" : res.received,
+       res.published && !res.received ? "zero" : res.received ? "ok" : "");
+  stat("smis", res.status === "FAIL" && !res.probeFired ? "—" : res.mismatches, "");
+  if (res.status === "FAIL" && res.fail !== "probe"){
+    el("arr-seq").className = "arrow";           /* the run never happened */
+    el("arr-ap").className = "arrow";
+  } else {
+    el("arr-seq").className = "arrow ok";
+    el("arr-ap").className = "arrow" + (res.subscribers ? " ok" : " badw");
+  }
+
+  var v = el("verdict"), got = bucket(res), right = committed === got;
+  var pv = right ? "<b>Your call was right.</b> " : "<b>You predicted " + predLabel(committed) +
+    " — it went " + predLabel(got) + ".</b> ";
+  var why;
+  if (res.fail === "null_handle"){
+    why = "Build walks top-down: when <code>env.build_phase</code> ran, <code>agent.build_phase</code> " +
+      "had not, so the handle you connected through was null. You cannot connect a port on a component " +
+      "build has not created. Wiring belongs in <code>connect_phase</code> — after everything exists.";
+  } else if (res.fail === "illcrt"){
+    why = "Creation belongs to <code>build_phase</code>, top-down, so that every handle exists before " +
+      "connect walks back up. A driver created in <code>connect_phase</code> has missed its own build " +
+      "and connect slots; the schedule refuses it, loudly.";
+  } else if (res.fail === "min_size"){
+    why = "<code>seq_item_port</code> demands at least one binding when ports resolve at " +
+      "<code>end_of_elaboration</code>. That demand is why this mistake is loud — and its absence on " +
+      "analysis ports is exactly why the other mistake is not.";
+  } else if (res.fail === "probe"){
+    why = "Same starved scoreboard as the silent run — one line of report_phase turned it red. " +
+      "That line costs nothing and separates a checking environment from a green one.";
+  } else if (res.status === "PASS_STARVED"){
+    why = "<b>The dangerous one.</b> The monitor published " + res.published + " items into an " +
+      "analysis port with " + res.subscribers + " subscribers. Zero is legal, so nothing errored: " +
+      "the data vanished and the test PASSED. The only breadcrumbs were 'subscribers 0' at " +
+      "elaboration" + (res.warnings.indexOf("late_connect") >= 0 ? ", one warning," : "") +
+      " and a scoreboard count of 0 that nothing asserted. Arm the probe and run this wiring again.";
+  } else {
+    why = "Build top-down, connect bottom-up, resolve, run: " + res.received + " of " +
+      res.published + " items reached the scoreboard and every one was judged. Note what UVM did " +
+      "not add: the checking is still your Week 4 reference model. Structure moves data; only the " +
+      "scoreboard decides anything." +
+      (res.warnings.indexOf("build_wire_fragile") >= 0 ?
+        " (Your seq_item wiring in build did bind — read the log for why that habit bites later.)" : "");
+  }
+  v.className = "verdict " + (res.status === "PASS_CHECKING" ? "ok" : res.status === "PASS_STARVED" ? "warn" : "bad");
+  v.innerHTML = pv + why;
+}
+
+function predLabel(p){
+  return p === "red" ? "red" : p === "starved" ? "silent green" : "green and checking";
+}
+
+function stat(id, val, cls){
+  el(id).textContent = val;
+  el(id).className = "v " + (cls === "zero" ? "zero" : cls || "");
+}
+
+/* ---- wiring / predict / run ---- */
+function plan(){
+  return { createDriver: el("wcreate").value, seqWire: el("wseq").value,
+           apWire: el("wap").value, probe: el("probe").checked };
+}
+
+function unCommit(){
+  committed = null;
+  el("run").disabled = true;
+  document.querySelectorAll("[data-p]").forEach(function(x){ x.classList.remove("on"); });
+  el("pverdict").textContent = "Wiring changed — commit again before you run.";
+}
+
+["wcreate", "wseq", "wap", "probe"].forEach(function(id){
+  el(id).addEventListener("change", unCommit);
+});
+
+document.querySelectorAll("[data-p]").forEach(function(b){
+  b.addEventListener("click", function(){
+    committed = b.dataset.p;
+    document.querySelectorAll("[data-p]").forEach(function(x){ x.classList.remove("on"); });
+    b.classList.add("on");
+    el("run").disabled = false;
+    el("pverdict").textContent = "Committed. Run it.";
+  });
+});
+
+el("run").addEventListener("click", function(){
+  if (playing || committed === null) return;
+  var p = plan();
+  el("lab-seq").textContent = p.seqWire === "none" ? "unwired" : p.seqWire + "_phase";
+  el("lab-ap").textContent = p.apWire === "none" ? "unwired" : p.apWire + "_phase";
+  var res = schedule(p);
+  play(res);
+  var reopen = function(){ if (!playing) el("run").disabled = false; else setTimeout(reopen, 200); };
+  setTimeout(reopen, 400);
+});
+
+el("auto").addEventListener("click", assembleAll);
+window.addEventListener("resize", function(){ stagePos = []; });
+
+trayHTML();
+document.querySelectorAll("[data-blk]").forEach(function(b){
+  b.addEventListener("click", function(){
+    document.querySelectorAll("[data-blk]").forEach(function(x){ x.classList.remove("on"); });
+    picked = b.dataset.blk;
+    b.classList.add("on");
+    el("hint").textContent = "Now click the slot whose job description fits " + PARTS[picked].name + ".";
+    el("hint").className = "hint";
+  });
+  b.addEventListener("dragstart", function(e){
+    e.dataTransfer.setData("text/plain", b.dataset.blk);
+    picked = b.dataset.blk;
+  });
+});
+
+drawTree();
+phaseStrip({});
+if (document.body.classList.contains("present")) assembleAll();
+})();
+</script>
+</body>
+</html>

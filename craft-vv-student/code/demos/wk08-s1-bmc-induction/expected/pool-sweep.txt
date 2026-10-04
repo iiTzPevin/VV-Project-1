@@ -1,0 +1,10 @@
+  [found  ] full_offbyone        (counterexample at step 9)  -- full asserts one entry too early (cnt == DEPTH-1)
+  [found  ] empty_offbyone       (counterexample at step 2)  -- empty asserts one entry too early (cnt == 1)
+  [found  ] ignore_full          (counterexample at step 11)  -- writes are accepted even when full (overflow)
+  [found  ] ignore_empty         (counterexample at step 3)  -- reads are accepted even when empty (underflow)
+  [found  ] count_wr_dec         (counterexample at step 3)  -- a write-only cycle decrements the count
+  [SURVIVED] rd_data_wrptr        (proof PASSES on the mutant)  -- rd_data reads from the write pointer instead of the read pointer
+  [SURVIVED] mem_corrupt          (proof PASSES on the mutant)  -- stored data is corrupted (+1) on write
+  [SURVIVED] wrptr_wrap_early     (proof PASSES on the mutant)  -- write pointer wraps one slot early
+
+==== found/total = 5/8  =  62.5% ====

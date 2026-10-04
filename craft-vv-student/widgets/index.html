@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Concept Widgets · CRAFT V&amp;V</title>
+<style>
+:root{--ground:#F4F6F9;--surface:#fff;--surface2:#EDF0F5;--ink:#16223B;--ink2:#3E4C68;
+ --ink3:#6B7791;--rule:#D9DEE7;--gold:#D4A843;--green:#27AE60}
+@media(prefers-color-scheme:dark){:root{--ground:#0D1524;--surface:#141E33;--surface2:#1B273F;
+ --ink:#E7ECF5;--ink2:#B6C1D6;--ink3:#8592AC;--rule:#2A3752;--gold:#E9BE58;--green:#5FD48C}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+ font:16px/1.55 "Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:28px 20px 70px}
+h1{font-size:1.6rem;margin:0 0 4px}
+.kick{font:600 .7rem/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+p{color:var(--ink2);max-width:62ch}
+header{border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:20px}
+ul{list-style:none;padding:0;margin:18px 0 0;display:flex;flex-direction:column;gap:8px}
+li a{display:flex;gap:14px;align-items:baseline;text-decoration:none;color:inherit;
+ background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:12px 16px}
+li a:hover{border-color:var(--ink3)}
+li a:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.wk{font:700 .72rem/1 ui-monospace,monospace;color:var(--ink3);min-width:44px;padding-top:3px}
+.nm{font-weight:700}
+.dsc{color:var(--ink2);font-size:.9rem;display:block;margin-top:2px}
+li.soon a{opacity:.5;pointer-events:none}
+.tag{margin-left:auto;font:700 .62rem/1 ui-monospace,monospace;letter-spacing:.08em;
+ text-transform:uppercase;padding:3px 7px;border-radius:3px;background:var(--surface2);color:var(--ink3);white-space:nowrap}
+.tag.live{background:rgba(39,174,96,.15);color:var(--green)}
+footer{margin-top:28px;border-top:1px solid var(--rule);padding-top:14px;font-size:.84rem;color:var(--ink3)}
+</style></head><body><div class="wrap">
+<header>
+  <div class="kick">CRAFT V&amp;V · EEL 4701 / EEL 5703</div>
+  <h1>Concept widgets</h1>
+  <p>Each one targets a single wrong idea. Commit to a prediction before you touch
+  the controls — that is the whole point of them. Add <code>?present=1</code> to any
+  link for projector-sized type.</p>
+</header>
+<ul>
+<li><a href="observability.html"><span class="wk">Wk 1</span><span><span class="nm">Observability explorer</span><span class="dsc">A bug you can reach and still cannot see.</span></span><span class="tag live">live</span></a></li>
+<li><a href="spec-ambiguity.html"><span class="wk">Wk 2</span><span><span class="nm">Spec-ambiguity hunter</span><span class="dsc">Two implementations, both conforming, different answers.</span></span><span class="tag live">live</span></a></li>
+<li><a href="delta-sampler.html"><span class="wk">Wk 3</span><span><span class="nm">Delta-cycle sampler</span><span class="dsc">What you observe depends on when you look.</span></span><span class="tag live">live</span></a></li>
+<li><a href="scoreboard-race.html"><span class="wk">Wk 4</span><span><span class="nm">Scoreboard divergence</span><span class="dsc">How many cycles before a dropped write becomes visible.</span></span><span class="tag live">live</span></a></li>
+<li><a href="constraint-sandbox.html"><span class="wk">Wk 5</span><span><span class="nm">Constraint sandbox</span><span class="dsc">Whether your boundary coverage is yours or the seed's.</span></span><span class="tag live">live</span></a></li>
+<li><a href="coverage-closure.html"><span class="wk">Wk 6</span><span><span class="nm">Coverage closure</span><span class="dsc">A bug inside a bin you already covered.</span></span><span class="tag live">live</span></a></li>
+<li><a href="sva-vacuity.html"><span class="wk">Wk 7</span><span><span class="nm">Assertion &amp; vacuity scrubber</span><span class="dsc">A property that passes because it never fired.</span></span><span class="tag live">live</span></a></li>
+<li><a href="bmc-induction.html"><span class="wk">Wk 8</span><span><span class="nm">BMC depth &amp; induction</span><span class="dsc">k=8 says PASS. k=9 finds it.</span></span><span class="tag live">live</span></a></li>
+<li><a href="uvm-phases.html"><span class="wk">Wk 9</span><span><span class="nm">Phase &amp; port wiring</span><span class="dsc">Build in the wrong phase and see what breaks.</span></span><span class="tag live">live</span></a></li>
+<li><a href="reg-policy.html"><span class="wk">Wk 10</span><span><span class="nm">Register policy playground</span><span class="dsc">A locked register that takes the write anyway.</span></span><span class="tag live">live</span></a></li>
+<li><a href="cdc-hazard.html"><span class="wk">Wk 10</span><span><span class="nm">CDC hazard animator</span><span class="dsc">The failure single-clock simulation cannot show.</span></span><span class="tag live">live</span></a></li>
+<li><a href="survivors.html"><span class="wk">Wk 3+</span><span><span class="nm">Survivor explorer</span><span class="dsc">Which test caught it, at which cycle, and why the rest did not.</span></span><span class="tag live">live</span></a></li>
+<li><a href="trigger-space.html"><span class="wk">Wk 8</span><span><span class="nm">Trigger-space visualizer</span><span class="dsc">Why random will not find it, drawn to scale.</span></span><span class="tag live">live</span></a></li>
+<li><a href="found-total.html"><span class="wk">All</span><span><span class="nm">found/total calculator</span><span class="dsc">Your score under the course threshold.</span></span><span class="tag live">live</span></a></li>
+</ul>
+<footer>Source: <code>web/widgets/</code> · one self-contained file each, no network required.
+Catalogue and design rules: <code>web/widgets/CATALOGUE.md</code>.</footer>
+</div></body></html>
