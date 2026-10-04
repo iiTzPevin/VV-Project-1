@@ -11,7 +11,7 @@
 
 Project Is Under `craft-vv-student/code/tb/project_one/`
 
-Everything Else In `craft-vv-student/` Is The Course Starter Packet.
+Everything Else In `craft-vv-student/` Is The Course Starter Packet
 
 ```
 craft-vv-student/code/tb/project_one/
