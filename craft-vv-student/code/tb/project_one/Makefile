@@ -1,4 +1,4 @@
-# cocotb + Verilator flow for the ALU testbench.
+# cocotb + Verilator flow for the Project 1 FIFO testbench.
 #   make            # run with Verilator (default)
 #   make SIM=icarus # run with Icarus Verilog
 #   make DUT=/path/to/fifo.sv   # override the DUT (used by the mutation harness)
@@ -10,6 +10,6 @@ VERILOG_SOURCES = $(DUT)
 TOPLEVEL = fifo
 MODULE   = test_fifo
 
-export PYTHONPATH := $(CURDIR)/../../lib:$(PYTHONPATH)
+export PYTHONPATH := $(CURDIR):$(CURDIR)/../../lib:$(PYTHONPATH)
 
 include $(shell cocotb-config --makefiles)/Makefile.sim
