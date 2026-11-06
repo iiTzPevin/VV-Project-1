@@ -51,7 +51,7 @@ Running `just test` Writes The Coverage Report To `tb/project_one/coverage_repor
 - All 11 Tests Pass On The Clean FIFO
 - Mutation Score Is 8/8 Released Mutants Found
 - Coverage Is 37/37 Bins
-- The Seeded Regression Runs 15 Seeds Of 500 Cycles Each
+- The Seeded Regression Runs 15 Seeds For 500 Cycles Each
 
 ## Demo
 
