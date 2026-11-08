@@ -1,43 +1,51 @@
-# FINDINGS — <lab / project> · <your name>
-
-> The number is the start of the argument, not the end of it. This file is
-> where you say what the number means and what it does not cover.
+# FINDINGS — Project #1 — Minh Hoang Ho, Matias Guillen, William Wright, Adrian Emeterio
 
 ## Score
 
 | Pool | found | total | % |
 |------|------:|------:|--:|
-| released (practice) | | | |
-| hidden (reported at grading) | | | |
+| Released | 8 | 8 | 100% |
+| Hidden | — | — | — |
 
 **Command run:**
 
 ```bash
+$ source /opt/course/cocotb-env/bin/activate
+$ cd project_testing/code
+$ just mutate project_one
+python -m craft_mutate.mutate --tb tb/project_one --pool tb/project_one/mutants_released.yaml --sim icarus
+[baseline] running clean fifo.sv through project_one ...
+  clean RTL: 11 tests passed.
+
+  [found  ] full_offbyone        (test-failed)  -- full asserts one entry too early (cnt == DEPTH-1)
+  [found  ] empty_offbyone       (test-failed)  -- empty asserts one entry too early (cnt == 1)
+  [found  ] ignore_full          (test-failed)  -- writes are accepted even when full (overflow)
+  [found  ] ignore_empty         (test-failed)  -- reads are accepted even when empty (underflow)
+  [found  ] count_wr_dec         (test-failed)  -- a write-only cycle decrements the count
+  [found  ] rd_data_wrptr        (test-failed)  -- rd_data reads from the write pointer instead of the read pointer
+  [found  ] mem_corrupt          (test-failed)  -- stored data is corrupted (+1) on write
+  [found  ] wrptr_wrap_early     (test-failed)  -- write pointer wraps one slot early
+
+==== found/total = 8/8  =  100.0%  (threshold 90%) ====
 ```
 
 ## Survivors
 
-One row per mutant your suite did not find. `Reachable?` is the important
-column: a survivor you never reached is a *stimulus* problem, a survivor you
-reached but did not notice is a *checking* problem, and they have different
-fixes.
-
-| Mutant | What it changes | Reachable by my stimulus? | Observable by my checks? | Why it survived |
+| Mutant | What It Changes | Reachable By My Stimulus? | Observable By My Checks? | Why It Survived |
 |--------|-----------------|---------------------------|--------------------------|-----------------|
-|        |                 | yes / no                  | yes / no                 |  |
+| Wrong rd_data while empty, not in the pool | The rd_data output shows the wrong value only when the FIFO is empty | Yes | No | We skip checking rd_data when the FIFO is empty since the spec says it is only valid when not empty so this is an observability gap |
+| Bug only at a size other than 8, not in the pool | Something like the wrap logic breaking at DEPTH = 16 or WIDTH = 4 | No | Yes | We only test the FIFO at WIDTH = 8 and DEPTH = 8 so a bug that needs another size never happens which makes this a reachability gap |
 
-## What I changed, and what it bought
+## What I Changed, And What It Bought
 
-| Change | Score before | Score after | Which survivors it caught |
+| Change | Score Before | Score After | Which Survivors It Caught |
 |--------|-------------:|------------:|---------------------------|
-|        |              |             |  |
+| Went from the starter smoke test to our full suite of 11 tests with the scoreboard checking every cycle | 1 / 8 | 8 / 8 | full_offbyone, empty_offbyone, ignore_full, ignore_empty, rd_data_wrptr, mem_corrupt, wrptr_wrap_early |
 
-## Residual risk
+## Residual Risk
 
-What this suite still cannot catch, stated plainly. Name a fault class, not a
-mutant id — the pool is a sample, not the population.
+1. Our code would not catch a wrong rd_data while the FIFO is empty because we never check rd_data when the FIFO is empty which makes this an observability gap.
+2. Our code would not catch bugs that only show up at other WIDTH or DEPTH values because we only test the FIFO at 8 and 8 which makes this a reachability gap.
+3. Our code would not catch anything that goes wrong before the first reset because every test resets first which makes this a reachability gap.
 
-1.
-2.
-
-**If I had another day:** <the one thing you would do next, and why that one>
+**If I Had Another Day:** Run all the tests again at a couple other sizes.
