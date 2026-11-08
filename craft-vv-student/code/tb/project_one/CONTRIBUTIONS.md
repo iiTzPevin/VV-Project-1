@@ -47,8 +47,10 @@
 
 | Where | Used For | Verified By | Where The Verification Shows |
 |-------|----------|-------------|------------------------------|
-| `crv/seeded_regression.py` | Updating it to work with transactions.py | Minh Hoang Ho | ai_log.md and the eustis mutate run |
-| Figure 2 graph script | Writing the script and making the graph from its printed numbers | Minh Hoang Ho | ai_log.md and the report |
+| `crv/seeded_regression.py` | Updating it to work with transactions.py | Minh Hoang Ho | ai_log.md Entry #1 and the eustis mutate run |
+| Figure 2 graph script | Writing the script and making the graph from its printed numbers | Minh Hoang Ho | ai_log.md Entry #2 |
+| Course slides on phase and rolls | Explaining the ideas behind the constraints | William Wright | ai_log.md Entries #3 and #4 |
+| `tb/scoreboard.py`, `tb/coverage.py`, and `test_fifo.py` | Splitting the scoreboard and coverage into their own files and adding the write during reset event | Adrian Emeterio | ai_log.md Entries #5, #6, and #7 and the eustis mutate run |
 
 ---
 
