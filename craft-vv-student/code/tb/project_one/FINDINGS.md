@@ -7,7 +7,7 @@
 | Released | 8 | 8 | 100% |
 | Hidden | — | — | — |
 
-**Command run:**
+**Command Run:**
 
 ```bash
 $ source /opt/course/cocotb-env/bin/activate

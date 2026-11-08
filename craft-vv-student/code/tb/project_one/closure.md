@@ -8,16 +8,16 @@
 | Pairs of how full the FIFO was and what it was asked to do | 20 / 20 bins |
 | Coverage goal from our vplan | 90% minimum with 100% as the goal |
 | Coverage we actually got | 100% with 37 / 37 bins |
-| Cycles it took to hit every bin | Not tracked since our coverage file only reports the final result |
+| Cycles it took to hit every bin | Seed 42 reached most bins by 200 cycles and write during reset is hit by test_reset_in_use |
 | Cycles that kept running after every bin was hit | The whole suite keeps running after closure, which is 9 directed tests, 5 plain random seeds of 400 cycles, and 15 pyvsc seeds of 500 cycles |
 
 
-**How the report was produced:**
+**How The Report Was Produced:**
 
 ```bash
 $ source /opt/course/cocotb-env/bin/activate
 $ cd project_testing/code
-$ just test project_one icarus
+$ just test project_one
 $ cat tb/project_one/coverage_report.txt
 FIFO Coverage: 37/37 Bins (100.0%)
 Occupancy: 5/5
@@ -32,16 +32,16 @@ Missing Events: []
 
 ## 2. The Convergence Argument
 
-**Shape Of The Curve:** We did not record coverage over time so we do not have a curve, but every bin was hit by the end of the full run.
+**Shape Of The Curve:** For seed 42 the curve slopes up fast at the start since most bins get hit in the first few cycles and then it flattens out as only the hard bins are left. By the end it reaches every bin except write during reset which is shown in Figure 2 of the report.
 
-**The Last Bins To Close, And What It Took:** We did not record which bins closed last. These are the hardest bins to reach and what hits them.
+**The Last Bins To Close, And What It Took:** For seed 42 the last bins to close were reading and writing together at full, at empty, at near empty, and at near full. These are the hardest bins to reach.
 
 | Bin | Why It Was Rare | What I Changed To Hit It |
 |-----|-----------------|--------------------------|
 | Idle at full and idle at empty | Both wr_en and rd_en have to be 0 while the FIFO is sitting at full or empty | Both the fill and drain phases only write or read part of the time so some cycles have neither and the Phase class keeps the FIFO at full or empty for a few cycles before switching |
 | Both at full and both at empty | Both enables have to be on while the FIFO is full or empty | The overlap in each phase keeps reading and writing while the Phase class holds the FIFO at the edge |
 | Write during reset | Reset has to be on while wr_en is held high and this never happens in normal random cycles | A directed test because random stimulus never turns on reset so test_reset_in_use holds the enables high during reset on purpose |
-| Write wrap and read wrap | The pointers only wrap after 8 writes or reads in a row since the last reset | test_wrap starts from every spot and the fill and drain phases push 8 or more writes and reads through before switching |
+| Write wrap and read wrap | The pointers only wrap after 8 writes or reads since the last reset | test_wrap starts from every spot and the fill and drain phases push 8 or more writes and reads through before switching |
 
 **Why I Stopped Where I Stopped:** All 37 bins were hit so the model was finished and the rest of the regression keeps running after that so a bad value written early could still get caught when it was read back out later
 

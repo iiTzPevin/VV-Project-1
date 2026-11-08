@@ -33,7 +33,7 @@
 |----|-----------|------|----------------|
 | C1 | How full the FIFO is before the cycle | Empty at 0, near empty at 1, middle from 2 to 6, near full at 7, and full at 8 | Most FIFO bugs happen right at the edges so 0, 1, 7, and 8 each get their own bin while 2 to 6 act the same and share one |
 | C2 | What the FIFO was asked to do that cycle | To stay idle, write, read, or both | These are the only 4 possible options of wr_en and rd_en |
-| C3 | Reset while an enable is held high | Write held during reset | Reset has to clear the FIFO even if a write is requested at the same time and this is our check for an illegal input |
+| C3 | Reset while an enable is held high | Write held during reset |Reset has to clear the FIFO even if a write is requested at the same time and this is our check that reset happens |
 | C4 | Corner events | Write while full, read while empty, both at empty, both at full, both in the middle, write pointer wrap, read pointer wrap, and write during reset | These are the spots where FIFO bugs usually hide so each one gets its own bin |
 
 **Crosses**
@@ -60,7 +60,7 @@
 | test_simple_random | F2, F3, F4, F5, F6, F7, F8, F9, F10 | Random | 5 seeds of 400 cycles each with plain Python random and no mismatches |
 | test_seeded_regression | F2, F3, F4, F5, F6, F7, F8, F9, F10 | Random with pyvsc | 15 seeds of 500 cycles each with constrained random and no mismatches |
 
-## 5. Risk and spec ambiguity
+## 5. Risk & Spec Ambiguity
 
 | # | Ambiguity Or Risk | Where In The Spec | How I Resolved It | Residual |
 |---|-------------------|-------------------|-------------------|----------|
@@ -69,9 +69,9 @@
 | 3 | The reference model was written to match the RTL so a mistake in the RTL could also be in the model | The comment at the top of fifo_model.py | The model should be correct after checking it against the spec | Low |
 | 4 | The spec does not say what the outputs are before the first reset | The reset rule in fifo.md | Every test resets first and nothing is checked before that | Power up behavior is not verified |
 
-## 6. Closure criteria
+## 6. Closure Criteria
 
 - Functional Coverage Target: **90%/100%**
 - Mutation Target: **7/8**
 - Assertions: We did not use SVA since our scoreboard checks count, full, empty, and rd_data against the reference model on every cycle
-- What I Will Report As **Not Verified**: The almost_full flag and FWFT mode, any WIDTH or DEPTH other than 8, rd_data while the FIFO is empty, and anything before the first reset
+- What I Will Report As **Not Verified**: Any WIDTH or DEPTH other than 8, rd_data while the FIFO is empty, and anything before the first reset

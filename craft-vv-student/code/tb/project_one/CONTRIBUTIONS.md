@@ -47,7 +47,8 @@
 
 | Where | Used For | Verified By | Where The Verification Shows |
 |-------|----------|-------------|------------------------------|
-| All of the files in `tb/` and `crv/` together with `test_fifo.py` | Checking that all the files worked together and ran as one testbench | The whole team | ai_log.md and the eustis test run |
+| `crv/seeded_regression.py` | Updating it to work with transactions.py | Minh Hoang Ho | ai_log.md and the eustis mutate run |
+| Figure 2 graph script | Writing the script and making the graph from its printed numbers | Minh Hoang Ho | ai_log.md and the report |
 
 ---
 
