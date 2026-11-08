@@ -31,7 +31,7 @@ craft-vv-student/code/tb/project_one/
 │   ├── scoreboard.py
 │   └── coverage.py
 └── crv/
-    ├── transactions.py        # Transaction And Constraints In One File
+    ├── transactions.py # Transaction And Constraints In One File
     └── seeded_regression.py
 ```
 
