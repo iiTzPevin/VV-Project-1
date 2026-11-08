@@ -21,6 +21,7 @@ craft-vv-student/code/tb/project_one/
 ├── CONTRIBUTIONS.md
 ├── ai_log.md
 ├── REPORT.pdf
+├── coverage_report.txt
 ├── test_fifo.py
 ├── Makefile
 ├── mutants_released.yaml
@@ -30,7 +31,7 @@ craft-vv-student/code/tb/project_one/
 │   ├── scoreboard.py
 │   └── coverage.py
 └── crv/
-    ├── transactions.py # Transaction And Constraints In One File
+    ├── transactions.py        # Transaction And Constraints In One File
     └── seeded_regression.py
 ```
 
@@ -40,19 +41,18 @@ Run These From The `craft-vv-student/code/` Folder On Eustis
 
 ```bash
 source /opt/course/cocotb-env/bin/activate
-just test project_one icarus
 just mutate project_one
 ```
 
-Running `just test` Writes The Coverage Report To `tb/project_one/coverage_report.txt`
+Running `just mutate` Writes The Coverage Report To `tb/project_one/coverage_report.txt`
 
 ## Results
 
 - All 11 Tests Pass On The Clean FIFO
-- Mutation Score Is 8/8 Released Mutants Found
-- Coverage Is 37/37 Bins
-- The Seeded Regression Runs 15 Seeds For 500 Cycles Each
+- Mutation Score Is 8/8 Released Mutants Found (100%)
+- Coverage Is 37/37 Bins (100%)
+- The Seeded Regression Runs 15 Seeds Of 500 Cycles Each
 
 ## Demo
 
-Link: 
+[Demo Video](https://ucf-my.sharepoint.com/:v:/g/personal/ho667674_ucf_edu/IQDNYZTf0hGhSKS1ULnkwfZPAczPsYebZXjd3SrbTUx1ie0?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=aEFBFV)

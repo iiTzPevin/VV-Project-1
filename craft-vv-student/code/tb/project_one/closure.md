@@ -17,7 +17,7 @@
 ```bash
 $ source /opt/course/cocotb-env/bin/activate
 $ cd project_testing/code
-$ just test project_one
+$ just mutate project_one
 $ cat tb/project_one/coverage_report.txt
 FIFO Coverage: 37/37 Bins (100.0%)
 Occupancy: 5/5
