@@ -7,6 +7,15 @@
 - Matias Guillen
 - Adrian Emeterio
 
+## Commits
+
+All Commits To This Repo Were Pushed By Minh Hoang Ho But Every Member Wrote Their Own Part
+
+- Minh Hoang Ho Wrote `test_fifo.py` & `crv/seeded_regression.py`
+- Matias Guillen Wrote `tb/driver.py` & `tb/monitor.py`
+- William Wright Wrote `crv/transactions.py` # Transaction And Constraints In One File
+- Adrian Emeterio Wrote `tb/scoreboard.py` & `tb/coverage.py`
+
 ## Where To Find The Files
 
 Project Is Under `craft-vv-student/code/tb/project_one/`
